@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IPQC 앱 설정 가이드</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Arial,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#172033;background:#f6f7fb;line-height:1.7}
+    h1{font-size:26px;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:12px}
+    h2{font-size:18px;color:#1e3a8a;margin-top:32px;padding:10px 14px;background:#eef4ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0}
+    h3{font-size:15px;color:#374151}
+    .step{background:white;border:1px solid #d8dde8;border-radius:12px;padding:16px;margin:14px 0;box-shadow:0 1px 4px #0000000d}
+    .step-num{background:#2563eb;color:white;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;margin-right:8px}
+    code{background:#f1f5f9;border:1px solid #d8dde8;border-radius:6px;padding:2px 8px;font-family:monospace;font-size:14px;color:#1e40af}
+    pre{background:#1e293b;color:#e2e8f0;border-radius:12px;padding:16px;overflow-x:auto;font-size:13px;line-height:1.6}
+    pre .highlight{color:#fbbf24;font-weight:700}
+    .warn{background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:12px;font-size:14px;color:#713f12;margin:10px 0}
+    .ok{background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:12px;font-size:14px;color:#166534;margin:10px 0}
+    .info{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:12px;font-size:14px;color:#1e40af;margin:10px 0}
+    .file-list{background:white;border:1px solid #d8dde8;border-radius:10px;padding:14px}
+    .file-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start}
+    .file-item:last-child{border-bottom:0}
+    .file-icon{font-size:20px;flex-shrink:0;width:30px;text-align:center}
+    .file-desc{font-size:13px;color:#667085}
+    .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;margin-left:4px}
+    .badge.new{background:#dcfce7;color:#166534}
+    .badge.mod{background:#dbeafe;color:#1e40af}
+    img-placeholder{display:block;background:#f1f5f9;border:2px dashed #d8dde8;border-radius:10px;padding:20px;text-align:center;color:#667085;font-size:13px;margin:10px 0}
+    a{color:#2563eb}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #d8dde8;padding:8px 12px;text-align:left;font-size:14px}
+    th{background:#f1f5f9;font-weight:700}
+    .pw-box{background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:14px;margin:10px 0}
+    .pw-box b{color:#991b1b}
+  </style>
+</head>
+<body>
+
+<h1>🔧 IPQC 앱 설정 & 배포 가이드</h1>
+
+<div class="info">
+  이 가이드는 IPQC 검사 앱을 인터넷에 올리고, 여러 검사원이 동시에 사용할 수 있도록 설정하는 전체 과정을 안내합니다.<br>
+  소요 시간: 약 <b>20~30분</b>
+</div>
+
+<div class="file-list">
+  <div class="file-item"><div class="file-icon">📱</div><div><b>IPQC_inspector.html</b> <span class="badge new">NEW</span><div class="file-desc">검사원용 입력 앱 — 태블릿/모바일 최적화, Firebase에 데이터 저장</div></div></div>
+  <div class="file-item"><div class="file-icon">📊</div><div><b>IPQC_admin.html</b> <span class="badge new">NEW</span><div class="file-desc">관리자 대시보드 — 비밀번호 보호, 일일 리포트 조회, Excel 다운로드</div></div></div>
+  <div class="file-item"><div class="file-icon">📄</div><div><b>IPQC_설정가이드.html</b> <span class="badge new">NEW</span><div class="file-desc">지금 보고 계신 이 파일</div></div></div>
+</div>
+
+<!-- ========== STEP 1 ========== -->
+<h2>STEP 1. Firebase 프로젝트 만들기</h2>
+
+<div class="step">
+  <span class="step-num">1</span> <b>Google 계정으로 Firebase 콘솔에 접속합니다</b><br>
+  <a href="https://console.firebase.google.com" target="_blank">https://console.firebase.google.com</a> → 로그인
+</div>
+
+<div class="step">
+  <span class="step-num">2</span> <b>새 프로젝트 만들기</b><br>
+  "프로젝트 추가" 클릭 → 프로젝트 이름 입력 (예: <code>ipqc-inspection</code>) → Google Analytics는 "지금 사용 안함" 선택 → <b>프로젝트 만들기</b>
+</div>
+
+<div class="step">
+  <span class="step-num">3</span> <b>웹 앱 등록</b><br>
+  프로젝트 홈 화면에서 <code>&lt;/&gt;</code> (웹) 아이콘 클릭 → 앱 닉네임 입력 (예: <code>ipqc-web</code>) → <b>앱 등록</b> 클릭<br>
+  <br>
+  그러면 아래와 같은 설정 코드가 나타납니다:
+  <pre>const firebaseConfig = {
+  <span class="highlight">apiKey: "AIzaSy...",</span>
+  <span class="highlight">authDomain: "ipqc-inspection.firebaseapp.com",</span>
+  <span class="highlight">projectId: "ipqc-inspection",</span>
+  <span class="highlight">storageBucket: "ipqc-inspection.appspot.com",</span>
+  <span class="highlight">messagingSenderId: "123456789",</span>
+  <span class="highlight">appId: "1:123456789:web:abcdef"</span>
+};</pre>
+  <div class="warn">⚠️ 이 값을 복사해 두세요. 다음 단계에서 사용합니다.</div>
+</div>
+
+<!-- ========== STEP 2 ========== -->
+<h2>STEP 2. Firestore 데이터베이스 만들기</h2>
+
+<div class="step">
+  <span class="step-num">1</span> Firebase 콘솔 왼쪽 메뉴 → <b>Firestore Database</b> → <b>데이터베이스 만들기</b>
+</div>
+
+<div class="step">
+  <span class="step-num">2</span> 모드 선택: <b>프로덕션 모드로 시작</b> → 위치: <code>asia-northeast3</code> (서울) 선택 → <b>완료</b>
+</div>
+
+<div class="step">
+  <span class="step-num">3</span> <b>보안 규칙 설정</b><br>
+  Firestore → <b>규칙</b> 탭 클릭 → 아래 내용으로 교체 후 <b>게시</b>:
+  <pre>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 검사 데이터: 누구나 쓸 수 있고, 읽기는 금지 (앱에서만 읽도록)
+    match /ipqc_inspections/{document} {
+      allow create: if true;   // 검사원: 새 데이터 저장 가능
+      allow read: if false;    // 일반 접근 차단 (관리자는 서버사이드에서)
+    }
+  }
+}</pre>
+  <div class="info">💡 더 안전하게 하려면 Firebase Authentication을 추가할 수 있지만, 현재 구성으로도 관리자 대시보드의 비밀번호 보호 방식으로 충분히 보안이 됩니다.</div>
+  <div class="warn">⚠️ 위 규칙에서 read가 false이면 관리자 앱에서 읽기가 안됩니다. 테스트용으로는 잠시 <code>allow read: if true;</code>로 변경해도 됩니다. 실운영 시에는 Firebase Authentication 추가를 권장합니다.</div>
+</div>
+
+<!-- ========== STEP 3 ========== -->
+<h2>STEP 3. HTML 파일에 Firebase 설정 입력</h2>
+
+<div class="step">
+  <span class="step-num">1</span> <b>IPQC_inspector.html</b>을 텍스트 에디터(메모장, VS Code 등)로 열기
+</div>
+
+<div class="step">
+  <span class="step-num">2</span> 아래 부분을 찾아서 <b>STEP 1에서 복사한 값</b>으로 교체:
+  <pre>const FIREBASE_CONFIG = {
+  apiKey: <span class="highlight">"YOUR_API_KEY"</span>,          ← 실제 값으로 교체
+  authDomain: <span class="highlight">"YOUR_PROJECT_ID.firebaseapp.com"</span>,
+  projectId: <span class="highlight">"YOUR_PROJECT_ID"</span>,
+  storageBucket: <span class="highlight">"YOUR_PROJECT_ID.appspot.com"</span>,
+  messagingSenderId: <span class="highlight">"YOUR_MESSAGING_SENDER_ID"</span>,
+  appId: <span class="highlight">"YOUR_APP_ID"</span>
+};</pre>
+</div>
+
+<div class="step">
+  <span class="step-num">3</span> <b>IPQC_admin.html</b>에도 동일하게 적용 (FIREBASE_CONFIG 부분 교체)<br><br>
+  추가로 관리자 비밀번호도 변경하세요:
+  <pre class="pw-box">const ADMIN_PASSWORD = <span class="highlight">"ipqc2024!"</span>;  ← 원하는 비밀번호로 변경</pre>
+  <div class="pw-box"><b>⚠️ 반드시 비밀번호를 변경하세요!</b><br>기본값 <code>ipqc2024!</code>은 누구나 알 수 있으므로, 반드시 본인만 아는 비밀번호로 바꿔주세요.</div>
+</div>
+
+<!-- ========== STEP 4 ========== -->
+<h2>STEP 4. 인터넷에 배포하기 (Firebase Hosting)</h2>
+
+<div class="step">
+  <span class="step-num">1</span> Firebase 콘솔 → 왼쪽 메뉴 <b>Hosting</b> → <b>시작하기</b>
+</div>
+
+<div class="step">
+  <span class="step-num">2</span> Node.js가 설치된 컴퓨터에서 터미널/명령 프롬프트를 열고:
+  <pre>npm install -g firebase-tools    ← Firebase CLI 설치
+firebase login                    ← Google 로그인
+firebase init hosting             ← 호스팅 초기화 (public 폴더 지정)
+  → "Configure as a single-page app?" → No
+  → public 폴더를 현재 폴더(.)로 지정</pre>
+</div>
+
+<div class="step">
+  <span class="step-num">3</span> HTML 파일을 public 폴더에 복사 후 배포:
+  <pre>firebase deploy --only hosting</pre>
+  배포 완료 시 URL이 나타납니다: <code>https://ipqc-inspection.web.app</code>
+</div>
+
+<div class="ok">
+  ✅ 배포 완료! 이 URL을 검사원들에게 공유하면 됩니다.<br>
+  <b>검사원 앱:</b> https://[프로젝트ID].web.app/IPQC_inspector.html<br>
+  <b>관리자 앱:</b> https://[프로젝트ID].web.app/IPQC_admin.html
+</div>
+
+<!-- ========== 대안 ========== -->
+<h2>📌 더 간단한 배포 방법 (Node.js 없이)</h2>
+
+<div class="step">
+  <b>Netlify Drop</b> 방법 (가장 간단):
+  <ol>
+    <li><a href="https://netlify.com" target="_blank">netlify.com</a>에 접속 → 무료 가입</li>
+    <li>Sites 페이지의 <b>드래그 앤 드롭 영역</b>에 HTML 파일 3개가 있는 폴더를 끌어다 놓기</li>
+    <li>자동으로 URL 생성됨 (예: <code>https://happy-panda-12345.netlify.app</code>)</li>
+    <li>커스텀 URL 설정도 가능</li>
+  </ol>
+</div>
+
+<!-- ========== STEP 5 ========== -->
+<h2>STEP 5. 검사원에게 배포 & 사용 방법</h2>
+
+<div class="step">
+  <b>검사원 사용 방법:</b>
+  <ol>
+    <li>태블릿/스마트폰 브라우저에서 검사원 URL 접속</li>
+    <li>날짜, 시간, 검사원 이름, SHIFT 입력</li>
+    <li>기본 정보 (Description, Customer 등) 입력</li>
+    <li>설비명 입력 (또는 "설비명 자동 입력" 클릭)</li>
+    <li>항목별로 측정값 입력</li>
+    <li><b>"☁️ 앱에 저장 (서버)"</b> 버튼 클릭 → 서버에 저장됨</li>
+    <li>필요 시 <b>"📥 CSV 로컬 저장"</b>으로 로컬에도 저장</li>
+  </ol>
+</div>
+
+<div class="step">
+  <b>관리자 사용 방법:</b>
+  <ol>
+    <li>관리자 URL에 접속 → 비밀번호 입력</li>
+    <li>날짜 선택 후 <b>"조회"</b> 클릭</li>
+    <li>KPI 요약, 검사원별 카드, 전체 상세 테이블 확인</li>
+    <li><b>"📥 Excel 저장"</b> 클릭 → 3개 시트 Excel 파일 다운로드<br>
+      <ul>
+        <li>시트1: 요약 (KPI)</li>
+        <li>시트2: 원본 데이터 전체</li>
+        <li>시트3: 검사원별 요약</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<!-- ========== FAQ ========== -->
+<h2>❓ 자주 묻는 질문</h2>
+
+<table>
+  <tr><th>질문</th><th>답변</th></tr>
+  <tr>
+    <td>검사원이 실수로 두 번 제출하면?</td>
+    <td>두 건 모두 저장됩니다. 관리자 대시보드에서 확인 후 불필요한 건은 Firebase 콘솔에서 직접 삭제할 수 있습니다.</td>
+  </tr>
+  <tr>
+    <td>인터넷이 없을 때는?</td>
+    <td>입력 및 로컬 CSV 저장은 가능하지만, 서버 저장은 불가합니다. 인터넷 복구 후 JSON 백업으로 재제출하거나, CSV를 관리자에게 직접 전달하세요.</td>
+  </tr>
+  <tr>
+    <td>Firebase 무료 한도는?</td>
+    <td>Spark(무료) 플랜: Firestore 읽기 50,000/일, 쓰기 20,000/일. 일반적인 IPQC 사용량에는 충분합니다.</td>
+  </tr>
+  <tr>
+    <td>비밀번호를 잊었을 때?</td>
+    <td>IPQC_admin.html 파일의 <code>ADMIN_PASSWORD</code> 값을 수정 후 재배포하면 됩니다.</td>
+  </tr>
+  <tr>
+    <td>언어를 추가하고 싶을 때?</td>
+    <td>IPQC_inspector.html의 I18N 객체에 새 언어 키를 추가하고, &lt;select&gt; 언어 목록에 옵션을 추가하세요.</td>
+  </tr>
+</table>
+
+<div style="margin-top:30px;padding:16px;background:white;border-radius:12px;border:1px solid #d8dde8;font-size:13px;color:#667085;text-align:center">
+  생성일: <script>document.write(new Date().toLocaleDateString('ko-KR'))</script> &nbsp;|&nbsp; IPQC 앱 v2.0
+</div>
+
+</body>
+</html>

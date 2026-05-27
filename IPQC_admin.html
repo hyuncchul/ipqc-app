@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>IPQC 관리자 대시보드</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{--bg:#f0f4ff;--card:#fff;--text:#172033;--muted:#667085;--line:#d8dde8;--primary:#2563eb;--ok:#16a34a;--warn:#f97316;--bad:#dc2626;--soft:#eef4ff;}
+    *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    /* ── 로그인 ── */
+    #loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#0f766e);display:flex;align-items:center;justify-content:center;z-index:200}
+    .login-box{background:white;border-radius:20px;padding:40px;min-width:320px;max-width:400px;width:90%;box-shadow:0 20px 60px #0003;text-align:center}
+    .login-box h2{margin:0 0 8px;font-size:22px;color:#1e3a8a}.login-box p{color:var(--muted);font-size:13px;margin:0 0 24px}
+    .login-input{width:100%;border:2px solid var(--line);border-radius:12px;padding:14px;font-size:16px;margin-bottom:12px;outline:none;transition:border .2s}
+    .login-input:focus{border-color:#2563eb}
+    .login-btn{width:100%;background:#2563eb;color:white;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer}
+    .login-err{color:#dc2626;font-size:13px;margin-top:8px;display:none}
+    /* ── 메인 ── */
+    #mainApp{display:none}
+    header{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:white;padding:14px 20px;box-shadow:0 2px 12px #0002;position:sticky;top:0;z-index:50}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;max-width:1400px;margin:0 auto;gap:12px}
+    h1{font-size:20px;margin:0}
+    .wrap{padding:14px;max-width:1400px;margin:auto}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;box-shadow:0 1px 4px #0000000d}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{border:0;border-radius:10px;padding:0 12px;min-height:28px;display:inline-flex;align-items:center;gap:5px;justify-content:center;font-weight:700;background:#e5e7eb;color:#111827;cursor:pointer;font-size:12px}
+    .btn.primary{background:var(--primary);color:white}
+    .btn.ok{background:var(--ok);color:white}
+    .btn.bad{background:var(--bad);color:white}
+    .btn.warn{background:var(--warn);color:white}
+    .btn.sm{min-height:22px;padding:0 8px;font-size:11px}
+    .btn:active{transform:scale(.98)}
+    input[type="date"],input[type="text"],input[type="password"],select,textarea{border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:13px;background:#fff;width:100%}
+    input[type="date"],input[type="text"],input[type="password"],select{height:28px}
+    textarea{min-height:60px;resize:vertical}
+    /* ── KPI ── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:10px 0}
+    .kpi-card{background:white;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+    .kpi-card .label{font-size:11px;color:var(--muted);margin-bottom:4px}
+    .kpi-card .value{font-size:26px;font-weight:800;color:#1e3a8a}
+    .kpi-card.ok .value{color:var(--ok)}.kpi-card.bad .value{color:var(--bad)}
+    /* ── 배지 ── */
+    .badge{border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;display:inline-block}
+    .badge.pass{background:#dcfce7;color:#166534}.badge.fail{background:#fee2e2;color:#991b1b}
+    .badge.hold{background:#fef9c3;color:#713f12}.badge.ok2{background:#dbeafe;color:#1e40af}
+    /* ── 검사원 카드 ── */
+    .inspector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin:12px 0}
+    .insp-card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;transition:box-shadow .2s}
+    .insp-card:hover{box-shadow:0 4px 16px #2563eb22}
+    .insp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+    .insp-name{font-size:16px;font-weight:800;color:#1e3a8a}
+    .insp-meta{font-size:11px;color:var(--muted);margin-top:2px}
+    /* ── 상세 테이블 ── */
+    .section-title{font-size:15px;font-weight:800;margin:14px 0 8px;color:#1e3a8a;display:flex;align-items:center;gap:8px}
+    .table-scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--line)}
+    .dtable{width:100%;border-collapse:collapse;font-size:12px}
+    .dtable th{background:#f1f5f9;padding:7px 8px;text-align:center;border:1px solid var(--line);font-weight:700;white-space:nowrap;position:sticky;top:0}
+    .dtable td{padding:6px 8px;text-align:center;border:1px solid var(--line);white-space:nowrap}
+    .dtable tr:hover td{background:#f0f7ff}
+    .dtable td.name-col{text-align:left;font-weight:700;min-width:90px}
+    /* ── 편집 모달 ── */
+    #editModal{position:fixed;inset:0;background:#0007;z-index:100;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+    #editModal.open{display:flex}
+    .modal-box{background:white;border-radius:18px;width:100%;max-width:860px;box-shadow:0 20px 60px #0004;margin:auto}
+    .modal-header{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:white;padding:16px 20px;border-radius:18px 18px 0 0;display:flex;justify-content:space-between;align-items:center}
+    .modal-header h2{margin:0;font-size:17px}
+    .modal-close{background:none;border:0;color:white;font-size:24px;cursor:pointer;line-height:1;padding:0 4px}
+    .modal-body{padding:18px}
+    /* 탭 */
+    .mtabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid var(--line);padding-bottom:0}
+    .mtab{padding:8px 16px;border:0;background:none;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+    .mtab.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .tab-panel{display:none}.tab-panel.active{display:block}
+    /* 편집 그리드 */
+    .edit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .edit-grid.two{grid-template-columns:repeat(2,1fr)}
+    .edit-field label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600}
+    .edit-field input,.edit-field select{font-size:12px!important;height:28px!important;min-height:28px!important;padding:3px 8px!important}
+    .edit-field textarea{font-size:12px}
+    /* 측정값 테이블 편집 */
+    .mval-table{width:100%;border-collapse:collapse;font-size:12px}
+    .mval-table th{background:#f1f5f9;padding:6px;border:1px solid var(--line);font-weight:700;text-align:center}
+    .mval-table td{border:1px solid var(--line);padding:4px}
+    .mval-input{width:100%;border:1px solid var(--line);border-radius:6px;padding:3px 5px;font-size:12px;text-align:center;min-width:60px;height:28px;min-height:28px}
+    .mval-input:focus{outline:none;border-color:#2563eb;background:#eef4ff}
+    .mval-item-header{background:#e0f2fe;font-weight:800;font-size:11px;padding:6px 8px;border-radius:6px;margin:10px 0 4px;color:#0c4a6e}
+    /* 저장 상태 */
+    #saveStatus{padding:10px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;display:none;margin-top:10px}
+    #saveStatus.ok{background:#dcfce7;color:#166534;display:block}
+    #saveStatus.err{background:#fee2e2;color:#991b1b;display:block}
+    #saveStatus.loading{background:#e0f2fe;color:#0c4a6e;display:block}
+    .footer-space{height:40px}
+    #loadingMsg{text-align:center;padding:40px;color:var(--muted);font-size:15px}
+    #noDataMsg{text-align:center;padding:40px;color:var(--muted);font-size:15px;display:none}
+    @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.edit-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.inspector-grid{grid-template-columns:1fr}.edit-grid{grid-template-columns:1fr}.header-inner{flex-wrap:wrap}}
+  </style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:48px;margin-bottom:12px">🔐</div>
+    <h2>IPQC 관리자</h2>
+    <p>일일 품질 검사 리포트 대시보드<br>관리자 비밀번호를 입력하세요</p>
+    <input type="password" id="pwInput" class="login-input" placeholder="비밀번호">
+    <button class="login-btn" onclick="login()">로그인</button>
+    <div id="loginErr" class="login-err">❌ 비밀번호가 올바르지 않습니다.</div>
+  </div>
+</div>
+
+<!-- 편집 모달 -->
+<div id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modalTitle">✏️ 검사 데이터 수정</h2>
+      <button class="modal-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="mtabs">
+        <button class="mtab active" onclick="switchTab('tab-basic',this)">📋 기본 정보</button>
+        <button class="mtab" onclick="switchTab('tab-machines',this)">⚙️ 설비 정보</button>
+        <button class="mtab" onclick="switchTab('tab-values',this)">📐 측정값</button>
+      </div>
+
+      <!-- 탭1: 기본 정보 -->
+      <div id="tab-basic" class="tab-panel active">
+        <div class="edit-grid">
+          <div class="edit-field"><label>날짜</label><input type="date" id="e_date"></div>
+          <div class="edit-field"><label>시간</label><input type="time" id="e_time"></div>
+          <div class="edit-field"><label>SHIFT</label>
+            <select id="e_shift"><option>Day</option><option>Night</option><option>A</option><option>B</option><option>C</option></select>
+          </div>
+          <div class="edit-field"><label>QC 검사원</label><input type="text" id="e_inspector"></div>
+          <div class="edit-field"><label>Description 料號</label><input type="text" id="e_desc"></div>
+          <div class="edit-field"><label>SAP PN</label><input type="text" id="e_sap"></div>
+          <div class="edit-field"><label>Customer</label><input type="text" id="e_customer"></div>
+          <div class="edit-field"><label>MOLD 模號</label><input type="text" id="e_mold"></div>
+          <div class="edit-field"><label>Datecode</label><input type="text" id="e_datecode"></div>
+          <div class="edit-field"><label>LTC No. 批號</label><input type="text" id="e_ltc"></div>
+          <div class="edit-field"><label>VISUAL 외관</label>
+            <select id="e_visual"><option>OK</option><option>NG</option><option>N/A</option><option>Waive</option></select>
+          </div>
+          <div class="edit-field"><label>RESULT 결과</label>
+            <select id="e_result"><option>PASS</option><option>FAIL</option><option>HOLD</option><option>N/A</option><option>Waive</option></select>
+          </div>
+          <div class="edit-field"><label>Approval 승인자</label><input type="text" id="e_approval"></div>
+          <div class="edit-field"><label>Remark / Material</label><input type="text" id="e_material"></div>
+          <div class="edit-field"><label>Material Ratio (%)</label><input type="text" id="e_ratio"></div>
+          <div class="edit-field"><label>SESS SR Trek 152-1 100V</label><input type="text" id="e_sess"></div>
+        </div>
+      </div>
+
+      <!-- 탭2: 설비 정보 -->
+      <div id="tab-machines" class="tab-panel">
+        <div id="e_machines_grid" class="edit-grid" style="gap:8px"></div>
+      </div>
+
+      <!-- 탭3: 측정값 -->
+      <div id="tab-values" class="tab-panel">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+          설비별로 전체 측정 항목의 값을 수정하세요. 빈 칸은 미입력으로 처리됩니다.
+        </div>
+        <div id="e_values_container"></div>
+      </div>
+
+      <div id="saveStatus"></div>
+      <div class="row" style="margin-top:14px;justify-content:flex-end;gap:8px">
+        <button class="btn bad sm" onclick="deleteDoc()">🗑️ 이 데이터 삭제</button>
+        <button class="btn" onclick="closeEdit()">취소</button>
+        <button class="btn primary" onclick="saveEdit()">💾 저장 (서버 업데이트)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 앱 -->
+<div id="mainApp">
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>📊 IPQC 관리자 대시보드</h1>
+        <div style="font-size:11px;opacity:.85">일일 품질 검사 종합 리포트 · 데이터 조회 및 수정</div>
+      </div>
+      <div class="row">
+        <button class="btn ok" onclick="exportExcel()">📥 Excel 저장</button>
+        <button class="btn" onclick="logout()" style="background:rgba(255,255,255,.2);color:white">로그아웃</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- 날짜 선택 -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <b>📅 조회 날짜 선택</b>
+        <div class="row">
+          <input type="date" id="reportDate" style="width:auto" onchange="loadReport()">
+          <button class="btn primary" onclick="loadReport()">🔍 조회</button>
+          <button class="btn" onclick="loadToday()">오늘</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div id="kpiSection" style="display:none">
+      <div class="section-title" id="kpiDateTitle"></div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="label">총 제출 건수</div><div class="value" id="kpiTotal">0</div></div>
+        <div class="kpi-card"><div class="label">검사원 수</div><div class="value" id="kpiInspectors">0</div></div>
+        <div class="kpi-card"><div class="label">총 설비 수</div><div class="value" id="kpiMachines">0</div></div>
+        <div class="kpi-card ok"><div class="label">PASS 건수</div><div class="value" id="kpiPass">0</div></div>
+        <div class="kpi-card bad"><div class="label">FAIL/HOLD 건수</div><div class="value" id="kpiFail">0</div></div>
+      </div>
+    </div>
+
+    <div id="loadingMsg">⏳ 데이터를 불러오는 중...</div>
+    <div id="noDataMsg">📭 해당 날짜에 제출된 검사 데이터가 없습니다.</div>
+
+    <!-- 검사원별 카드 -->
+    <div id="inspectorSection" style="display:none">
+      <div class="section-title">👷 검사원별 결과 <span style="font-size:12px;color:var(--muted);font-weight:400">— 카드의 [상세보기/수정] 버튼으로 데이터를 조회하고 수정할 수 있습니다</span></div>
+      <div class="inspector-grid" id="inspectorCards"></div>
+    </div>
+
+    <!-- 전체 상세 테이블 -->
+    <div id="detailSection" style="display:none">
+      <div class="section-title">
+        📋 전체 제출 목록
+        <span style="font-size:12px;color:var(--muted);font-weight:400">— ✏️ 버튼으로 개별 수정 가능</span>
+      </div>
+      <div class="card" style="padding:0">
+        <div class="table-scroll">
+          <table class="dtable" id="detailTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-space"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBiMY4D3lnM4SKzSA0OhB-JBmeFhZzSuPE",
+  authDomain: "ipqc-inspection.firebaseapp.com",
+  projectId: "ipqc-inspection",
+  storageBucket: "ipqc-inspection.firebasestorage.app",
+  messagingSenderId: "368910997117",
+  appId: "1:368910997117:web:8960ab041acf2d8d924314"
+};
+const ADMIN_PASSWORD = "1117mac";
+// ============================================================
+
+let db = null;
+let currentReportData = [];
+let editingDocId = null;
+
+const HEADERS = ['DATE 日期','TIME 時間','M/C 機台','SHIFT 班別','QC inspector 檢驗員','Description 料號','SAP PN','Customer','MOLD 模號','Datecode','LTC No. 批號','VISUAL外觀','OL總長','OW總寬','ST外疊合高','Warpage彎度','Where 位置','C/C 凹凸度','SR表面電阻','Weight重量','RESULT結果','Approval 審核者','TSMC EL 3點 最大值','一般客戶 EL','TSMC SKH 量測10點結果','TSMC SKH 量測4點結果','TSMC 20片 ST 量測4點 最大值','TSMC 20片 ST 量測4點 最小值','TTSMC 單片ST  量測4點 最大值','TSMC 單片ST  量測4點 最小值','ASE / SPIL SKH 量測 4點結果','AASEK SR表面電阻 (2pin)','備註 Material','Material Ratio（%）','SESS SR表面電阻 (Trek 152-1) 100V'];
+function colName(n){let s='';while(n>0){let m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+const ITEMS = HEADERS.slice(12,32).map((name,idx)=>({col:idx+12, code:colName(idx+13), name}));
+
+// ── 로그인 ──────────────────────────────────
+function login(){
+  if(document.getElementById('pwInput').value === ADMIN_PASSWORD){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainApp').style.display='block';
+    initFirebase(); loadToday();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+  }
+}
+function logout(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('pwInput').value='';
+  document.getElementById('loginErr').style.display='none';
+}
+document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+
+function initFirebase(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+  }catch(e){console.error(e);}
+}
+
+function loadToday(){
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('reportDate').value = today;
+  loadReport();
+}
+
+// ── 리포트 로드 ──────────────────────────────
+async function loadReport(){
+  const date = document.getElementById('reportDate').value;
+  if(!date || !db) return;
+
+  ['kpiSection','inspectorSection','detailSection'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('noDataMsg').style.display='none';
+  document.getElementById('loadingMsg').style.display='block';
+  document.getElementById('loadingMsg').textContent='⏳ 데이터를 불러오는 중...';
+
+  try{
+    const snap = await db.collection('ipqc_inspections')
+      .where('date','==',date).get();
+
+    document.getElementById('loadingMsg').style.display='none';
+
+    if(snap.empty){ document.getElementById('noDataMsg').style.display='block'; currentReportData=[]; return; }
+
+    const docs=[];
+    snap.forEach(d=>docs.push({id:d.id,...d.data()}));
+    // 클라이언트에서 제출 시간 순으로 정렬 (인덱스 불필요)
+    docs.sort((a,b)=>{
+      const ta=a.submittedAt?.seconds||0;
+      const tb=b.submittedAt?.seconds||0;
+      if(ta!==tb) return ta-tb;
+      return (a.common?.time||'').localeCompare(b.common?.time||'');
+    });
+    currentReportData=docs;
+
+    renderKPI(docs,date);
+    renderInspectorCards(docs);
+    renderDetailTable(docs);
+
+  }catch(err){
+    document.getElementById('loadingMsg').textContent='❌ 로드 실패: '+err.message;
+    console.error(err);
+  }
+}
+
+// ── KPI ──────────────────────────────────────
+function renderKPI(docs,date){
+  const insp=new Set(docs.map(d=>d.inspector));
+  let totalMach=0, pass=0, fail=0;
+  docs.forEach(d=>{
+    if(d.machineInfo && d.machineInfo.length){
+      totalMach+=d.machineInfo.length;
+      d.machineInfo.forEach(mi=>{
+        const r=(mi.result||'').toUpperCase();
+        if(r==='PASS') pass++;
+        if(r==='FAIL'||r==='HOLD') fail++;
+      });
+    } else {
+      totalMach+=(d.machineCount||0);
+      const r=(d.common?.result||'').toUpperCase();
+      if(r==='PASS') pass++;
+      if(r==='FAIL'||r==='HOLD') fail++;
+    }
+  });
+  document.getElementById('kpiDateTitle').textContent=`📅 ${date} 일일 리포트`;
+  document.getElementById('kpiTotal').textContent=docs.length;
+  document.getElementById('kpiInspectors').textContent=insp.size;
+  document.getElementById('kpiMachines').textContent=totalMach;
+  document.getElementById('kpiPass').textContent=pass;
+  document.getElementById('kpiFail').textContent=fail;
+  document.getElementById('kpiSection').style.display='block';
+}
+
+// ── 검사원 카드 ──────────────────────────────
+function renderInspectorCards(docs){
+  const byInsp={};
+  docs.forEach(d=>{ const k=d.inspector||'Unknown'; if(!byInsp[k])byInsp[k]=[]; byInsp[k].push(d); });
+
+  const container=document.getElementById('inspectorCards');
+  container.innerHTML='';
+
+  Object.entries(byInsp).forEach(([name,subs])=>{
+    const latest=subs[subs.length-1];
+    const c=latest.common||{};
+
+    // 측정 완료율
+    let totalCells=0,doneCells=0;
+    subs.forEach(sub=>{
+      totalCells+=ITEMS.length*(sub.machineCount||0)*(sub.roundCount||0);
+      Object.values(sub.values||{}).forEach(v=>{if(v)doneCells++;});
+    });
+    const pct=totalCells>0?Math.round(doneCells/totalCells*100):0;
+
+    // 설비별 테이블 HTML 생성
+    const TH='<th style="padding:4px 6px;border:1px solid var(--line);background:#f1f5f9">';
+    const thRow=`<thead><tr>${TH}설비</th>${TH}Description</th>${TH}VISUAL</th>${TH}RESULT</th></tr></thead>`;
+    let machTableHtml='';
+    subs.forEach((sub,si)=>{
+      if(subs.length>1){
+        machTableHtml+=`<div style="font-size:10px;color:var(--muted);margin:6px 0 2px">제출 ${si+1} · ${escHtml(sub.common?.time||'')}</div>`;
+      }
+      machTableHtml+=`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px">${thRow}<tbody>`;
+      if(sub.machineInfo && sub.machineInfo.length){
+        sub.machineInfo.forEach((mi,m)=>{
+          const vis=(mi.visual||'').toUpperCase();
+          const res=(mi.result||'').toUpperCase();
+          const rb=res==='PASS'?'pass':res==='FAIL'?'fail':res==='HOLD'?'hold':'ok2';
+          const vb=vis==='OK'?'pass':vis==='NG'?'fail':'ok2';
+          machTableHtml+=`<tr>
+            <td style="padding:3px 6px;border:1px solid var(--line);font-weight:700">⚙️ ${escHtml(mi.name||('M/C '+(m+1)))}</td>
+            <td style="padding:3px 6px;border:1px solid var(--line)">${escHtml(mi.desc||'-')}</td>
+            <td style="padding:3px 6px;border:1px solid var(--line);text-align:center"><span class="badge ${vb}">${escHtml(mi.visual||'-')}</span></td>
+            <td style="padding:3px 6px;border:1px solid var(--line);text-align:center"><span class="badge ${rb}">${escHtml(mi.result||'-')}</span></td>
+          </tr>`;
+        });
+      } else {
+        const vis=(sub.common?.visual||'').toUpperCase();
+        const res=(sub.common?.result||'').toUpperCase();
+        const rb=res==='PASS'?'pass':res==='FAIL'?'fail':res==='HOLD'?'hold':'ok2';
+        const vb=vis==='OK'?'pass':vis==='NG'?'fail':'ok2';
+        for(let m=0;m<(sub.machineCount||0);m++){
+          const mname=(sub.machines&&sub.machines[m])||('M/C '+(m+1));
+          machTableHtml+=`<tr>
+            <td style="padding:3px 6px;border:1px solid var(--line);font-weight:700">⚙️ ${escHtml(mname)}</td>
+            <td style="padding:3px 6px;border:1px solid var(--line)">${escHtml(sub.common?.desc||'-')}</td>
+            <td style="padding:3px 6px;border:1px solid var(--line);text-align:center"><span class="badge ${vb}">${escHtml(sub.common?.visual||'-')}</span></td>
+            <td style="padding:3px 6px;border:1px solid var(--line);text-align:center"><span class="badge ${rb}">${escHtml(sub.common?.result||'-')}</span></td>
+          </tr>`;
+        }
+      }
+      machTableHtml+='</tbody></table>';
+    });
+
+    // 전체 결과 배지 (한 건이라도 FAIL이면 FAIL)
+    let overallResult='N/A', overallBadge='ok2';
+    if(latest.machineInfo && latest.machineInfo.length){
+      const hasFail=latest.machineInfo.some(mi=>(mi.result||'').toUpperCase()==='FAIL');
+      const hasHold=latest.machineInfo.some(mi=>(mi.result||'').toUpperCase()==='HOLD');
+      const hasPass=latest.machineInfo.some(mi=>(mi.result||'').toUpperCase()==='PASS');
+      if(hasFail){overallResult='FAIL';overallBadge='fail';}
+      else if(hasHold){overallResult='HOLD';overallBadge='hold';}
+      else if(hasPass){overallResult='PASS';overallBadge='pass';}
+    } else {
+      const res=(c.result||'').toUpperCase();
+      overallResult=res||'N/A';
+      overallBadge=res==='PASS'?'pass':res==='FAIL'?'fail':res==='HOLD'?'hold':'ok2';
+    }
+
+    const card=document.createElement('div');
+    card.className='insp-card';
+    card.innerHTML=`
+      <div class="insp-header">
+        <div>
+          <div class="insp-name">👷 ${escHtml(name)}</div>
+          <div class="insp-meta">SHIFT: ${escHtml(c.shift||'-')} · 제출 ${subs.length}건 · ${escHtml(c.time||'')}</div>
+        </div>
+        <span class="badge ${overallBadge}">${overallResult}</span>
+      </div>
+      ${machTableHtml}
+      <div style="margin:8px 0">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+          <span>측정 완료율</span><span><b>${doneCells}</b>/${totalCells} (${pct}%)</span>
+        </div>
+        <div style="height:7px;background:#e5e7eb;border-radius:99px;overflow:hidden">
+          <div style="height:100%;background:var(--ok);width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;gap:6px">
+        ${subs.map(sub=>`
+          <button class="btn sm primary" onclick="openEdit('${sub.id}')">✏️ ${escHtml(sub.common?.time||'')} 수정</button>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  document.getElementById('inspectorSection').style.display='block';
+}
+
+// ── 전체 상세 테이블 (설비 기준 그룹) ──────────
+function renderDetailTable(docs){
+  const NCOLS=10;
+  let html='<thead><tr>';
+  html+='<th>설비명</th><th>Description</th><th>SAP PN</th><th>Customer</th><th>MOLD</th><th>LTC No.</th><th>VISUAL</th><th>RESULT</th><th>Approval</th><th>비고</th>';
+  html+='</tr></thead><tbody>';
+
+  docs.forEach(doc=>{
+    const c=doc.common||{};
+    // ── 제출 그룹 헤더 행 ──
+    html+=`<tr style="background:#dbeafe">`;
+    html+=`<td colspan="${NCOLS}" style="padding:8px 12px;font-weight:800;color:#1e3a8a;border-left:4px solid #2563eb;text-align:left">`;
+    html+=`📅 ${escHtml(c.date||doc.date||'')} &nbsp;`;
+    html+=`🕐 ${escHtml(c.time||'')} &nbsp;`;
+    html+=`👷 ${escHtml(doc.inspector||'')} &nbsp;`;
+    html+=`SHIFT: ${escHtml(c.shift||'')}`;
+    html+=`&nbsp;&nbsp;<button class="btn sm primary" onclick="openEdit('${doc.id}')">✏️ 수정</button>`;
+    html+='</td></tr>';
+
+    // ── 설비별 상세 행 ──
+    if(doc.machineInfo && doc.machineInfo.length){
+      doc.machineInfo.forEach((mi,m)=>{
+        const vis=(mi.visual||'').toUpperCase();
+        const res=(mi.result||'').toUpperCase();
+        const rowBg=res==='FAIL'?'background:#fff5f5':res==='HOLD'?'background:#fffbeb':'';
+        html+=`<tr style="${rowBg}">`;
+        html+=`<td class="name-col" style="padding-left:22px"><b>⚙️ ${escHtml(mi.name||('M/C '+(m+1)))}</b></td>`;
+        html+=`<td>${escHtml(mi.desc||'')}</td>`;
+        html+=`<td>${escHtml(mi.sap||'')}</td>`;
+        html+=`<td>${escHtml(mi.customer||'')}</td>`;
+        html+=`<td>${escHtml(mi.mold||'')}</td>`;
+        html+=`<td>${escHtml(mi.ltc||'')}</td>`;
+        html+=`<td><span class="badge ${vis==='OK'?'pass':vis==='NG'?'fail':'ok2'}">${escHtml(mi.visual||'-')}</span></td>`;
+        html+=`<td><span class="badge ${res==='PASS'?'pass':res==='FAIL'?'fail':res==='HOLD'?'hold':'ok2'}">${escHtml(mi.result||'-')}</span></td>`;
+        html+=`<td>${escHtml(mi.approval||'')}</td>`;
+        html+=`<td>${escHtml(mi.material||'')}</td>`;
+        html+='</tr>';
+      });
+    } else {
+      // 구 포맷 호환: machineInfo 없으면 common 데이터로 설비수만큼 표시
+      const vis=(c.visual||'').toUpperCase();
+      const res=(c.result||'').toUpperCase();
+      const rowBg=res==='FAIL'?'background:#fff5f5':res==='HOLD'?'background:#fffbeb':'';
+      for(let m=0;m<(doc.machineCount||1);m++){
+        const mname=(doc.machines&&doc.machines[m])||('M/C '+(m+1));
+        html+=`<tr style="${rowBg}">`;
+        html+=`<td class="name-col" style="padding-left:22px"><b>⚙️ ${escHtml(mname)}</b></td>`;
+        html+=`<td>${escHtml(c.desc||'')}</td>`;
+        html+=`<td>${escHtml(c.sap||'')}</td>`;
+        html+=`<td>${escHtml(c.customer||'')}</td>`;
+        html+=`<td>${escHtml(c.mold||'')}</td>`;
+        html+=`<td>${escHtml(c.ltc||'')}</td>`;
+        html+=`<td><span class="badge ${vis==='OK'?'pass':vis==='NG'?'fail':'ok2'}">${escHtml(c.visual||'-')}</span></td>`;
+        html+=`<td><span class="badge ${res==='PASS'?'pass':res==='FAIL'?'fail':res==='HOLD'?'hold':'ok2'}">${escHtml(c.result||'-')}</span></td>`;
+        html+=`<td>${escHtml(c.approval||'')}</td>`;
+        html+=`<td>${escHtml(c.material||'')}</td>`;
+        html+='</tr>';
+      }
+    }
+  });
+  html+='</tbody>';
+  document.getElementById('detailTable').innerHTML=html;
+  document.getElementById('detailSection').style.display='block';
+}
+
+// ── 편집 모달 열기 ────────────────────────────
+function openEdit(docId){
+  const doc = currentReportData.find(d=>d.id===docId);
+  if(!doc){ alert('데이터를 찾을 수 없습니다.'); return; }
+
+  editingDocId = docId;
+  const c = doc.common||{};
+
+  // 제목
+  document.getElementById('modalTitle').textContent = `✏️ 수정: ${doc.inspector||''} (${c.date||doc.date||''} ${c.time||''})`;
+
+  // 기본 정보 채우기
+  const fields = ['date','time','shift','inspector','desc','sap','customer','mold','datecode','ltc','visual','result','approval','material','ratio','sess'];
+  fields.forEach(f=>{
+    const el=document.getElementById('e_'+f);
+    if(!el) return;
+    if(f==='inspector') el.value=doc.inspector||'';
+    else if(f==='date') el.value=c.date||doc.date||'';
+    else el.value=c[f]||'';
+  });
+
+  // 설비명 그리드
+  const mg = document.getElementById('e_machines_grid');
+  mg.innerHTML='';
+  const mCount = doc.machineCount||0;
+  for(let i=0;i<mCount;i++){
+    const div=document.createElement('div');
+    div.className='edit-field';
+    div.innerHTML=`<label>설비 ${i+1}</label><input type="text" id="em_${i}" value="${escHtml((doc.machines&&doc.machines[i])||'')}">`;
+    mg.appendChild(div);
+  }
+
+  // 측정값 렌더링
+  renderEditValues(doc);
+
+  // 저장 상태 초기화
+  document.getElementById('saveStatus').style.display='none';
+  document.getElementById('saveStatus').className='';
+
+  // 첫 탭 활성화
+  switchTab('tab-basic', document.querySelector('.mtab'));
+
+  document.getElementById('editModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function renderEditValues(doc){
+  const container = document.getElementById('e_values_container');
+  container.innerHTML='';
+  const mCount=doc.machineCount||0;
+  const rCount=doc.roundCount||0;
+
+  // 설비명 가져오기 (신포맷 machineInfo[] 우선, 구포맷 machines[] 폴백)
+  const getMachineName = m => {
+    if(doc.machineInfo && doc.machineInfo[m] && doc.machineInfo[m].name) return doc.machineInfo[m].name;
+    return (doc.machines && doc.machines[m]) || ('M/C '+(m+1));
+  };
+
+  // ── 설비 기준으로 그룹 ──
+  for(let m=0; m<mCount; m++){
+    const machineName = getMachineName(m);
+
+    // 이 설비에 값이 하나라도 있는지
+    let hasAny=false;
+    ITEMS.forEach((_,i)=>{ for(let r=0;r<rCount;r++) if((doc.values||{})[`${i}|${m}|${r}`]) hasAny=true; });
+
+    const header=document.createElement('div');
+    header.className='mval-item-header';
+    header.style.cssText='background:#dbeafe;color:#1e3a8a;border-left:4px solid #2563eb;border-radius:6px;padding:7px 10px;font-size:13px;font-weight:800;margin:12px 0 4px';
+    header.textContent=`⚙️ ${machineName}  ${hasAny?'✅':''}`;
+    container.appendChild(header);
+
+    // 테이블: 행=항목, 열=Round
+    let thtml=`<table class="mval-table"><thead><tr>`;
+    thtml+=`<th style="text-align:left;min-width:160px">항목</th>`;
+    for(let r=0;r<rCount;r++) thtml+=`<th>Round ${r+1}</th>`;
+    thtml+='</tr></thead><tbody>';
+
+    ITEMS.forEach((item,i)=>{
+      let hasMachVal=false;
+      for(let r=0;r<rCount;r++) if((doc.values||{})[`${i}|${m}|${r}`]) hasMachVal=true;
+
+      thtml+=`<tr>`;
+      thtml+=`<td style="font-weight:700;background:#f8fafc;text-align:left;padding:5px 8px;font-size:11px;white-space:nowrap">${item.code} ${item.name.slice(0,22)}${hasMachVal?' ✅':''}</td>`;
+      for(let r=0;r<rCount;r++){
+        const k=`${i}|${m}|${r}`;
+        const v=(doc.values||{})[k]||'';
+        thtml+=`<td><input class="mval-input" type="text" inputmode="text" id="ev_${i}_${m}_${r}" value="${escHtml(v)}"></td>`;
+      }
+      thtml+='</tr>';
+    });
+    thtml+='</tbody></table>';
+
+    const wrapper=document.createElement('div');
+    wrapper.style.marginBottom='8px';
+    wrapper.innerHTML=thtml;
+    container.appendChild(wrapper);
+  }
+}
+
+function closeEdit(){
+  document.getElementById('editModal').classList.remove('open');
+  document.body.style.overflow='';
+  editingDocId=null;
+}
+
+function switchTab(tabId, btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+// ── 저장 (Firestore 업데이트) ─────────────────
+async function saveEdit(){
+  if(!editingDocId || !db) return;
+
+  const doc = currentReportData.find(d=>d.id===editingDocId);
+  if(!doc) return;
+
+  const status=document.getElementById('saveStatus');
+  status.className='loading'; status.textContent='💾 서버에 저장 중...'; status.style.display='block';
+
+  try{
+    // 기본정보 수집
+    const newCommon={
+      date: document.getElementById('e_date').value,
+      time: document.getElementById('e_time').value,
+      shift: document.getElementById('e_shift').value,
+      desc: document.getElementById('e_desc').value,
+      sap: document.getElementById('e_sap').value,
+      customer: document.getElementById('e_customer').value,
+      mold: document.getElementById('e_mold').value,
+      datecode: document.getElementById('e_datecode').value,
+      ltc: document.getElementById('e_ltc').value,
+      visual: document.getElementById('e_visual').value,
+      result: document.getElementById('e_result').value,
+      approval: document.getElementById('e_approval').value,
+      material: document.getElementById('e_material').value,
+      ratio: document.getElementById('e_ratio').value,
+      sess: document.getElementById('e_sess').value,
+    };
+    const newInspector = document.getElementById('e_inspector').value.trim();
+    const newDate = newCommon.date;
+
+    // 설비명 수집
+    const mCount=doc.machineCount||0;
+    const newMachines=[];
+    for(let i=0;i<mCount;i++){
+      const el=document.getElementById('em_'+i);
+      newMachines.push(el?el.value:'');
+    }
+
+    // 측정값 수집
+    const rCount=doc.roundCount||0;
+    const newValues={};
+    ITEMS.forEach((item,i)=>{
+      for(let m=0;m<mCount;m++){
+        for(let r=0;r<rCount;r++){
+          const el=document.getElementById(`ev_${i}_${m}_${r}`);
+          if(el&&el.value.trim()) newValues[`${i}|${m}|${r}`]=el.value.trim();
+        }
+      }
+    });
+
+    // Firestore 업데이트
+    await db.collection('ipqc_inspections').doc(editingDocId).update({
+      common: newCommon,
+      inspector: newInspector,
+      date: newDate,
+      machines: newMachines,
+      values: newValues,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: 'admin'
+    });
+
+    // 로컬 데이터도 업데이트
+    const idx=currentReportData.findIndex(d=>d.id===editingDocId);
+    if(idx>=0){
+      currentReportData[idx]={...currentReportData[idx], common:newCommon, inspector:newInspector, date:newDate, machines:newMachines, values:newValues};
+    }
+
+    status.className='ok'; status.textContent='✅ 서버에 성공적으로 저장되었습니다!';
+
+    // 카드/테이블 새로 그리기
+    renderKPI(currentReportData, document.getElementById('reportDate').value);
+    renderInspectorCards(currentReportData);
+    renderDetailTable(currentReportData);
+
+    setTimeout(()=>closeEdit(), 1500);
+
+  }catch(err){
+    status.className='err'; status.textContent='❌ 저장 실패: '+err.message;
+    console.error(err);
+  }
+}
+
+// ── 삭제 ─────────────────────────────────────
+async function deleteDoc(){
+  if(!editingDocId || !db) return;
+  const doc=currentReportData.find(d=>d.id===editingDocId);
+  if(!confirm(`[${doc?.inspector||''}] 의 데이터를 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+  const status=document.getElementById('saveStatus');
+  status.className='loading'; status.textContent='🗑️ 삭제 중...'; status.style.display='block';
+
+  try{
+    await db.collection('ipqc_inspections').doc(editingDocId).delete();
+    currentReportData=currentReportData.filter(d=>d.id!==editingDocId);
+    closeEdit();
+    if(currentReportData.length){
+      renderKPI(currentReportData, document.getElementById('reportDate').value);
+      renderInspectorCards(currentReportData);
+      renderDetailTable(currentReportData);
+    } else {
+      ['kpiSection','inspectorSection','detailSection'].forEach(id=>document.getElementById(id).style.display='none');
+      document.getElementById('noDataMsg').style.display='block';
+    }
+  }catch(err){
+    status.className='err'; status.textContent='❌ 삭제 실패: '+err.message;
+  }
+}
+
+// ── Excel 내보내기 ────────────────────────────
+function exportExcel(){
+  const date=document.getElementById('reportDate').value||'report';
+  if(!currentReportData.length){ alert('내보낼 데이터가 없습니다.'); return; }
+
+  const wb=XLSX.utils.book_new();
+
+  // 시트1: 요약
+  const inspectors=[...new Set(currentReportData.map(d=>d.inspector))];
+  const s1=[
+    ['IPQC 일일 리포트','','','',''],
+    ['날짜',date,'','생성 시각',new Date().toLocaleString()],[],
+    ['구분','값'],
+    ['총 제출 건수',currentReportData.length],
+    ['검사원 수',inspectors.length],
+    ['총 설비 수',currentReportData.reduce((s,d)=>s+(d.machineCount||0),0)],
+    ['PASS 건수',currentReportData.filter(d=>(d.common?.result||'').toUpperCase()==='PASS').length],
+    ['FAIL 건수',currentReportData.filter(d=>(d.common?.result||'').toUpperCase()==='FAIL').length],
+    ['HOLD 건수',currentReportData.filter(d=>(d.common?.result||'').toUpperCase()==='HOLD').length],[],
+    ['검사원 목록',...inspectors]
+  ];
+  const ws1=XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols']=[{wch:20},{wch:20},{wch:15},{wch:20},{wch:25}];
+  XLSX.utils.book_append_sheet(wb,ws1,'요약');
+
+  // 시트2: 원본 데이터
+  const dh=['DATE','TIME','M/C','SHIFT','Inspector','Description','SAP PN','Customer','MOLD','Datecode','LTC No.','VISUAL','RESULT','Approval','Material','Ratio(%)','SESS','Round',...ITEMS.map(it=>it.code+' '+it.name.slice(0,15))];
+  const dr=[dh];
+  currentReportData.forEach(doc=>{
+    const c=doc.common||{};
+    for(let m=0;m<(doc.machineCount||0);m++){
+      for(let r=0;r<(doc.roundCount||0);r++){
+        const row=[c.date||doc.date||'',c.time||'',(doc.machines&&doc.machines[m])||('M/C '+(m+1)),c.shift||'',doc.inspector||'',c.desc||'',c.sap||'',c.customer||'',c.mold||'',c.datecode||'',c.ltc||'',c.visual||'',c.result||'',c.approval||'',c.material||'',c.ratio||'',c.sess||'','R'+(r+1)];
+        ITEMS.forEach((it,i)=>row.push((doc.values||{})[`${i}|${m}|${r}`]||''));
+        dr.push(row);
+      }
+    }
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(dr);
+  ws2['!cols']=dh.map((_,i)=>({wch:i<18?14:18}));
+  XLSX.utils.book_append_sheet(wb,ws2,'원본 데이터');
+
+  // 시트3: 검사원별 요약
+  const bi={};
+  currentReportData.forEach(d=>{ const k=d.inspector||'Unknown'; if(!bi[k])bi[k]=[]; bi[k].push(d); });
+  const sh=['검사원','SHIFT','설비수','검사횟수','제출건수','VISUAL','RESULT','Description','Customer','비고'];
+  const sr=[sh];
+  Object.entries(bi).forEach(([name,subs])=>{
+    const l=subs[subs.length-1]; const c=l.common||{};
+    sr.push([name,c.shift||'',l.machineCount||0,l.roundCount||0,subs.length,c.visual||'',c.result||'',c.desc||'',c.customer||'',c.material||'']);
+  });
+  const ws3=XLSX.utils.aoa_to_sheet(sr);
+  ws3['!cols']=sh.map(()=>({wch:16}));
+  XLSX.utils.book_append_sheet(wb,ws3,'검사원별 요약');
+
+  XLSX.writeFile(wb,`IPQC_일일리포트_${date}.xlsx`);
+}
+
+function escHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('editModal').addEventListener('click',e=>{ if(e.target===document.getElementById('editModal')) closeEdit(); });
+</script>
+</body>
+</html>
