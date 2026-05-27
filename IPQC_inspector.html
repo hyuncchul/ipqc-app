@@ -280,7 +280,8 @@
     <div class="plan-upload-bar">
       <span class="plan-file-label" data-i18n="planFileLabel">📂 생산계획 Excel</span>
       <span id="planFileName" class="plan-file-name">파일을 선택하세요 (production_plan.xlsx)</span>
-      <button class="btn primary sm" onclick="document.getElementById('planFileInput').click()" data-i18n="planFileBtn">📂 파일 선택</button>
+      <button class="btn warn sm" id="manualSelectBtn" onclick="manualSelect()" data-i18n="manualSelectBtn">🔧 수동 선택</button>
+      <button class="btn primary sm" id="excelSelectBtn" onclick="document.getElementById('planFileInput').click()" data-i18n="planFileBtn">📂 파일 선택</button>
       <button class="btn sm" onclick="clearPlan()" id="planClearBtn" style="display:none" data-i18n="planClearKey">✕ 초기화</button>
       <input id="planFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadProductionPlan(this)">
     </div>
@@ -446,6 +447,11 @@ function loadProductionPlan(input){
   }
   document.getElementById('planFileName').textContent = file.name;
   document.getElementById('planClearBtn').style.display = '';
+  // 수동 선택 / 파일 선택 버튼 숨기기
+  const mb = document.getElementById('manualSelectBtn');
+  const eb = document.getElementById('excelSelectBtn');
+  if(mb) mb.style.display='none';
+  if(eb) eb.style.display='none';
 
   const reader = new FileReader();
   reader.onload = function(e){
@@ -564,6 +570,56 @@ function clearPlan(){
   document.getElementById('planClearBtn').style.display='none';
   document.getElementById('planSelector').classList.remove('show');
   document.getElementById('machGrid').innerHTML='';
+  // 수동 선택 / 파일 선택 버튼 복원
+  const mb = document.getElementById('manualSelectBtn');
+  const eb = document.getElementById('excelSelectBtn');
+  if(mb) mb.style.display='';
+  if(eb) eb.style.display='';
+}
+
+// ── 수동 설비 선택 ──
+const MANUAL_MACHINES = [
+  // Group A
+  {machine:'A07',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A08',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A09',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A10',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A11',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A12',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  // Group B
+  {machine:'B13',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B14',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B15',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B16',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B17',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B18',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B19',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B20',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B21',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B22',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B23',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B24',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  // Group C
+  {machine:'C25',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C26',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C27',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C28',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C29',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C30',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+];
+
+function manualSelect(){
+  planMachines = MANUAL_MACHINES.map(m=>({...m}));
+  selectedPlanIdx = new Set();
+  renderMachGrid();
+  document.getElementById('planSelector').classList.add('show');
+  document.getElementById('planFileName').textContent = tr('manualModeActive');
+  document.getElementById('planClearBtn').style.display = '';
+  // 수동선택 / 파일선택 버튼 숨기기
+  const mb = document.getElementById('manualSelectBtn');
+  const eb = document.getElementById('excelSelectBtn');
+  if(mb) mb.style.display='none';
+  if(eb) eb.style.display='none';
 }
 
 function applySetup(){
@@ -728,6 +784,7 @@ const I18N = {
     machTabEmpty:'설비를 선택하면 여기에 탭이 생성됩니다',
     planFileLabel:'📂 생산계획 Excel', planFileHint:'파일을 선택하세요 (production_plan.xlsx)',
     planFileBtn:'📂 파일 선택', planClearKey:'✕ 초기화',
+    manualSelectBtn:'🔧 수동 선택', manualModeActive:'수동 선택 모드',
     planSelectorTitle:'🏭 검사할 설비를 클릭하여 선택하세요',
     planSelectAll:'전체 선택', planDeselectAll:'전체 해제',
     planHint:'선택 후 버튼을 누르면 탭이 생성됩니다',
@@ -791,6 +848,7 @@ const I18N = {
     machTabEmpty:'Select machines above to create tabs here',
     planFileLabel:'📂 Production Plan Excel', planFileHint:'Select a file (production_plan.xlsx)',
     planFileBtn:'📂 Select File', planClearKey:'✕ Clear',
+    manualSelectBtn:'🔧 Manual Select', manualModeActive:'Manual Selection Mode',
     planSelectorTitle:'🏭 Click machines to select for inspection',
     planSelectAll:'Select All', planDeselectAll:'Deselect All',
     planHint:'After selecting, click Apply to create tabs',
@@ -854,6 +912,7 @@ const I18N = {
     machTabEmpty:'選擇設備後將在此顯示標籤',
     planFileLabel:'📂 生產計劃 Excel', planFileHint:'請選擇檔案 (production_plan.xlsx)',
     planFileBtn:'📂 選擇檔案', planClearKey:'✕ 清除',
+    manualSelectBtn:'🔧 手動選擇', manualModeActive:'手動選擇模式',
     planSelectorTitle:'🏭 點擊選擇要檢驗的設備',
     planSelectAll:'全選', planDeselectAll:'全不選',
     planHint:'選擇後按套用按鈕建立標籤',
@@ -917,6 +976,7 @@ const I18N = {
     machTabEmpty:'Chọn máy ở trên để tạo tab tại đây',
     planFileLabel:'📂 Kế hoạch sản xuất Excel', planFileHint:'Chọn tệp (production_plan.xlsx)',
     planFileBtn:'📂 Chọn tệp', planClearKey:'✕ Xóa',
+    manualSelectBtn:'🔧 Chọn thủ công', manualModeActive:'Chế độ chọn thủ công',
     planSelectorTitle:'🏭 Nhấp để chọn máy cần kiểm tra',
     planSelectAll:'Chọn tất cả', planDeselectAll:'Bỏ chọn tất cả',
     planHint:'Sau khi chọn, nhấn Áp dụng để tạo tab',
@@ -980,6 +1040,7 @@ const I18N = {
     machTabEmpty:'Pilih mesin di atas untuk membuat tab di sini',
     planFileLabel:'📂 Rencana Produksi Excel', planFileHint:'Pilih file (production_plan.xlsx)',
     planFileBtn:'📂 Pilih File', planClearKey:'✕ Reset',
+    manualSelectBtn:'🔧 Pilih Manual', manualModeActive:'Mode Pemilihan Manual',
     planSelectorTitle:'🏭 Klik untuk memilih mesin yang akan diperiksa',
     planSelectAll:'Pilih Semua', planDeselectAll:'Batal Pilih Semua',
     planHint:'Setelah memilih, klik Terapkan untuk membuat tab',
