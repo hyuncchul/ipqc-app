@@ -4,8 +4,6 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
   <title>IPQC 검사 입력</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
     onerror="document.write('<scr'+'ipt src=\'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js\'><\/scr'+'ipt>')"></script>
   <style>
@@ -137,9 +135,12 @@
     .hist-badge.no-id{background:#fef9c3;color:#713f12}
 
     /* ── 모달 ── */
-    #histModal{position:fixed;inset:0;background:#0007;z-index:100;display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
-    #histModal.open{display:flex}
+    #histModal,
+    #measureSummaryModal{position:fixed;inset:0;background:#0007;z-index:100;display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+    #histModal.open,
+    #measureSummaryModal.open{display:flex}
     .hmodal-box{background:white;border-radius:18px;width:100%;max-width:860px;margin:auto;box-shadow:0 20px 60px #0004}
+    .measure-summary-box{max-width:1180px}
     .hmodal-header{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:white;padding:14px 18px;border-radius:18px 18px 0 0;display:flex;justify-content:space-between;align-items:center}
     .hmodal-header h2{margin:0;font-size:16px;font-weight:800}
     .hmodal-close{background:none;border:0;color:white;font-size:24px;cursor:pointer;line-height:1}
@@ -165,6 +166,14 @@
     .view-field .vl{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:2px}
     .view-field .vv{font-size:13px;font-weight:700}
     .section-div{background:#e0f2fe;color:#0c4a6e;font-weight:800;font-size:12px;padding:6px 10px;border-radius:6px;margin:10px 0 6px}
+    .measure-summary-meta{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .measure-summary-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:white;max-height:70vh}
+    .measure-summary-table{min-width:760px;font-size:12px}
+    .measure-summary-table th{top:0;z-index:7}
+    .measure-summary-table th:first-child{z-index:8}
+    .measure-summary-table td:first-child{min-width:250px;color:#1e40af}
+    .measure-summary-table td.has-value{background:#ecfdf3;font-weight:700}
+    .measure-summary-table td.empty-value{color:#9ca3af;background:#f8fafc}
 
     .footer-space{height:80px}
     @media(max-width:900px){
@@ -225,6 +234,25 @@
         <button class="btn bad sm" onclick="deleteHistItem()" data-i18n="hDeleteBtn">🗑️ 삭제</button>
         <button class="btn sm" onclick="closeHistModal()" data-i18n="hCloseBtn">닫기</button>
         <button class="btn primary sm" id="hSaveBtn" onclick="saveHistEdit()" style="display:none" data-i18n="hSaveBtn">💾 서버 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 항목별 입력값 전체보기 모달 ══ -->
+<div id="measureSummaryModal" onclick="if(event.target.id==='measureSummaryModal') closeMeasureSummary()">
+  <div class="hmodal-box measure-summary-box">
+    <div class="hmodal-header">
+      <h2 data-i18n="measureSummaryTitle">📊 항목별 입력값 전체보기</h2>
+      <button class="hmodal-close" onclick="closeMeasureSummary()">✕</button>
+    </div>
+    <div class="hmodal-body">
+      <div id="measureSummaryMeta" class="measure-summary-meta"></div>
+      <div class="measure-summary-wrap">
+        <table id="measureSummaryTable" class="measure-summary-table"></table>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:flex-end">
+        <button class="btn sm" onclick="closeMeasureSummary()" data-i18n="measureSummaryClose">닫기</button>
       </div>
     </div>
   </div>
@@ -336,6 +364,7 @@
         <div class="hint" data-i18n="s3hint">항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다</div>
       </div>
       <div class="row">
+        <button class="btn ok sm" onclick="openMeasureSummary()" data-i18n="measureSummaryBtn">전체 입력값 보기</button>
         <button class="btn sm" onclick="prevItem()" data-i18n="prevItem">◀ 이전 항목</button>
         <button class="btn primary sm" onclick="nextItem()" data-i18n="nextItem">다음 항목 ▶</button>
       </div>
@@ -362,7 +391,8 @@
     </div>
     <div id="cloudStatus"></div>
     <div class="row" style="margin-top:12px">
-      <button class="btn cloud" onclick="submitToServer()" data-i18n="submitBtn">☁️ 앱에 저장 (서버)</button>
+      <button class="btn cloud" onclick="submitToServer()" data-i18n="submitBtn">☁️ Google Sheet 저장</button>
+      <button class="btn primary" onclick="loadFromServer()" data-i18n="loadServerBtn">🔄 서버에서 불러오기</button>
       <button class="btn ok" onclick="exportWideCsv()" data-i18n="csvBtn">📥 CSV 로컬 저장</button>
       <button class="btn" onclick="exportJson()" data-i18n="exportJsonBtn">JSON 백업</button>
       <button class="btn" onclick="importJsonFile.click()" data-i18n="importJsonBtn">JSON 가져오기</button>
@@ -731,20 +761,9 @@ function exportPnList(){
   XLSX.writeFile(wb, 'PEAK_PN_List_Updated.xlsx');
 }
 
-// ══ Firebase 설정 ════════════════════════════════
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBiMY4D3lnM4SKzSA0OhB-JBmeFhZzSuPE",
-  authDomain: "ipqc-inspection.firebaseapp.com",
-  projectId: "ipqc-inspection",
-  storageBucket: "ipqc-inspection.firebasestorage.app",
-  messagingSenderId: "368910997117",
-  appId: "1:368910997117:web:8960ab041acf2d8d924314"
-};
-let db = null;
-function initFirebase(){
-  try{ firebase.initializeApp(FIREBASE_CONFIG); db = firebase.firestore(); }
-  catch(e){ console.error(e); }
-}
+// ══ Google Sheets Web App 설정 ═══════════════════
+// Google Apps Script 배포 후 Web App URL을 아래에 붙여넣으세요.
+const GOOGLE_SHEET_WEB_APP_URL = '';
 
 // ══ i18n ══════════════════════════════════════════
 const I18N = {
@@ -764,6 +783,9 @@ const I18N = {
     s2title:'2. 설비별 정보 및 측정값 입력', s2hint:'각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요',
     prevMach:'◀ 이전 설비', nextMach:'다음 설비 ▶',
     s3title:'3. 항목별 측정값 입력', s3hint:'항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다',
+    measureSummaryBtn:'전체 입력값 보기', measureSummaryTitle:'📊 항목별 입력값 전체보기',
+    measureSummaryClose:'닫기', measureSummaryEmpty:'표시할 설비가 없습니다.',
+    measureSummaryMeta:'항목별 입력값',
     prevItem:'◀ 이전 항목', nextItem:'다음 항목 ▶',
     machNameLabel:'⚙️ 설비명 M/C No.', machNamePH:'예: A01',
     progressLabel:'측정 완료율', infoTitle:'📋 설비 정보 (이 설비만 적용)',
@@ -775,7 +797,10 @@ const I18N = {
     mcHeader:'설비 / M/C',
     s4title:'4. 저장 / 내보내기',
     kpiMachLabel:'설비 수', kpiRoundsLabel:'검사 횟수', kpiTotalLabel:'총 입력칸', kpiDoneLabel:'완료',
-    submitBtn:'☁️ 앱에 저장 (서버)', csvBtn:'📥 Excel 저장 (.xlsx)',
+    submitBtn:'☁️ Google Sheet 저장', loadServerBtn:'🔄 서버에서 불러오기', csvBtn:'📥 Excel 저장 (.xlsx)',
+    sheetUrlMissing:'Google Apps Script Web App URL을 먼저 설정하세요.',
+    serverLoading:'🔄 서버에서 불러오는 중...', serverLoadOk:'✅ 서버 데이터를 불러왔습니다.',
+    serverLoadFail:'❌ 서버 불러오기 실패', serverNoData:'서버에 저장된 데이터가 없습니다.',
     exportJsonBtn:'JSON 백업', importJsonBtn:'JSON 가져오기', resetBtn:'전체 초기화',
     histTitle:'📋 이번 기기 제출 기록', histClearBtn:'🗑️ 전체 기록 삭제',
     histHint:'항목을 탭하면 내용 확인 및 수정할 수 있습니다.',
@@ -828,6 +853,9 @@ const I18N = {
     s2title:'2. Per-Machine Info & Measurements', s2hint:'Select a machine tab to enter info and measurements',
     prevMach:'◀ Prev Machine', nextMach:'Next Machine ▶',
     s3title:'3. Measurements by Item', s3hint:'Select an item to enter values for all machines at once',
+    measureSummaryBtn:'View All Values', measureSummaryTitle:'📊 All Measurement Values',
+    measureSummaryClose:'Close', measureSummaryEmpty:'No machines to display.',
+    measureSummaryMeta:'Measurement values by item',
     prevItem:'◀ Prev Item', nextItem:'Next Item ▶',
     machNameLabel:'⚙️ Machine No.', machNamePH:'e.g. A01',
     progressLabel:'Completion', infoTitle:'📋 Machine Info (this machine only)',
@@ -839,7 +867,10 @@ const I18N = {
     mcHeader:'Machine / M/C',
     s4title:'4. Save & Export',
     kpiMachLabel:'Machines', kpiRoundsLabel:'Rounds', kpiTotalLabel:'Total Cells', kpiDoneLabel:'Done',
-    submitBtn:'☁️ Save to Server', csvBtn:'📥 Save Excel (.xlsx)',
+    submitBtn:'☁️ Save to Google Sheet', loadServerBtn:'🔄 Load from Server', csvBtn:'📥 Save Excel (.xlsx)',
+    sheetUrlMissing:'Please set the Google Apps Script Web App URL first.',
+    serverLoading:'🔄 Loading from server...', serverLoadOk:'✅ Server data loaded.',
+    serverLoadFail:'❌ Server load failed', serverNoData:'No saved data on the server.',
     exportJsonBtn:'JSON Backup', importJsonBtn:'Import JSON', resetBtn:'Reset All',
     histTitle:'📋 Recent Submissions', histClearBtn:'🗑️ Clear All',
     histHint:'Tap an item to view or edit.',
@@ -892,6 +923,9 @@ const I18N = {
     s2title:'2. 各設備資訊及量測值輸入', s2hint:'選擇設備標籤輸入設備資訊及量測值',
     prevMach:'◀ 上一個', nextMach:'下一個 ▶',
     s3title:'3. 各項目量測值輸入', s3hint:'選擇項目可同時輸入所有設備的量測值',
+    measureSummaryBtn:'查看全部輸入值', measureSummaryTitle:'📊 各項目輸入值總覽',
+    measureSummaryClose:'關閉', measureSummaryEmpty:'沒有可顯示的設備。',
+    measureSummaryMeta:'各項目輸入值',
     prevItem:'◀ 上一項', nextItem:'下一項 ▶',
     machNameLabel:'⚙️ 設備名 M/C No.', machNamePH:'例：A01',
     progressLabel:'完成率', infoTitle:'📋 設備資訊（僅此設備）',
@@ -903,7 +937,10 @@ const I18N = {
     mcHeader:'設備 / M/C',
     s4title:'4. 儲存及匯出',
     kpiMachLabel:'設備數', kpiRoundsLabel:'檢驗次數', kpiTotalLabel:'總輸入格', kpiDoneLabel:'完成',
-    submitBtn:'☁️ 伺服器儲存', csvBtn:'📥 Excel儲存 (.xlsx)',
+    submitBtn:'☁️ 儲存到 Google Sheet', loadServerBtn:'🔄 從伺服器載入', csvBtn:'📥 Excel儲存 (.xlsx)',
+    sheetUrlMissing:'請先設定 Google Apps Script Web App URL。',
+    serverLoading:'🔄 正在從伺服器載入...', serverLoadOk:'✅ 已載入伺服器資料。',
+    serverLoadFail:'❌ 伺服器載入失敗', serverNoData:'伺服器沒有已儲存的資料。',
     exportJsonBtn:'JSON備份', importJsonBtn:'匯入JSON', resetBtn:'全部清除',
     histTitle:'📋 最近提交記錄', histClearBtn:'🗑️ 清除記錄',
     histHint:'點擊項目可查看及修改。',
@@ -956,6 +993,9 @@ const I18N = {
     s2title:'2. Thông tin & đo theo máy', s2hint:'Chọn tab máy để nhập thông tin và giá trị đo',
     prevMach:'◀ Máy trước', nextMach:'Máy sau ▶',
     s3title:'3. Giá trị đo theo hạng mục', s3hint:'Chọn hạng mục để nhập tất cả máy cùng lúc',
+    measureSummaryBtn:'Xem tất cả giá trị', measureSummaryTitle:'📊 Toàn bộ giá trị đo',
+    measureSummaryClose:'Đóng', measureSummaryEmpty:'Không có máy để hiển thị.',
+    measureSummaryMeta:'Giá trị đo theo hạng mục',
     prevItem:'◀ Trước', nextItem:'Sau ▶',
     machNameLabel:'⚙️ Tên máy M/C No.', machNamePH:'VD: A01',
     progressLabel:'Tiến độ', infoTitle:'📋 Thông tin máy (máy này)',
@@ -967,7 +1007,10 @@ const I18N = {
     mcHeader:'Máy / M/C',
     s4title:'4. Lưu & Xuất',
     kpiMachLabel:'Số máy', kpiRoundsLabel:'Số lần', kpiTotalLabel:'Tổng ô', kpiDoneLabel:'Xong',
-    submitBtn:'☁️ Lưu server', csvBtn:'📥 Lưu Excel (.xlsx)',
+    submitBtn:'☁️ Lưu vào Google Sheet', loadServerBtn:'🔄 Tải từ server', csvBtn:'📥 Lưu Excel (.xlsx)',
+    sheetUrlMissing:'Vui lòng thiết lập URL Web App của Google Apps Script trước.',
+    serverLoading:'🔄 Đang tải từ server...', serverLoadOk:'✅ Đã tải dữ liệu server.',
+    serverLoadFail:'❌ Tải server thất bại', serverNoData:'Không có dữ liệu đã lưu trên server.',
     exportJsonBtn:'Sao lưu JSON', importJsonBtn:'Nhập JSON', resetBtn:'Xóa tất cả',
     histTitle:'📋 Lịch sử nộp', histClearBtn:'🗑️ Xóa lịch sử',
     histHint:'Nhấn để xem hoặc chỉnh sửa.',
@@ -1020,6 +1063,9 @@ const I18N = {
     s2title:'2. Info & Pengukuran per Mesin', s2hint:'Pilih tab mesin untuk memasukkan info dan pengukuran',
     prevMach:'◀ Mesin Sebelumnya', nextMach:'Mesin Berikutnya ▶',
     s3title:'3. Nilai Ukur per Item', s3hint:'Pilih item untuk memasukkan semua mesin sekaligus',
+    measureSummaryBtn:'Lihat Semua Nilai', measureSummaryTitle:'📊 Semua Nilai Pengukuran',
+    measureSummaryClose:'Tutup', measureSummaryEmpty:'Tidak ada mesin untuk ditampilkan.',
+    measureSummaryMeta:'Nilai pengukuran per item',
     prevItem:'◀ Sebelumnya', nextItem:'Berikutnya ▶',
     machNameLabel:'⚙️ Nama Mesin M/C No.', machNamePH:'mis: A01',
     progressLabel:'Kemajuan', infoTitle:'📋 Info Mesin (mesin ini saja)',
@@ -1031,7 +1077,10 @@ const I18N = {
     mcHeader:'Mesin / M/C',
     s4title:'4. Simpan & Ekspor',
     kpiMachLabel:'Mesin', kpiRoundsLabel:'Putaran', kpiTotalLabel:'Total Sel', kpiDoneLabel:'Selesai',
-    submitBtn:'☁️ Simpan ke Server', csvBtn:'📥 Simpan Excel (.xlsx)',
+    submitBtn:'☁️ Simpan ke Google Sheet', loadServerBtn:'🔄 Muat dari Server', csvBtn:'📥 Simpan Excel (.xlsx)',
+    sheetUrlMissing:'Atur URL Web App Google Apps Script terlebih dahulu.',
+    serverLoading:'🔄 Memuat dari server...', serverLoadOk:'✅ Data server berhasil dimuat.',
+    serverLoadFail:'❌ Gagal memuat server', serverNoData:'Tidak ada data tersimpan di server.',
     exportJsonBtn:'Backup JSON', importJsonBtn:'Impor JSON', resetBtn:'Reset Semua',
     histTitle:'📋 Riwayat Pengiriman', histClearBtn:'🗑️ Hapus Semua',
     histHint:'Ketuk item untuk melihat atau mengedit.',
@@ -1110,7 +1159,8 @@ function rebuildCountOptions(){
 // ══ 측정 항목 ══════════════════════════════════════
 const HEADERS=['DATE 日期','TIME 時間','M/C 機台','SHIFT 班別','QC inspector 檢驗員','Description 料號','SAP PN','Customer','MOLD 模號','Datecode','LTC No. 批號','VISUAL外觀','OL總長','OW總寬','ST外疊合高','Warpage彎度','Where 位置','C/C 凹凸度','SR表面電阻','Weight重量','RESULT結果','Approval 審核者','TSMC EL 3點 最大值','一般客戶 EL','TSMC SKH 量測10點結果','TSMC SKH 量測4點結果','TSMC 20片 ST 量測4點 最大值','TSMC 20片 ST 量測4點 最小值','TTSMC 單片ST  量測4點 最大值','TSMC 單片ST  量測4點 最小值','ASE / SPIL SKH 量測 4點結果','AASEK SR表面電阻 (2pin)','備註 Material','Material Ratio（%）','SESS SR表面電阻 (Trek 152-1) 100V'];
 function colName(n){let s='';while(n>0){let m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
-const ITEMS = HEADERS.slice(12,32).map((name,idx)=>({col:idx+12, code:colName(idx+13), name}));
+const RAW_ITEMS = HEADERS.slice(12,32).map((name,idx)=>({key:idx, col:idx+12, code:colName(idx+13), name}));
+const ITEMS = RAW_ITEMS.filter(item=>item.key!==8 && item.key!==9).concat(RAW_ITEMS.filter(item=>item.key===8 || item.key===9));
 
 // ══ 상태 ══════════════════════════════════════════
 const LSKEY   = 'ipqc_pad_v3';
@@ -1216,7 +1266,9 @@ function loadDemoNames(){
 // ══ 설비 탭 렌더링 ════════════════════════════════
 function getMachinePct(m){
   let done=0, total=ITEMS.length*state.roundCount;
-  for(let i=0;i<ITEMS.length;i++) for(let r=0;r<state.roundCount;r++) if(state.values[`${i}|${m}|${r}`]) done++;
+  ITEMS.forEach(item=>{
+    for(let r=0;r<state.roundCount;r++) if(state.values[`${item.key}|${m}|${r}`]) done++;
+  });
   return {done, total, pct: total>0 ? Math.round(done/total*100):0};
 }
 
@@ -1321,15 +1373,15 @@ function buildMachineContent(m){
         ${sel('visual',['OK','NG','N/A','Waive'],info.visual||'OK')}
       </select>
     </div>
+    <div><label>${tr('materialLabel')}</label><input id="mi_${m}_material" value="${esc(info.material||'')}" oninput="saveDebounced()"></div>
+    <div><label>${tr('ratioLabel')}</label><input id="mi_${m}_ratio" value="${esc(info.ratio||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
+    <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
     <div><label>${tr('resultLabel')}</label>
       <select id="mi_${m}_result" onchange="saveDebounced()">
         ${sel('result',['PASS','FAIL','HOLD','N/A','Waive'],info.result||'PASS')}
       </select>
     </div>
     <div><label>${tr('approvalLabel')}</label><input id="mi_${m}_approval" value="${esc(info.approval||'')}" oninput="saveDebounced()"></div>
-    <div><label>${tr('materialLabel')}</label><input id="mi_${m}_material" value="${esc(info.material||'')}" oninput="saveDebounced()"></div>
-    <div><label>${tr('ratioLabel')}</label><input id="mi_${m}_ratio" value="${esc(info.ratio||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
-    <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
   </div>
 
   `;
@@ -1350,7 +1402,7 @@ function renderMeasurementSection(){
       let totalCells = state.machineCount * state.roundCount, doneCells = 0;
       for(let m=0;m<state.machineCount;m++)
         for(let r=0;r<state.roundCount;r++)
-          if(state.values[`${idx}|${m}|${r}`]) doneCells++;
+          if(state.values[`${item.key}|${m}|${r}`]) doneCells++;
       const isDone = totalCells>0 && doneCells===totalCells;
       const btn = document.createElement('button');
       btn.id = `itab_${idx}`;
@@ -1371,7 +1423,7 @@ function renderMeasurementSection(){
   let totalAll = state.machineCount*state.roundCount, doneAll = 0;
   for(let m=0;m<state.machineCount;m++)
     for(let r=0;r<state.roundCount;r++)
-      if(state.values[`${i}|${m}|${r}`]) doneAll++;
+      if(state.values[`${it.key}|${m}|${r}`]) doneAll++;
   const subBar = document.getElementById('itemSubBar');
   if(subBar) subBar.textContent = `${tr('doneOf')}: ${doneAll} / ${totalAll}`;
 
@@ -1388,13 +1440,63 @@ function renderMeasurementSection(){
     const mName = (state.machineInfo[m]||{}).name || ('M/C '+(m+1));
     html += `<tr><td style="font-weight:800;font-size:14px">${esc(mName)}</td>`;
     for(let r=0;r<state.roundCount;r++){
-      const k=`${i}|${m}|${r}`, val=state.values[k]||'';
+      const k=`${it.key}|${m}|${r}`, val=state.values[k]||'';
       html += `<td class="${val?'done-cell':''}"><input class="measure-input" inputmode="text" value="${esc(val)}" oninput="setVal(${i},${m},${r},this)"></td>`;
     }
     html += '</tr>';
   }
   html += '</tbody>';
   table.innerHTML = html;
+}
+
+function openMeasureSummary(){
+  collectCommon();
+  collectCurrentMachineInfo();
+  const modal = document.getElementById('measureSummaryModal');
+  const meta = document.getElementById('measureSummaryMeta');
+  const table = document.getElementById('measureSummaryTable');
+  if(!modal || !meta || !table) return;
+
+  if(state.machineCount === 0){
+    meta.textContent = tr('measureSummaryEmpty');
+    table.innerHTML = '';
+    modal.classList.add('open');
+    return;
+  }
+
+  const total = ITEMS.length * state.machineCount * state.roundCount;
+  let done = 0;
+  Object.values(state.values).forEach(v=>{ if(v) done++; });
+  meta.textContent = `${tr('measureSummaryMeta')} · ${done} / ${total}`;
+
+  let html = '<thead><tr><th>항목</th>';
+  for(let m=0;m<state.machineCount;m++){
+    const mi = state.machineInfo[m] || {};
+    const mName = mi.name || ('M/C '+(m+1));
+    for(let r=0;r<state.roundCount;r++){
+      html += `<th>${esc(mName)}<br>R${r+1}</th>`;
+    }
+  }
+  html += '</tr></thead><tbody>';
+
+  ITEMS.forEach(item=>{
+    html += `<tr><td>${esc(item.code + '  ' + item.name)}</td>`;
+    for(let m=0;m<state.machineCount;m++){
+      for(let r=0;r<state.roundCount;r++){
+        const val = state.values[`${item.key}|${m}|${r}`] || '';
+        html += `<td class="${val?'has-value':'empty-value'}">${val ? esc(val) : '-'}</td>`;
+      }
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+  modal.classList.add('open');
+}
+
+function closeMeasureSummary(){
+  const modal = document.getElementById('measureSummaryModal');
+  if(modal) modal.classList.remove('open');
 }
 
 // LTC No. 라운드별 저장
@@ -1429,8 +1531,10 @@ function switchItemInMachine(itemIdx){
 }
 
 function setVal(i,m,r,el){
+  const item = ITEMS[i];
+  if(!item) return;
   const v = el.value.trim();
-  state.values[`${i}|${m}|${r}`] = v;
+  state.values[`${item.key}|${m}|${r}`] = v;
   el.closest('td').className = v ? 'done-cell' : '';
   saveDebounced();
   updateMachineProgress(m);
@@ -1441,9 +1545,9 @@ function setVal(i,m,r,el){
     let total=state.machineCount*state.roundCount, done=0;
     for(let m2=0;m2<state.machineCount;m2++)
       for(let r2=0;r2<state.roundCount;r2++)
-        if(state.values[`${i}|${m2}|${r2}`]) done++;
+        if(state.values[`${item.key}|${m2}|${r2}`]) done++;
     const isDone = total>0 && done===total;
-    tab.textContent = ITEMS[i].code + '  ' + ITEMS[i].name + (isDone?'  ✓':'');
+    tab.textContent = item.code + '  ' + item.name + (isDone?'  ✓':'');
     tab.classList.toggle('done-tab', isDone);
   }
   const sub = document.getElementById('itemSubBar');
@@ -1451,7 +1555,7 @@ function setVal(i,m,r,el){
     let total=state.machineCount*state.roundCount, done=0;
     for(let m2=0;m2<state.machineCount;m2++)
       for(let r2=0;r2<state.roundCount;r2++)
-        if(state.values[`${i}|${m2}|${r2}`]) done++;
+        if(state.values[`${item.key}|${m2}|${r2}`]) done++;
     sub.textContent = `입력 완료: ${done} / ${total} 칸`;
   }
 }
@@ -1507,6 +1611,116 @@ function resetAll(){
   location.reload();
 }
 
+function ensureSheetWebAppUrl(){
+  if(GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL.trim()) return true;
+  alert(tr('sheetUrlMissing'));
+  return false;
+}
+
+function nowIso(){
+  return new Date().toISOString();
+}
+
+function newRecordId(){
+  return 'ipqc_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+}
+
+function buildServerPayload(existingId){
+  const machinesArr = state.machineInfo.map(mi=>mi.name||'');
+  return {
+    id: existingId || newRecordId(),
+    submittedAt: nowIso(),
+    date: state.common.date||new Date().toISOString().slice(0,10),
+    time: state.common.time||'',
+    shift: state.common.shift||'',
+    inspector: state.common.inspector.trim(),
+    common: {...state.common},
+    machines: machinesArr,
+    machineInfo: state.machineInfo.map(mi=>({...mi})),
+    machineCount: state.machineCount,
+    roundCount: state.roundCount,
+    values: {...state.values},
+    deviceId: getDeviceId(),
+    lang: state.lang||'ko'
+  };
+}
+
+function postToSheet(action, payload){
+  const form = new FormData();
+  form.append('action', action);
+  form.append('payload', JSON.stringify(payload || {}));
+  return fetch(GOOGLE_SHEET_WEB_APP_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: form
+  });
+}
+
+function sheetJsonp(params = {}){
+  return new Promise((resolve, reject)=>{
+    const cb = 'ipqcSheetCb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const url = new URL(GOOGLE_SHEET_WEB_APP_URL);
+    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k, v));
+    url.searchParams.set('callback', cb);
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{
+      cleanup();
+      reject(new Error('Request timeout'));
+    }, 20000);
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cb];
+      script.remove();
+    }
+    window[cb] = data => {
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Network error'));
+    };
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+}
+
+function normalizeServerRecord(record){
+  if(!record) return null;
+  ['common','machines','machineInfo','values'].forEach(key=>{
+    if(typeof record[key] === 'string'){
+      try{ record[key] = JSON.parse(record[key]); }catch(e){}
+    }
+  });
+  record.docId = record.id || record.docId || null;
+  record.machineCount = Number(record.machineCount || (record.machineInfo||[]).length || 0);
+  record.roundCount = Number(record.roundCount || 0);
+  record.machines = Array.isArray(record.machines) ? record.machines : [];
+  record.machineInfo = Array.isArray(record.machineInfo) ? record.machineInfo : [];
+  record.values = record.values && typeof record.values === 'object' ? record.values : {};
+  record.common = record.common && typeof record.common === 'object' ? record.common : {};
+  record.date = record.date || record.common.date || '';
+  record.time = record.time || record.common.time || '';
+  record.shift = record.shift || record.common.shift || '';
+  record.inspector = record.inspector || record.common.inspector || '';
+  return record;
+}
+
+function applyServerRecordToState(record){
+  const r = normalizeServerRecord(record);
+  if(!r) return;
+  state.common = {...state.common, ...r.common, date:r.date||r.common.date||'', time:r.time||r.common.time||'', shift:r.shift||r.common.shift||'Day', inspector:r.inspector||r.common.inspector||''};
+  state.machineCount = r.machineCount;
+  state.roundCount = r.roundCount || state.roundCount || 3;
+  state.machineInfo = r.machineInfo;
+  state.values = r.values;
+  state.currentMachine = 0;
+  state.currentItem = 0;
+  save();
+  applyCommonToForm();
+  renderAll();
+}
+
 // ══ 서버 저장 ═════════════════════════════════════
 async function submitToServer(){
   collectCommon();
@@ -1515,36 +1729,59 @@ async function submitToServer(){
   let hasData=false;
   for(const v of Object.values(state.values)){ if(v){ hasData=true; break; } }
   if(!hasData){ alert(tr('noData')); return; }
-  if(!db){ alert('Firebase가 설정되지 않았습니다.'); return; }
+  if(!ensureSheetWebAppUrl()) return;
 
   const statusEl = document.getElementById('cloudStatus');
   statusEl.className='loading'; statusEl.textContent=tr('submitting');
 
   try{
-    const machinesArr = state.machineInfo.map(mi=>mi.name||'');
-    const payload = {
-      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      date: state.common.date||new Date().toISOString().slice(0,10),
-      time: state.common.time||'',
-      shift: state.common.shift||'',
-      inspector: state.common.inspector.trim(),
-      common: {...state.common},
-      machines: machinesArr,
-      machineInfo: state.machineInfo.map(mi=>({...mi})),
-      machineCount: state.machineCount,
-      roundCount: state.roundCount,
-      values: {...state.values},
-      deviceId: getDeviceId(),
-      lang: state.lang||'ko'
-    };
-    const docRef = await db.collection('ipqc_inspections').add(payload);
+    const payload = buildServerPayload();
+    await postToSheet('save', payload);
     statusEl.className='success'; statusEl.textContent=tr('submitOk');
     setTimeout(()=>{ statusEl.style.display='none'; },4000);
-    saveToHistory({...payload, docId:docRef.id});
+    saveToHistory({...payload, docId:payload.id});
     renderHistory();
   }catch(err){
     console.error(err);
     statusEl.className='error'; statusEl.textContent=tr('submitFail')+' ('+err.message+')';
+  }
+}
+
+async function loadFromServer(){
+  if(!ensureSheetWebAppUrl()) return;
+  const statusEl = document.getElementById('cloudStatus');
+  statusEl.className='loading'; statusEl.textContent=tr('serverLoading');
+  try{
+    const result = await sheetJsonp({action:'list'});
+    if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
+    const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
+    if(!records.length){
+      statusEl.className='error'; statusEl.textContent=tr('serverNoData');
+      return;
+    }
+    records.sort((a,b)=>String(b.submittedAt||b.savedAt||'').localeCompare(String(a.submittedAt||a.savedAt||'')));
+    localStorage.setItem(HIST_KEY, JSON.stringify(records.slice(0,30).map(r=>({
+      docId: r.id || r.docId,
+      id: r.id || r.docId,
+      date: r.date,
+      time: r.time||'',
+      inspector: r.inspector,
+      shift: r.shift||'',
+      machineCount: r.machineCount||0,
+      roundCount: r.roundCount||0,
+      machines: r.machines||[],
+      machineInfo: r.machineInfo||[],
+      common: r.common||{},
+      values: r.values||{},
+      savedAt: r.submittedAt || r.savedAt || ''
+    }))));
+    applyServerRecordToState(records[0]);
+    renderHistory();
+    statusEl.className='success'; statusEl.textContent=tr('serverLoadOk');
+    setTimeout(()=>{ statusEl.style.display='none'; },4000);
+  }catch(err){
+    console.error(err);
+    statusEl.className='error'; statusEl.textContent=tr('serverLoadFail')+' ('+err.message+')';
   }
 }
 
@@ -1571,8 +1808,8 @@ function exportWideCsv(){
     for(let r=0;r<state.roundCount;r++){
       const row = buildDataRow(mi, m, r);
       let has = false;
-      ITEMS.forEach((it,i)=>{
-        const v = state.values[`${i}|${m}|${r}`]||'';
+      ITEMS.forEach(it=>{
+        const v = state.values[`${it.key}|${m}|${r}`]||'';
         if(v){ row[it.col] = v; has = true; }
       });
       if(has) dataRows.push(row);
@@ -1662,6 +1899,7 @@ function importJson(e){
 function saveToHistory(payload){
   let hist=getHistory();
   hist.unshift({
+    id: payload.id||payload.docId||null,
     docId: payload.docId||null,
     date: payload.date, time: payload.time||'',
     inspector: payload.inspector, shift: payload.shift||'',
@@ -1703,7 +1941,10 @@ async function deleteHistItemByIdx(idx,e){
   if(e) e.stopPropagation();
   const hist=getHistory(); const item=hist[idx];
   if(!confirm(`[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?\n서버 데이터도 함께 삭제됩니다.`)) return;
-  if(item.docId&&db){ try{ await db.collection('ipqc_inspections').doc(item.docId).delete(); }catch(e){ console.warn(e.message); } }
+  const serverId = item.id || item.docId;
+  if(serverId && ensureSheetWebAppUrl()){
+    try{ await postToSheet('delete', {id:serverId}); }catch(e){ console.warn(e.message); }
+  }
   hist.splice(idx,1); localStorage.setItem(HIST_KEY,JSON.stringify(hist)); renderHistory();
 }
 function clearAllHistory(){
@@ -1747,10 +1988,10 @@ function openHistModal(idx){
         .map(([l,v])=>`<div class="view-field"><div class="vl">${esc(l)}</div><div class="vv">${esc(v||'-')}</div></div>`).join('')}
       ${(mi.ltcRounds||[]).map((ltcV,r)=>`<div class="view-field"><div class="vl">LTC No. R${r+1}</div><div class="vv">${esc(ltcV||'-')}</div></div>`).join('')}
     </div>`;
-    ITEMS.forEach((it,i)=>{
+    ITEMS.forEach(it=>{
       let hasAny=false; let cells='';
       for(let r=0;r<rCount;r++){
-        const v=vals[`${i}|${m}|${r}`]||'';
+        const v=vals[`${it.key}|${m}|${r}`]||'';
         if(v) hasAny=true;
         cells+=`<span style="display:inline-block;min-width:55px;margin:2px 3px;padding:2px 5px;background:${v?'#dcfce7':'#f1f5f9'};border-radius:4px;font-size:12px">${esc(v)||'-'}</span>`;
       }
@@ -1805,11 +2046,11 @@ function openHistModal(idx){
     let thtml=`<table class="mval-table"><thead><tr><th style="text-align:left;min-width:150px">항목</th>`;
     for(let r=0;r<rCount;r++) thtml+=`<th>R${r+1}</th>`;
     thtml+='</tr></thead><tbody>';
-    ITEMS.forEach((it,i)=>{
+    ITEMS.forEach(it=>{
       thtml+=`<tr><td style="text-align:left;padding:4px 6px;font-weight:700;background:#f8fafc">${it.code} ${it.name}</td>`;
       for(let r=0;r<rCount;r++){
-        const v=vals[`${i}|${m}|${r}`]||'';
-        thtml+=`<td><input class="mval-input" type="text" inputmode="text" id="hev_${i}_${m}_${r}" value="${esc(v)}"></td>`;
+        const v=vals[`${it.key}|${m}|${r}`]||'';
+        thtml+=`<td><input class="mval-input" type="text" inputmode="text" id="hev_${it.key}_${m}_${r}" value="${esc(v)}"></td>`;
       }
       thtml+='</tr>';
     });
@@ -1846,9 +2087,11 @@ function switchHTab(panelId, btn){
 }
 
 async function saveHistEdit(){
-  if(currentHistIdx===null||!db) return;
+  if(currentHistIdx===null) return;
+  if(!ensureSheetWebAppUrl()) return;
   const hist=getHistory(); const item=hist[currentHistIdx];
-  if(!item||!item.docId){ alert(tr('hNoFbIdAlert')); return; }
+  const serverId = item && (item.id || item.docId);
+  if(!item||!serverId){ alert(tr('hNoFbIdAlert')); return; }
   const status=document.getElementById('hSaveStatus');
   status.className='loading'; status.textContent=tr('hSaving'); status.style.display='block';
   try{
@@ -1878,23 +2121,29 @@ async function saveHistEdit(){
       });
     }
     const newValues={};
-    ITEMS.forEach((it,i)=>{
+    ITEMS.forEach(it=>{
       for(let m=0;m<mCount;m++) for(let r=0;r<rCount;r++){
-        const el=document.getElementById(`hev_${i}_${m}_${r}`);
-        if(el&&el.value.trim()) newValues[`${i}|${m}|${r}`]=el.value.trim();
+        const el=document.getElementById(`hev_${it.key}_${m}_${r}`);
+        if(el&&el.value.trim()) newValues[`${it.key}|${m}|${r}`]=el.value.trim();
       }
     });
-    await db.collection('ipqc_inspections').doc(item.docId).update({
+    const updatedPayload = {
+      ...item,
+      id: serverId,
+      docId: serverId,
       common: newCommon,
       inspector: newCommon.inspector,
       date: newCommon.date,
+      time: newCommon.time,
+      shift: newCommon.shift,
       machines: newMachineInfo.map(mi=>mi.name),
       machineInfo: newMachineInfo,
       values: newValues,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: nowIso(),
       updatedBy: 'inspector'
-    });
-    hist[currentHistIdx]={...item, common:newCommon, inspector:newCommon.inspector, date:newCommon.date, machines:newMachineInfo.map(mi=>mi.name), machineInfo:newMachineInfo, values:newValues};
+    };
+    await postToSheet('save', updatedPayload);
+    hist[currentHistIdx]=updatedPayload;
     localStorage.setItem(HIST_KEY, JSON.stringify(hist));
     status.className='ok'; status.textContent=tr('hSaveOk');
     renderHistory();
@@ -1908,7 +2157,10 @@ async function deleteHistItem(){
   if(currentHistIdx===null) return;
   const hist=getHistory(); const item=hist[currentHistIdx];
   if(!confirm(`[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?`)) return;
-  if(item.docId&&db){ try{ await db.collection('ipqc_inspections').doc(item.docId).delete(); }catch(e){ console.warn(e.message); } }
+  const serverId = item && (item.id || item.docId);
+  if(serverId && ensureSheetWebAppUrl()){
+    try{ await postToSheet('delete', {id:serverId}); }catch(e){ console.warn(e.message); }
+  }
   hist.splice(currentHistIdx,1); localStorage.setItem(HIST_KEY,JSON.stringify(hist));
   closeHistModal(); renderHistory();
 }
@@ -1941,7 +2193,6 @@ function init(){
   applyCommonToForm();
   renderAll();
   applyLanguage();
-  initFirebase();
   renderHistory();
   renderPnSection();
 }
