@@ -798,7 +798,7 @@ function exportPnList(){
 
 // ══ Google Sheets Web App 설정 ═══════════════════
 // Google Apps Script 배포 후 Web App URL을 아래에 붙여넣으세요.
-const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyXzKb7l5WLYDgqYFReikIT0X_W0oJkawtAGx_Ytu5Rlson3TKMZrEnuRVf6o_VJkY/exec';
+const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfASScDbCaXhKN8qfYzzNm3U5CaD10EFjMnKFGaTNHuyd3VR6KES6cggMvkn08rpg/exec';
 
 // ══ i18n ══════════════════════════════════════════
 const I18N = {
@@ -1842,6 +1842,7 @@ async function loadFromServer(){
 }
 
 let searchResultRows = [];
+let searchRowsApiReady = true;
 
 function getSearchFilters(){
   const val = id => (document.getElementById(id)?.value || '').trim();
@@ -1955,6 +1956,7 @@ async function searchServerRecords(){
     if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
     let rowsResult = {ok:false, rows:[]};
     try{ rowsResult = await sheetJsonp({action:'rows'}); }catch(e){ console.warn(e); }
+    searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
     const filters = getSearchFilters();
     const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
     const seen = new Set();
@@ -1967,7 +1969,7 @@ async function searchServerRecords(){
         }
       });
     });
-    if(rowsResult && rowsResult.ok){
+    if(searchRowsApiReady){
       (rowsResult.rows || []).forEach(item=>{
         const row = (item.row || []).slice(0, HEADERS.length);
         if(!rowMatchesSearch(row, filters)) return;
@@ -1995,13 +1997,16 @@ function renderSearchResults(){
   const table = document.getElementById('searchResultTable');
   const total = searchResultRows.length;
   status.textContent = total ? `검색 결과 ${total}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.` : '검색 결과가 없습니다.';
+  if(!searchRowsApiReady){
+    status.textContent += ' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.';
+  }
   if(!total){
     if(wrap) wrap.style.display='none';
     if(table) table.innerHTML='';
     return;
   }
-  const preview = searchResultRows.slice(0, 500);
-  const cols = [0,1,2,4,5,6,7,8,10,20,34];
+  const preview = searchResultRows;
+  const cols = HEADERS.map((_, idx)=>idx);
   let html = '<thead><tr>';
   cols.forEach(idx=>{ html += `<th>${esc(HEADERS[idx])}</th>`; });
   html += '</tr></thead><tbody>';
@@ -2013,7 +2018,7 @@ function renderSearchResults(){
   html += '</tbody>';
   table.innerHTML = html;
   wrap.style.display = 'block';
-  if(total > preview.length) status.textContent += ` 화면에는 최근 ${preview.length}건만 표시됩니다. Excel 저장은 전체 ${total}건이 저장됩니다.`;
+  status.textContent += ' 엑셀 전체 컬럼 데이터를 모두 표시합니다.';
 }
 
 function openSearchResult(idx){
