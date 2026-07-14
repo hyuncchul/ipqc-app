@@ -1157,10 +1157,11 @@ function rebuildCountOptions(){
 }
 
 // ══ 측정 항목 ══════════════════════════════════════
-const HEADERS=['DATE 日期','TIME 時間','M/C 機台','SHIFT 班別','QC inspector 檢驗員','Description 料號','SAP PN','Customer','MOLD 模號','Datecode','LTC No. 批號','VISUAL外觀','OL總長','OW總寬','ST外疊合高','Warpage彎度','Where 位置','C/C 凹凸度','SR表面電阻','Weight重量','RESULT結果','Approval 審核者','TSMC EL 3點 最大值','一般客戶 EL','TSMC SKH 量測10點結果','TSMC SKH 量測4點結果','TSMC 20片 ST 量測4點 最大值','TSMC 20片 ST 量測4點 最小值','TTSMC 單片ST  量測4點 最大值','TSMC 單片ST  量測4點 最小值','ASE / SPIL SKH 量測 4點結果','AASEK SR表面電阻 (2pin)','備註 Material','Material Ratio（%）','SESS SR表面電阻 (Trek 152-1) 100V'];
+const HEADERS=['DATE 日期','TIME 時間','M/C 機台','SHIFT 班別','QC inspector 檢驗員','Description 料號','SAP PN','Customer','MOLD 模號','Datecode','LTC No. 批號','VISUAL外觀','OL總長','OW總寬','ST外疊合高','Warpage彎度','Where 位置','C/C 凹凸度','SR表面電阻','Weight重量','RESULT結果','Approval 審核者','TSMC EL 3點 最大值','一般客戶 EL','TSMC SKH 量測10點結果','TSMC SKH 量測4點結果','TSMC 20片 ST 量測4點 最大值','TSMC 20片 ST 量測4點 最小值','TTSMC 單片ST  量測4點 最大值','TSMC 單片ST  量測4點 最小值','ASE / SPIL SKH 量測 4點結果','AASEK SR表面電阻 (2pin)','Remark/Material','Material Ratio（%）','Remark'];
 function colName(n){let s='';while(n>0){let m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
 const RAW_ITEMS = HEADERS.slice(12,32).map((name,idx)=>({key:idx, col:idx+12, code:colName(idx+13), name}));
-const ITEMS = RAW_ITEMS.filter(item=>item.key!==8 && item.key!==9).concat(RAW_ITEMS.filter(item=>item.key===8 || item.key===9));
+const REMARK_ITEM = {key:'remark', col:34, code:colName(35), name:'Remark'};
+const ITEMS = RAW_ITEMS.filter(item=>item.key!==8 && item.key!==9).concat(RAW_ITEMS.filter(item=>item.key===8 || item.key===9), [REMARK_ITEM]);
 
 // ══ 상태 ══════════════════════════════════════════
 const LSKEY   = 'ipqc_pad_v3';
@@ -1640,9 +1641,28 @@ function buildServerPayload(existingId){
     machineCount: state.machineCount,
     roundCount: state.roundCount,
     values: {...state.values},
+    dataHeaders: HEADERS.slice(),
+    dataRows: buildSheetRows(),
     deviceId: getDeviceId(),
     lang: state.lang||'ko'
   };
+}
+
+function buildSheetRows(){
+  const rows = [];
+  for(let m=0;m<state.machineCount;m++){
+    const mi = state.machineInfo[m]||emptyMachineInfo();
+    for(let r=0;r<state.roundCount;r++){
+      const row = buildDataRow(mi, m, r);
+      let has = false;
+      ITEMS.forEach(it=>{
+        const v = state.values[`${it.key}|${m}|${r}`]||'';
+        if(v){ row[it.col] = v; has = true; }
+      });
+      if(has) rows.push(row);
+    }
+  }
+  return rows;
 }
 
 function postToSheet(action, payload){
@@ -1716,7 +1736,7 @@ function applyServerRecordToState(record){
   state.values = r.values;
   state.currentMachine = 0;
   state.currentItem = 0;
-  save();
+  localStorage.setItem(LSKEY, JSON.stringify(state));
   applyCommonToForm();
   renderAll();
 }
@@ -1778,6 +1798,7 @@ async function loadFromServer(){
     applyServerRecordToState(records[0]);
     renderHistory();
     statusEl.className='success'; statusEl.textContent=tr('serverLoadOk');
+    setTimeout(()=>openHistModal(0), 150);
     setTimeout(()=>{ statusEl.style.display='none'; },4000);
   }catch(err){
     console.error(err);
@@ -1800,21 +1821,8 @@ function exportWideCsv(){
     return;
   }
 
-  const headerRow = HEADERS.concat(['Round']);
-  const dataRows  = [];
-
-  for(let m=0;m<state.machineCount;m++){
-    const mi = state.machineInfo[m]||emptyMachineInfo();
-    for(let r=0;r<state.roundCount;r++){
-      const row = buildDataRow(mi, m, r);
-      let has = false;
-      ITEMS.forEach(it=>{
-        const v = state.values[`${it.key}|${m}|${r}`]||'';
-        if(v){ row[it.col] = v; has = true; }
-      });
-      if(has) dataRows.push(row);
-    }
-  }
+  const headerRow = HEADERS.slice();
+  const dataRows  = buildSheetRows();
 
   if(dataRows.length === 0){ alert(tr('noData')); return; }
 
@@ -1865,7 +1873,11 @@ function exportWideCsv(){
 }
 
 function buildDataRow(mi, m, round){
-  const c = state.common||{};
+  return buildDataRowForRecord(state.common||{}, mi, m, round);
+}
+
+function buildDataRowForRecord(common, mi, m, round){
+  const c = common||{};
   const row = Array(HEADERS.length).fill('');
   row[0]=c.date||'';   row[1]=c.time||'';   row[2]=mi.name||('M/C '+(m+1));
   row[3]=c.shift||'';  row[4]=c.inspector||'';
@@ -1875,8 +1887,7 @@ function buildDataRow(mi, m, round){
   const ltcVal = (mi.ltcRounds && mi.ltcRounds[round]!==undefined) ? mi.ltcRounds[round] : (mi.ltc||'');
   row[10] = ltcVal;
   row[11]=mi.visual||''; row[20]=mi.result||''; row[21]=mi.approval||'';
-  row[32]=mi.material||''; row[33]=mi.ratio||''; row[34]=mi.sess||'';
-  row.push('Round '+(round+1));
+  row[32]=mi.material||''; row[33]=mi.ratio||'';
   return row;
 }
 // 구형 호환 (혹시 다른 곳에서 참조 시)
@@ -2127,6 +2138,19 @@ async function saveHistEdit(){
         if(el&&el.value.trim()) newValues[`${it.key}|${m}|${r}`]=el.value.trim();
       }
     });
+    const dataRows = [];
+    for(let m=0;m<mCount;m++){
+      const mi = newMachineInfo[m] || emptyMachineInfo();
+      for(let r=0;r<rCount;r++){
+        const row = buildDataRowForRecord(newCommon, mi, m, r);
+        let has = false;
+        ITEMS.forEach(it=>{
+          const v = newValues[`${it.key}|${m}|${r}`] || '';
+          if(v){ row[it.col] = v; has = true; }
+        });
+        if(has) dataRows.push(row);
+      }
+    }
     const updatedPayload = {
       ...item,
       id: serverId,
@@ -2139,6 +2163,8 @@ async function saveHistEdit(){
       machines: newMachineInfo.map(mi=>mi.name),
       machineInfo: newMachineInfo,
       values: newValues,
+      dataHeaders: HEADERS.slice(),
+      dataRows,
       updatedAt: nowIso(),
       updatedBy: 'inspector'
     };
