@@ -174,6 +174,12 @@
     .measure-summary-table td:first-child{min-width:250px;color:#1e40af}
     .measure-summary-table td.has-value{background:#ecfdf3;font-weight:700}
     .measure-summary-table td.empty-value{color:#9ca3af;background:#f8fafc}
+    .search-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin-top:12px}
+    .search-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+    .search-result-meta{font-size:12px;color:var(--muted);font-weight:700;margin:10px 0 6px}
+    .search-table{font-size:12px}
+    .search-table tbody tr{cursor:pointer}
+    .search-table tbody tr:hover{background:#eff6ff}
 
     .footer-space{height:80px}
     @media(max-width:900px){
@@ -182,10 +188,12 @@
       .summary{grid-template-columns:repeat(2,1fr)}
       .edit-grid{grid-template-columns:repeat(2,1fr)}
       .view-grid{grid-template-columns:repeat(2,1fr)}
+      .search-grid{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:600px){
       .common-grid{grid-template-columns:repeat(2,1fr)}
       .info-grid{grid-template-columns:1fr 1fr}
+      .search-grid{grid-template-columns:1fr}
       .lang-top label{display:none}
       .lang-top select{min-width:110px;font-size:13px}
       header{padding:10px 12px}
@@ -401,10 +409,37 @@
     </div>
   </div>
 
-  <!-- ══ 섹션 5: 파트 번호 추가 등록 ══ -->
+  <!-- ══ 섹션 5: 서버 데이터 검색 ══ -->
+  <div class="card">
+    <b>5. 서버 데이터 검색 / Excel 저장</b>
+    <div class="hint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div>
+    <div class="search-grid">
+      <div><label>특정 날짜</label><input id="searchDate" type="date"></div>
+      <div><label>시작 날짜</label><input id="searchDateFrom" type="date"></div>
+      <div><label>종료 날짜</label><input id="searchDateTo" type="date"></div>
+      <div><label>QC Inspector</label><input id="searchInspector" placeholder="검사원"></div>
+      <div><label>Description</label><input id="searchDesc" placeholder="Description"></div>
+      <div><label>SAP PN</label><input id="searchSap" placeholder="SAP PN"></div>
+      <div><label>Customer</label><input id="searchCustomer" placeholder="Customer"></div>
+      <div><label>Mold 번호</label><input id="searchMold" placeholder="MOLD"></div>
+      <div><label>LTC No.</label><input id="searchLtc" placeholder="LTC No."></div>
+      <div><label>M/C</label><input id="searchMachine" placeholder="예: A07 또는 A07,A08"></div>
+    </div>
+    <div class="search-actions">
+      <button class="btn primary" onclick="searchServerRecords()">🔍 검색</button>
+      <button class="btn ok" onclick="exportSearchResults()">📥 검색 결과 Excel 저장</button>
+      <button class="btn" onclick="clearSearchFilters()">초기화</button>
+    </div>
+    <div id="searchStatus" class="search-result-meta">검색 조건을 입력한 뒤 검색 버튼을 누르세요.</div>
+    <div class="table-wrap" id="searchResultWrap" style="display:none;max-height:420px">
+      <table id="searchResultTable" class="search-table"></table>
+    </div>
+  </div>
+
+  <!-- ══ 섹션 6: 파트 번호 추가 등록 ══ -->
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <b data-i18n="s5title">5. 파트 번호 추가 등록 (Part Number Manager)</b>
+      <b data-i18n="s5title">6. 파트 번호 추가 등록 (Part Number Manager)</b>
       <span id="pnCountBadge" style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:999px;font-weight:700">0개 추가</span>
     </div>
     <div class="hint" style="margin-bottom:10px" data-i18n="pnHint">🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.</div>
@@ -818,7 +853,7 @@ const I18N = {
     planAlertMin:'설비를 1대 이상 선택하세요.',
     planLoaded:'대 설비가 로드되었습니다!',
     planExcelError:'Excel 파일 읽기 실패',
-    s5title:'5. 파트 번호 추가 등록 (Part Number Manager)',
+    s5title:'6. 파트 번호 추가 등록 (Part Number Manager)',
     pnHint:'🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.',
     pnNewSection:'➕ 신규 파트 등록', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ 등록', pnListTitle:'📋 사용자 추가 파트 목록',
@@ -888,7 +923,7 @@ const I18N = {
     planAlertMin:'Please select at least 1 machine.',
     planLoaded:'machines loaded!',
     planExcelError:'Excel read failed',
-    s5title:'5. Part Number Manager',
+    s5title:'6. Part Number Manager',
     pnHint:'🔍 Base DB: 861 SAP PNs · Auto-fill on SAP PN input · Add unregistered PNs below.',
     pnNewSection:'➕ Register New Part', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ Add', pnListTitle:'📋 User-added Parts',
@@ -958,7 +993,7 @@ const I18N = {
     planAlertMin:'請至少選擇1台設備。',
     planLoaded:'台設備已載入！',
     planExcelError:'Excel讀取失敗',
-    s5title:'5. 零件號碼追加登録 (Part Number Manager)',
+    s5title:'6. 零件號碼追加登録 (Part Number Manager)',
     pnHint:'🔍 基本DB：861個SAP PN · 輸入SAP PN自動填入Description · 未登録零件請在此追加。',
     pnNewSection:'➕ 新增零件', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ 登録', pnListTitle:'📋 使用者追加零件',
@@ -1028,7 +1063,7 @@ const I18N = {
     planAlertMin:'Vui lòng chọn ít nhất 1 máy.',
     planLoaded:'máy đã tải!',
     planExcelError:'Lỗi đọc Excel',
-    s5title:'5. Quản lý số bộ phận (Part Number Manager)',
+    s5title:'6. Quản lý số bộ phận (Part Number Manager)',
     pnHint:'🔍 DB cơ bản: 861 SAP PN · Tự động điền khi nhập SAP PN · Thêm PN chưa đăng ký bên dưới.',
     pnNewSection:'➕ Đăng ký bộ phận mới', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ Đăng ký', pnListTitle:'📋 Bộ phận người dùng thêm',
@@ -1098,7 +1133,7 @@ const I18N = {
     planAlertMin:'Pilih minimal 1 mesin.',
     planLoaded:'mesin berhasil dimuat!',
     planExcelError:'Gagal membaca Excel',
-    s5title:'5. Manajemen Nomor Part (Part Number Manager)',
+    s5title:'6. Manajemen Nomor Part (Part Number Manager)',
     pnHint:'🔍 DB Dasar: 861 SAP PN · Auto-isi saat input SAP PN · Tambahkan PN baru di bawah.',
     pnNewSection:'➕ Daftarkan Part Baru', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ Daftar', pnListTitle:'📋 Part Tambahan Pengguna',
@@ -1707,7 +1742,7 @@ function sheetJsonp(params = {}){
 
 function normalizeServerRecord(record){
   if(!record) return null;
-  ['common','machines','machineInfo','values'].forEach(key=>{
+  ['common','machines','machineInfo','values','dataRows'].forEach(key=>{
     if(typeof record[key] === 'string'){
       try{ record[key] = JSON.parse(record[key]); }catch(e){}
     }
@@ -1804,6 +1839,166 @@ async function loadFromServer(){
     console.error(err);
     statusEl.className='error'; statusEl.textContent=tr('serverLoadFail')+' ('+err.message+')';
   }
+}
+
+let searchResultRows = [];
+
+function getSearchFilters(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    date: val('searchDate'),
+    dateFrom: val('searchDateFrom'),
+    dateTo: val('searchDateTo'),
+    inspector: val('searchInspector').toLowerCase(),
+    desc: val('searchDesc').toLowerCase(),
+    sap: val('searchSap').toLowerCase(),
+    customer: val('searchCustomer').toLowerCase(),
+    mold: val('searchMold').toLowerCase(),
+    ltc: val('searchLtc').toLowerCase(),
+    machines: val('searchMachine').toLowerCase().split(/[,\s]+/).map(s=>s.trim()).filter(Boolean)
+  };
+}
+
+function serverRecordToRows(record){
+  const r = normalizeServerRecord({...record});
+  if(Array.isArray(r.dataRows) && r.dataRows.length){
+    return r.dataRows.map(row=>row.slice(0, HEADERS.length));
+  }
+  const rows = [];
+  const mCount = r.machineCount || (r.machineInfo||[]).length || 0;
+  const roundCount = r.roundCount || 1;
+  const values = r.values || {};
+  for(let m=0;m<mCount;m++){
+    const mi = (r.machineInfo||[])[m] || emptyMachineInfo();
+    for(let round=0;round<roundCount;round++){
+      const row = buildDataRowForRecord(r.common||{}, mi, m, round);
+      let has = false;
+      ITEMS.forEach(it=>{
+        const v = values[`${it.key}|${m}|${round}`] || '';
+        if(v){ row[it.col] = v; has = true; }
+      });
+      if(has) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function rowMatchesSearch(row, filters){
+  const lower = idx => String(row[idx] || '').toLowerCase();
+  const rowDate = String(row[0] || '').slice(0, 10);
+  if(filters.date && rowDate !== filters.date) return false;
+  if(filters.dateFrom && rowDate < filters.dateFrom) return false;
+  if(filters.dateTo && rowDate > filters.dateTo) return false;
+  if(filters.inspector && !lower(4).includes(filters.inspector)) return false;
+  if(filters.desc && !lower(5).includes(filters.desc)) return false;
+  if(filters.sap && !lower(6).includes(filters.sap)) return false;
+  if(filters.customer && !lower(7).includes(filters.customer)) return false;
+  if(filters.mold && !lower(8).includes(filters.mold)) return false;
+  if(filters.ltc && !lower(10).includes(filters.ltc)) return false;
+  if(filters.machines.length && !filters.machines.some(token=>lower(2).includes(token))) return false;
+  return true;
+}
+
+async function searchServerRecords(){
+  if(!ensureSheetWebAppUrl()) return;
+  const status = document.getElementById('searchStatus');
+  const wrap = document.getElementById('searchResultWrap');
+  const table = document.getElementById('searchResultTable');
+  searchResultRows = [];
+  if(wrap) wrap.style.display='none';
+  if(table) table.innerHTML='';
+  status.textContent = '서버에서 검색 중...';
+  try{
+    const result = await sheetJsonp({action:'list'});
+    if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
+    const filters = getSearchFilters();
+    const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
+    records.forEach(record=>{
+      serverRecordToRows(record).forEach(row=>{
+        if(rowMatchesSearch(row, filters)){
+          searchResultRows.push({record, row});
+        }
+      });
+    });
+    searchResultRows.sort((a,b)=>{
+      const ad = `${a.row[0]||''} ${a.row[1]||''}`;
+      const bd = `${b.row[0]||''} ${b.row[1]||''}`;
+      return bd.localeCompare(ad);
+    });
+    renderSearchResults();
+  }catch(err){
+    console.error(err);
+    status.textContent = '검색 실패: ' + err.message;
+  }
+}
+
+function renderSearchResults(){
+  const status = document.getElementById('searchStatus');
+  const wrap = document.getElementById('searchResultWrap');
+  const table = document.getElementById('searchResultTable');
+  const total = searchResultRows.length;
+  status.textContent = total ? `검색 결과 ${total}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.` : '검색 결과가 없습니다.';
+  if(!total){
+    if(wrap) wrap.style.display='none';
+    if(table) table.innerHTML='';
+    return;
+  }
+  const preview = searchResultRows.slice(0, 500);
+  const cols = [0,1,2,4,5,6,7,8,10,20,34];
+  let html = '<thead><tr>';
+  cols.forEach(idx=>{ html += `<th>${esc(HEADERS[idx])}</th>`; });
+  html += '</tr></thead><tbody>';
+  preview.forEach((item, idx)=>{
+    html += `<tr onclick="openSearchResult(${idx})">`;
+    cols.forEach(col=>{ html += `<td>${esc(item.row[col] || '')}</td>`; });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+  wrap.style.display = 'block';
+  if(total > preview.length) status.textContent += ` 화면에는 최근 ${preview.length}건만 표시됩니다. Excel 저장은 전체 ${total}건이 저장됩니다.`;
+}
+
+function openSearchResult(idx){
+  const item = searchResultRows[idx];
+  if(!item || !item.record) return;
+  const rec = normalizeServerRecord({...item.record});
+  const hist = getHistory().filter(h=>(h.id||h.docId) !== (rec.id||rec.docId));
+  hist.unshift({
+    ...rec,
+    id: rec.id || rec.docId,
+    docId: rec.id || rec.docId,
+    savedAt: rec.submittedAt || rec.savedAt || ''
+  });
+  localStorage.setItem(HIST_KEY, JSON.stringify(hist.slice(0,30)));
+  renderHistory();
+  openHistModal(0);
+}
+
+function exportSearchResults(){
+  if(!searchResultRows.length){ alert('검색 결과가 없습니다.'); return; }
+  if(typeof XLSX === 'undefined'){
+    alert('XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.');
+    return;
+  }
+  const rows = searchResultRows.map(item=>item.row);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
+  ws['!cols'] = HEADERS.map((h,i)=>({wch: i<=4 ? 14 : i<=11 ? 18 : 22}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Search Results');
+  const today = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `IPQC_search_results_${today}.xlsx`);
+}
+
+function clearSearchFilters(){
+  ['searchDate','searchDateFrom','searchDateTo','searchInspector','searchDesc','searchSap','searchCustomer','searchMold','searchLtc','searchMachine'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  searchResultRows = [];
+  document.getElementById('searchStatus').textContent = '검색 조건을 입력한 뒤 검색 버튼을 누르세요.';
+  document.getElementById('searchResultWrap').style.display = 'none';
+  document.getElementById('searchResultTable').innerHTML = '';
 }
 
 function getDeviceId(){
