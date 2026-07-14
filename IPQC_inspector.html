@@ -1883,6 +1883,48 @@ function serverRecordToRows(record){
   return rows;
 }
 
+function recordFromSheetRow(row, meta = {}){
+  const values = {};
+  RAW_ITEMS.forEach(item=>{
+    const v = row[item.col] || '';
+    if(v !== '') values[`${item.key}|0|0`] = v;
+  });
+  if(row[34]) values['remark|0|0'] = row[34];
+  const machineInfo = [{
+    name: row[2] || '',
+    desc: row[5] || '',
+    sap: row[6] || '',
+    customer: row[7] || '',
+    mold: row[8] || '',
+    datecode: row[9] || '',
+    ltcRounds: [row[10] || ''],
+    visual: row[11] || '',
+    result: row[20] || '',
+    approval: row[21] || '',
+    material: row[32] || '',
+    ratio: row[33] || '',
+    sess: ''
+  }];
+  const id = meta.recordId || `sheet_${meta.sheetName || 'data'}_${meta.rowNumber || Date.now()}`;
+  return {
+    id,
+    docId: id,
+    submittedAt: `${row[0] || ''} ${row[1] || ''}`.trim(),
+    date: row[0] || '',
+    time: row[1] || '',
+    shift: row[3] || '',
+    inspector: row[4] || '',
+    common: {date:row[0]||'', time:row[1]||'', shift:row[3]||'', inspector:row[4]||''},
+    machines: [row[2] || ''],
+    machineInfo,
+    machineCount: 1,
+    roundCount: 1,
+    values,
+    dataRows: [row.slice(0, HEADERS.length)],
+    savedAt: meta.sheetName ? `${meta.sheetName} row ${meta.rowNumber}` : ''
+  };
+}
+
 function rowMatchesSearch(row, filters){
   const lower = idx => String(row[idx] || '').toLowerCase();
   const rowDate = String(row[0] || '').slice(0, 10);
@@ -1911,15 +1953,30 @@ async function searchServerRecords(){
   try{
     const result = await sheetJsonp({action:'list'});
     if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
+    let rowsResult = {ok:false, rows:[]};
+    try{ rowsResult = await sheetJsonp({action:'rows'}); }catch(e){ console.warn(e); }
     const filters = getSearchFilters();
     const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
+    const seen = new Set();
     records.forEach(record=>{
       serverRecordToRows(record).forEach(row=>{
         if(rowMatchesSearch(row, filters)){
+          const key = `${record.id || record.docId || ''}|${row.join('|')}`;
+          seen.add(key);
           searchResultRows.push({record, row});
         }
       });
     });
+    if(rowsResult && rowsResult.ok){
+      (rowsResult.rows || []).forEach(item=>{
+        const row = (item.row || []).slice(0, HEADERS.length);
+        if(!rowMatchesSearch(row, filters)) return;
+        const key = `${item.recordId || ''}|${row.join('|')}`;
+        if(seen.has(key)) return;
+        seen.add(key);
+        searchResultRows.push({record:recordFromSheetRow(row, item), row});
+      });
+    }
     searchResultRows.sort((a,b)=>{
       const ad = `${a.row[0]||''} ${a.row[1]||''}`;
       const bd = `${b.row[0]||''} ${b.row[1]||''}`;
