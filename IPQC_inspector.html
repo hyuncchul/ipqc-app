@@ -1711,7 +1711,7 @@ function postToSheet(action, payload){
   });
 }
 
-function sheetJsonp(params = {}){
+function sheetJsonp(params = {}, timeoutMs = 20000){
   return new Promise((resolve, reject)=>{
     const cb = 'ipqcSheetCb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
     const url = new URL(GOOGLE_SHEET_WEB_APP_URL);
@@ -1721,7 +1721,7 @@ function sheetJsonp(params = {}){
     const timer = setTimeout(()=>{
       cleanup();
       reject(new Error('Request timeout'));
-    }, 20000);
+    }, timeoutMs);
     function cleanup(){
       clearTimeout(timer);
       delete window[cb];
@@ -1843,6 +1843,11 @@ async function loadFromServer(){
 
 let searchResultRows = [];
 let searchRowsApiReady = true;
+let searchRowsCache = null;      // 연도별 시트(rows) 응답 캐시 - 응답이 커서 재요청 비용이 큼
+let searchRowsCacheAt = 0;
+let searchRowsError = '';        // '' | 'timeout' | 'error'
+const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
+const SEARCH_ROWS_TIMEOUT_MS = 300000;
 
 function getSearchFilters(){
   const val = id => (document.getElementById(id)?.value || '').trim();
@@ -1955,7 +1960,22 @@ async function searchServerRecords(){
     const result = await sheetJsonp({action:'list'});
     if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
     let rowsResult = {ok:false, rows:[]};
-    try{ rowsResult = await sheetJsonp({action:'rows'}); }catch(e){ console.warn(e); }
+    searchRowsError = '';
+    if(searchRowsCache && (Date.now() - searchRowsCacheAt) < SEARCH_ROWS_CACHE_MS){
+      rowsResult = searchRowsCache;
+    }else{
+      status.textContent = '서버에서 검색 중... (연도별 시트 데이터 로딩 중 - 데이터가 많아 3~5분 걸릴 수 있습니다. 창을 닫지 말고 기다려 주세요)';
+      try{
+        rowsResult = await sheetJsonp({action:'rows'}, SEARCH_ROWS_TIMEOUT_MS);
+        if(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows)){
+          searchRowsCache = rowsResult;
+          searchRowsCacheAt = Date.now();
+        }
+      }catch(e){
+        console.warn(e);
+        searchRowsError = (e && e.message === 'Request timeout') ? 'timeout' : 'error';
+      }
+    }
     searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
     const filters = getSearchFilters();
     const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
@@ -1998,7 +2018,13 @@ function renderSearchResults(){
   const total = searchResultRows.length;
   status.textContent = total ? `검색 결과 ${total}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.` : '검색 결과가 없습니다.';
   if(!searchRowsApiReady){
-    status.textContent += ' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.';
+    if(searchRowsError === 'timeout'){
+      status.textContent += ' 단, 연도별 시트(2026) 데이터 로딩이 시간 초과되어 이번 검색에 포함되지 않았습니다. 잠시 후 [검색]을 다시 눌러 주세요.';
+    }else if(searchRowsError){
+      status.textContent += ' 단, 연도별 시트(2026) 데이터 로딩에 실패해 이번 검색에 포함되지 않았습니다. 잠시 후 다시 시도해 주세요.';
+    }else{
+      status.textContent += ' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.';
+    }
   }
   if(!total){
     if(wrap) wrap.style.display='none';
