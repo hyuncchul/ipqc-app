@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>업무 시스템 접속 링크</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f4f6f8;
+      color: #17202a;
+      font-family: Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .page {
+      width: 100%;
+      padding: 24px 12px;
+    }
+
+    .mail-card {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #d7dde5;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .hero {
+      background: #17202a;
+      padding: 22px 24px;
+      color: #ffffff;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 24px;
+      line-height: 1.3;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: #dbe4ee;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .language-box {
+      flex: 0 0 180px;
+    }
+
+    .language-label {
+      display: block;
+      margin: 0 0 6px;
+      color: #dbe4ee;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .language-select {
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 7px;
+      background: #ffffff;
+      color: #17202a;
+      padding: 6px 10px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .content {
+      padding: 18px 24px 24px;
+    }
+
+    .link-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #e5e9ef;
+    }
+
+    .link-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 2px;
+    }
+
+    .item-title {
+      font-size: 17px;
+      line-height: 1.35;
+      font-weight: 800;
+      color: #17202a;
+    }
+
+    .url {
+      display: inline-block;
+      margin-top: 2px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #4f677d;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .open-button {
+      display: inline-block;
+      min-width: 88px;
+      padding: 10px 14px;
+      background: #0f766e;
+      border-radius: 7px;
+      color: #ffffff;
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .footer {
+      padding: 14px 24px 20px;
+      background: #f8fafc;
+      border-top: 1px solid #e5e9ef;
+    }
+
+    .note {
+      margin: 0;
+      color: #697586;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 560px) {
+      .hero-top {
+        display: block;
+      }
+
+      .language-box {
+        margin-top: 14px;
+      }
+
+      .link-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .open-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="mail-card">
+      <header class="hero">
+        <div class="hero-top">
+          <div>
+            <h1 data-i18n="title">업무 시스템 접속 링크</h1>
+            <p class="subtitle" data-i18n="subtitle">아래 버튼을 클릭하여 각 업무 페이지로 접속해 주세요.</p>
+          </div>
+          <div class="language-box">
+            <label class="language-label" for="languageSelect" data-i18n="languageLabel">언어 선택</label>
+            <select class="language-select" id="languageSelect" aria-label="Language selection">
+              <option value="ko">한국어</option>
+              <option value="en">English</option>
+              <option value="zh-TW">繁體中文</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="id">Bahasa Indonesia</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="link-row">
+          <div>
+            <div class="item-title" data-key="ipqc">IPQC Monitoring</div>
+            <a class="url" href="https://hyuncchul.github.io/ipqc-app/IPQC_inspector">https://hyuncchul.github.io/ipqc-app/IPQC_inspector</a>
+          </div>
+          <div>
+            <a class="open-button" href="https://hyuncchul.github.io/ipqc-app/IPQC_inspector" data-i18n="open">Open</a>
+          </div>
+        </div>
+
+        <div class="link-row">
+          <div>
+            <div class="item-title" data-key="micron">Micron Shipping Check</div>
+            <a class="url" href="https://hyuncchul.github.io/micron-box/">https://hyuncchul.github.io/micron-box/</a>
+          </div>
+          <div>
+            <a class="open-button" href="https://hyuncchul.github.io/micron-box/" data-i18n="open">Open</a>
+          </div>
+        </div>
+
+        <div class="link-row">
+          <div>
+            <div class="item-title" data-key="benchmark">QC Benchmark Data Check</div>
+            <a class="url" href="https://hyuncchul.github.io/benchmark2/">https://hyuncchul.github.io/benchmark2/</a>
+          </div>
+          <div>
+            <a class="open-button" href="https://hyuncchul.github.io/benchmark2/" data-i18n="open">Open</a>
+          </div>
+        </div>
+
+        <div class="link-row">
+          <div>
+            <div class="item-title" data-key="packing">완제품 입출고 관리</div>
+            <a class="url" href="https://hyuncchul.github.io/Packing/">https://hyuncchul.github.io/Packing/</a>
+          </div>
+          <div>
+            <a class="open-button" href="https://hyuncchul.github.io/Packing/" data-i18n="open">Open</a>
+          </div>
+        </div>
+
+        <div class="link-row">
+          <div>
+            <div class="item-title" data-key="tech">사출 조건 모니터링</div>
+            <a class="url" href="https://hyuncchul.github.io/tech/">https://hyuncchul.github.io/tech/</a>
+          </div>
+          <div>
+            <a class="open-button" href="https://hyuncchul.github.io/tech/" data-i18n="open">Open</a>
+          </div>
+        </div>
+
+        <div class="link-row">
+          <div>
+            <div class="item-title" data-key="mold">Mold List Dashboard</div>
+            <a class="url" href="http://127.0.0.1:3212/mold_dashboard.html">http://127.0.0.1:3212/mold_dashboard.html</a>
+          </div>
+          <div>
+            <a class="open-button" href="http://127.0.0.1:3212/mold_dashboard.html" data-i18n="open">Open</a>
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p class="note" data-i18n="note">참고: Mold List Dashboard는 로컬 주소이므로 해당 PC에서 서버가 실행 중일 때만 접속됩니다.</p>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const translations = {
+      ko: {
+        documentTitle: "업무 시스템 접속 링크",
+        title: "업무 시스템 접속 링크",
+        subtitle: "아래 버튼을 클릭하여 각 업무 페이지로 접속해 주세요.",
+        languageLabel: "언어 선택",
+        open: "열기",
+        note: "참고: Mold List Dashboard는 로컬 주소이므로 해당 PC에서 서버가 실행 중일 때만 접속됩니다.",
+        items: {
+          ipqc: "IPQC Monitoring",
+          micron: "Micron Shipping Check",
+          benchmark: "QC Benchmark Data Check",
+          packing: "완제품 입출고 관리",
+          tech: "사출 조건 모니터링",
+          mold: "Mold List Dashboard"
+        }
+      },
+      en: {
+        documentTitle: "Business System Access Links",
+        title: "Business System Access Links",
+        subtitle: "Click the buttons below to open each business page.",
+        languageLabel: "Language",
+        open: "Open",
+        note: "Note: Mold List Dashboard is a local address and is available only when the server is running on that PC.",
+        items: {
+          ipqc: "IPQC Monitoring",
+          micron: "Micron Shipping Check",
+          benchmark: "QC Benchmark Data Check",
+          packing: "Finished Goods In/Out Management",
+          tech: "Injection Condition Monitoring",
+          mold: "Mold List Dashboard"
+        }
+      },
+      "zh-TW": {
+        documentTitle: "業務系統連結",
+        title: "業務系統連結",
+        subtitle: "請點選下方按鈕進入各業務頁面。",
+        languageLabel: "語言選擇",
+        open: "開啟",
+        note: "注意：Mold List Dashboard 是本機網址，只有在該電腦的伺服器執行時才能連線。",
+        items: {
+          ipqc: "IPQC 監控",
+          micron: "Micron 出貨檢查",
+          benchmark: "QC Benchmark 資料檢查",
+          packing: "成品出入庫管理",
+          tech: "射出條件監控",
+          mold: "模具清單儀表板"
+        }
+      },
+      vi: {
+        documentTitle: "Liên kết truy cập hệ thống công việc",
+        title: "Liên kết truy cập hệ thống công việc",
+        subtitle: "Nhấp vào các nút bên dưới để mở từng trang công việc.",
+        languageLabel: "Chọn ngôn ngữ",
+        open: "Mở",
+        note: "Lưu ý: Mold List Dashboard là địa chỉ cục bộ và chỉ truy cập được khi máy chủ đang chạy trên PC đó.",
+        items: {
+          ipqc: "Giám sát IPQC",
+          micron: "Kiểm tra xuất hàng Micron",
+          benchmark: "Kiểm tra dữ liệu QC Benchmark",
+          packing: "Quản lý nhập/xuất thành phẩm",
+          tech: "Giám sát điều kiện ép phun",
+          mold: "Bảng điều khiển danh sách khuôn"
+        }
+      },
+      id: {
+        documentTitle: "Tautan Akses Sistem Kerja",
+        title: "Tautan Akses Sistem Kerja",
+        subtitle: "Klik tombol di bawah untuk membuka setiap halaman kerja.",
+        languageLabel: "Pilih bahasa",
+        open: "Buka",
+        note: "Catatan: Mold List Dashboard adalah alamat lokal dan hanya dapat diakses saat server berjalan di PC tersebut.",
+        items: {
+          ipqc: "Pemantauan IPQC",
+          micron: "Pemeriksaan Pengiriman Micron",
+          benchmark: "Pemeriksaan Data QC Benchmark",
+          packing: "Manajemen Masuk/Keluar Barang Jadi",
+          tech: "Pemantauan Kondisi Injeksi",
+          mold: "Dasbor Daftar Mold"
+        }
+      }
+    };
+
+    function setLanguage(language) {
+      const text = translations[language] || translations.ko;
+
+      document.documentElement.lang = language;
+      document.title = text.documentTitle;
+
+      document.querySelectorAll("[data-i18n]").forEach((element) => {
+        const key = element.getAttribute("data-i18n");
+        element.textContent = text[key];
+      });
+
+      document.querySelectorAll("[data-key]").forEach((element) => {
+        const key = element.getAttribute("data-key");
+        element.textContent = text.items[key];
+      });
+
+      localStorage.setItem("mailAccessLinksLanguage", language);
+    }
+
+    const languageSelect = document.getElementById("languageSelect");
+    const savedLanguage = localStorage.getItem("mailAccessLinksLanguage") || "ko";
+
+    languageSelect.value = translations[savedLanguage] ? savedLanguage : "ko";
+    setLanguage(languageSelect.value);
+
+    languageSelect.addEventListener("change", (event) => {
+      setLanguage(event.target.value);
+    });
+  </script>
+</body>
+</html>
