@@ -411,26 +411,26 @@
 
   <!-- ══ 섹션 5: 서버 데이터 검색 ══ -->
   <div class="card">
-    <b>5. 서버 데이터 검색 / Excel 저장</b>
-    <div class="hint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div>
+    <b data-i18n="srchTitle">5. 서버 데이터 검색 / Excel 저장</b>
+    <div class="hint" data-i18n="srchHint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div>
     <div class="search-grid">
-      <div><label>특정 날짜</label><input id="searchDate" type="date"></div>
-      <div><label>시작 날짜</label><input id="searchDateFrom" type="date"></div>
-      <div><label>종료 날짜</label><input id="searchDateTo" type="date"></div>
-      <div><label>QC Inspector</label><input id="searchInspector" placeholder="검사원"></div>
+      <div><label data-i18n="srchDate">특정 날짜</label><input id="searchDate" type="date"></div>
+      <div><label data-i18n="srchDateFrom">시작 날짜</label><input id="searchDateFrom" type="date"></div>
+      <div><label data-i18n="srchDateTo">종료 날짜</label><input id="searchDateTo" type="date"></div>
+      <div><label>QC Inspector</label><input id="searchInspector" data-i18n-ph="srchInspectorPH" placeholder="검사원"></div>
       <div><label>Description</label><input id="searchDesc" placeholder="Description"></div>
       <div><label>SAP PN</label><input id="searchSap" placeholder="SAP PN"></div>
       <div><label>Customer</label><input id="searchCustomer" placeholder="Customer"></div>
-      <div><label>Mold 번호</label><input id="searchMold" placeholder="MOLD"></div>
+      <div><label data-i18n="srchMold">Mold 번호</label><input id="searchMold" placeholder="MOLD"></div>
       <div><label>LTC No.</label><input id="searchLtc" placeholder="LTC No."></div>
-      <div><label>M/C</label><input id="searchMachine" placeholder="예: A07 또는 A07,A08"></div>
+      <div><label>M/C</label><input id="searchMachine" data-i18n-ph="srchMachinePH" placeholder="예: A07 또는 A07,A08"></div>
     </div>
     <div class="search-actions">
-      <button class="btn primary" onclick="searchServerRecords()">🔍 검색</button>
-      <button class="btn ok" onclick="exportSearchResults()">📥 검색 결과 Excel 저장</button>
-      <button class="btn" onclick="clearSearchFilters()">초기화</button>
+      <button class="btn primary" onclick="searchServerRecords()" data-i18n="srchBtn">🔍 검색</button>
+      <button class="btn ok" onclick="exportSearchResults()" data-i18n="srchExportBtn">📥 검색 결과 Excel 저장</button>
+      <button class="btn" onclick="clearSearchFilters()" data-i18n="srchClearBtn">초기화</button>
     </div>
-    <div id="searchStatus" class="search-result-meta">검색 조건을 입력한 뒤 검색 버튼을 누르세요.</div>
+    <div id="searchStatus" class="search-result-meta" data-i18n="srchInit">검색 조건을 입력한 뒤 검색 버튼을 누르세요.</div>
     <div class="table-wrap" id="searchResultWrap" style="display:none;max-height:420px">
       <table id="searchResultTable" class="search-table"></table>
     </div>
@@ -781,7 +781,7 @@ function deletePn(sap){
 }
 function exportPnList(){
   if(typeof XLSX === 'undefined'){
-    alert('XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.');
+    alert(tr('srchNoXlsx'));
     return;
   }
   const custom = getPnDbCustom();
@@ -803,6 +803,22 @@ const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfASS
 // ══ i18n ══════════════════════════════════════════
 const I18N = {
   ko:{
+    srchTitle:'5. 서버 데이터 검색 / Excel 저장',
+    srchHint:'Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.',
+    srchDate:'특정 날짜', srchDateFrom:'시작 날짜', srchDateTo:'종료 날짜', srchMold:'Mold 번호',
+    srchInspectorPH:'검사원', srchMachinePH:'예: A07 또는 A07,A08',
+    srchBtn:'🔍 검색', srchExportBtn:'📥 검색 결과 Excel 저장', srchClearBtn:'초기화',
+    srchInit:'검색 조건을 입력한 뒤 검색 버튼을 누르세요.',
+    srchSearching:'서버에서 검색 중...',
+    srchLoadingRows:'서버에서 검색 중... (연도별 시트 데이터 로딩 중 - 데이터가 많아 3~5분 걸릴 수 있습니다. 창을 닫지 말고 기다려 주세요)',
+    srchResultCount:'검색 결과 {n}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.',
+    srchNoResult:'검색 결과가 없습니다.',
+    srchTimeoutNote:' 단, 연도별 시트(2026) 데이터 로딩이 시간 초과되어 이번 검색에 포함되지 않았습니다. 잠시 후 [검색]을 다시 눌러 주세요.',
+    srchRowsFailNote:' 단, 연도별 시트(2026) 데이터 로딩에 실패해 이번 검색에 포함되지 않았습니다. 잠시 후 다시 시도해 주세요.',
+    srchOldDeployNote:' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.',
+    srchAllCols:' 엑셀 전체 컬럼 데이터를 모두 표시합니다.',
+    srchFail:'검색 실패: ',
+    srchNoXlsx:'XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.',
     machines:'대', rounds:'회',
     submitOk:'✅ 서버에 성공적으로 저장되었습니다!', submitFail:'❌ 서버 저장 실패.',
     submitting:'☁️ 서버에 저장 중...', noInspector:'검사원 이름을 입력하세요.',
@@ -873,6 +889,22 @@ const I18N = {
     hSaving:'💾 서버에 저장 중...', hSaveOk:'✅ 서버에 성공적으로 저장되었습니다!', hSaveFail:'❌ 저장 실패: ',
   },
   en:{
+    srchTitle:'5. Server Data Search / Excel Export',
+    srchHint:'Search data saved in Google Sheet by conditions. Click a result row to see details.',
+    srchDate:'Exact Date', srchDateFrom:'Start Date', srchDateTo:'End Date', srchMold:'Mold No.',
+    srchInspectorPH:'Inspector', srchMachinePH:'e.g. A07 or A07,A08',
+    srchBtn:'🔍 Search', srchExportBtn:'📥 Export Results to Excel', srchClearBtn:'Reset',
+    srchInit:'Enter search conditions and press Search.',
+    srchSearching:'Searching server...',
+    srchLoadingRows:'Searching server... (Loading yearly sheet data - may take 3-5 minutes due to large data. Please keep this window open)',
+    srchResultCount:'{n} results - click a row to see details.',
+    srchNoResult:'No results found.',
+    srchTimeoutNote:' Note: yearly sheet (2026) data loading timed out and was not included in this search. Please press Search again shortly.',
+    srchRowsFailNote:' Note: failed to load yearly sheet (2026) data; not included in this search. Please try again shortly.',
+    srchOldDeployNote:' Note: the Apps Script deployment is outdated, so yearly sheets like 2026 could not be searched yet.',
+    srchAllCols:' Showing all Excel columns.',
+    srchFail:'Search failed: ',
+    srchNoXlsx:'XLSX library not loaded. Check your network connection.',
     machines:'machines', rounds:'rounds',
     submitOk:'✅ Saved to server!', submitFail:'❌ Save failed.',
     submitting:'☁️ Saving...', noInspector:'Please enter inspector name.',
@@ -943,6 +975,22 @@ const I18N = {
     hSaving:'💾 Saving to server...', hSaveOk:'✅ Saved to server!', hSaveFail:'❌ Save failed: ',
   },
   zh:{
+    srchTitle:'5. 伺服器資料查詢 / Excel 匯出',
+    srchHint:'依條件查詢儲存在 Google Sheet 的資料，點擊結果列可查看詳細內容。',
+    srchDate:'指定日期', srchDateFrom:'開始日期', srchDateTo:'結束日期', srchMold:'模號',
+    srchInspectorPH:'檢驗員', srchMachinePH:'例：A07 或 A07,A08',
+    srchBtn:'🔍 查詢', srchExportBtn:'📥 查詢結果匯出 Excel', srchClearBtn:'重設',
+    srchInit:'輸入查詢條件後按查詢按鈕。',
+    srchSearching:'伺服器查詢中...',
+    srchLoadingRows:'伺服器查詢中...（正在載入年度工作表資料，資料量大約需 3~5 分鐘，請勿關閉視窗）',
+    srchResultCount:'查詢結果 {n} 筆 - 點擊列可查看詳細內容。',
+    srchNoResult:'查無資料。',
+    srchTimeoutNote:' 註：年度工作表(2026)資料載入逾時，未包含在本次查詢中。請稍後再按一次查詢。',
+    srchRowsFailNote:' 註：年度工作表(2026)資料載入失敗，未包含在本次查詢中。請稍後再試。',
+    srchOldDeployNote:' 註：Apps Script 並非最新部署，尚無法查詢 2026 等年度工作表。',
+    srchAllCols:' 顯示 Excel 全部欄位資料。',
+    srchFail:'查詢失敗：',
+    srchNoXlsx:'尚未載入 XLSX 程式庫，請確認網路連線。',
     machines:'台', rounds:'次',
     submitOk:'✅ 儲存成功！', submitFail:'❌ 儲存失敗。',
     submitting:'☁️ 儲存中...', noInspector:'請輸入檢驗員。',
@@ -1013,6 +1061,22 @@ const I18N = {
     hSaving:'💾 儲存中...', hSaveOk:'✅ 儲存成功！', hSaveFail:'❌ 儲存失敗: ',
   },
   vi:{
+    srchTitle:'5. Tìm kiếm dữ liệu máy chủ / Xuất Excel',
+    srchHint:'Tìm kiếm dữ liệu đã lưu trong Google Sheet theo điều kiện. Nhấp vào hàng kết quả để xem chi tiết.',
+    srchDate:'Ngày cụ thể', srchDateFrom:'Ngày bắt đầu', srchDateTo:'Ngày kết thúc', srchMold:'Số Mold',
+    srchInspectorPH:'Kiểm tra viên', srchMachinePH:'VD: A07 hoặc A07,A08',
+    srchBtn:'🔍 Tìm kiếm', srchExportBtn:'📥 Xuất kết quả ra Excel', srchClearBtn:'Đặt lại',
+    srchInit:'Nhập điều kiện tìm kiếm rồi nhấn nút Tìm kiếm.',
+    srchSearching:'Đang tìm trên máy chủ...',
+    srchLoadingRows:'Đang tìm trên máy chủ... (Đang tải dữ liệu sheet theo năm - có thể mất 3-5 phút do dữ liệu lớn. Vui lòng không đóng cửa sổ)',
+    srchResultCount:'{n} kết quả - nhấp vào hàng để xem chi tiết.',
+    srchNoResult:'Không tìm thấy kết quả.',
+    srchTimeoutNote:' Lưu ý: tải dữ liệu sheet năm (2026) quá thời gian nên chưa được bao gồm trong lần tìm này. Vui lòng nhấn Tìm kiếm lại sau.',
+    srchRowsFailNote:' Lưu ý: tải dữ liệu sheet năm (2026) thất bại; chưa được bao gồm trong lần tìm này. Vui lòng thử lại sau.',
+    srchOldDeployNote:' Lưu ý: bản triển khai Apps Script chưa phải mới nhất nên chưa tìm được các sheet năm như 2026.',
+    srchAllCols:' Hiển thị tất cả các cột Excel.',
+    srchFail:'Tìm kiếm thất bại: ',
+    srchNoXlsx:'Thư viện XLSX chưa được tải. Kiểm tra kết nối mạng.',
     machines:'máy', rounds:'lần',
     submitOk:'✅ Đã lưu!', submitFail:'❌ Lỗi.',
     submitting:'☁️ Đang lưu...', noInspector:'Nhập tên nhân viên.',
@@ -1083,6 +1147,22 @@ const I18N = {
     hSaving:'💾 Đang lưu...', hSaveOk:'✅ Đã lưu!', hSaveFail:'❌ Lỗi lưu: ',
   },
   id:{
+    srchTitle:'5. Pencarian Data Server / Ekspor Excel',
+    srchHint:'Cari data yang tersimpan di Google Sheet berdasarkan kondisi. Klik baris hasil untuk melihat detail.',
+    srchDate:'Tanggal Tertentu', srchDateFrom:'Tanggal Mulai', srchDateTo:'Tanggal Selesai', srchMold:'No. Mold',
+    srchInspectorPH:'Inspektur', srchMachinePH:'cth: A07 atau A07,A08',
+    srchBtn:'🔍 Cari', srchExportBtn:'📥 Ekspor Hasil ke Excel', srchClearBtn:'Reset',
+    srchInit:'Masukkan kondisi pencarian lalu tekan tombol Cari.',
+    srchSearching:'Mencari di server...',
+    srchLoadingRows:'Mencari di server... (Memuat data sheet tahunan - bisa memakan waktu 3-5 menit karena data besar. Jangan tutup jendela ini)',
+    srchResultCount:'{n} hasil - klik baris untuk melihat detail.',
+    srchNoResult:'Tidak ada hasil.',
+    srchTimeoutNote:' Catatan: pemuatan data sheet tahunan (2026) melebihi batas waktu dan tidak disertakan dalam pencarian ini. Silakan tekan Cari lagi nanti.',
+    srchRowsFailNote:' Catatan: gagal memuat data sheet tahunan (2026); tidak disertakan dalam pencarian ini. Coba lagi nanti.',
+    srchOldDeployNote:' Catatan: deployment Apps Script belum terbaru sehingga sheet tahunan seperti 2026 belum bisa dicari.',
+    srchAllCols:' Menampilkan semua kolom Excel.',
+    srchFail:'Pencarian gagal: ',
+    srchNoXlsx:'Pustaka XLSX belum dimuat. Periksa koneksi jaringan.',
     machines:'mesin', rounds:'kali',
     submitOk:'✅ Tersimpan!', submitFail:'❌ Gagal.',
     submitting:'☁️ Menyimpan...', noInspector:'Masukkan nama inspector.',
@@ -1955,7 +2035,7 @@ async function searchServerRecords(){
   searchResultRows = [];
   if(wrap) wrap.style.display='none';
   if(table) table.innerHTML='';
-  status.textContent = '서버에서 검색 중...';
+  status.textContent = tr('srchSearching');
   try{
     const result = await sheetJsonp({action:'list'});
     if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
@@ -1964,7 +2044,7 @@ async function searchServerRecords(){
     if(searchRowsCache && (Date.now() - searchRowsCacheAt) < SEARCH_ROWS_CACHE_MS){
       rowsResult = searchRowsCache;
     }else{
-      status.textContent = '서버에서 검색 중... (연도별 시트 데이터 로딩 중 - 데이터가 많아 3~5분 걸릴 수 있습니다. 창을 닫지 말고 기다려 주세요)';
+      status.textContent = tr('srchLoadingRows');
       try{
         rowsResult = await sheetJsonp({action:'rows'}, SEARCH_ROWS_TIMEOUT_MS);
         if(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows)){
@@ -2007,7 +2087,7 @@ async function searchServerRecords(){
     renderSearchResults();
   }catch(err){
     console.error(err);
-    status.textContent = '검색 실패: ' + err.message;
+    status.textContent = tr('srchFail') + err.message;
   }
 }
 
@@ -2016,14 +2096,14 @@ function renderSearchResults(){
   const wrap = document.getElementById('searchResultWrap');
   const table = document.getElementById('searchResultTable');
   const total = searchResultRows.length;
-  status.textContent = total ? `검색 결과 ${total}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.` : '검색 결과가 없습니다.';
+  status.textContent = total ? tr('srchResultCount').replace('{n}', total) : tr('srchNoResult');
   if(!searchRowsApiReady){
     if(searchRowsError === 'timeout'){
-      status.textContent += ' 단, 연도별 시트(2026) 데이터 로딩이 시간 초과되어 이번 검색에 포함되지 않았습니다. 잠시 후 [검색]을 다시 눌러 주세요.';
+      status.textContent += tr('srchTimeoutNote');
     }else if(searchRowsError){
-      status.textContent += ' 단, 연도별 시트(2026) 데이터 로딩에 실패해 이번 검색에 포함되지 않았습니다. 잠시 후 다시 시도해 주세요.';
+      status.textContent += tr('srchRowsFailNote');
     }else{
-      status.textContent += ' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.';
+      status.textContent += tr('srchOldDeployNote');
     }
   }
   if(!total){
@@ -2044,7 +2124,7 @@ function renderSearchResults(){
   html += '</tbody>';
   table.innerHTML = html;
   wrap.style.display = 'block';
-  status.textContent += ' 엑셀 전체 컬럼 데이터를 모두 표시합니다.';
+  status.textContent += tr('srchAllCols');
 }
 
 function openSearchResult(idx){
@@ -2064,9 +2144,9 @@ function openSearchResult(idx){
 }
 
 function exportSearchResults(){
-  if(!searchResultRows.length){ alert('검색 결과가 없습니다.'); return; }
+  if(!searchResultRows.length){ alert(tr('srchNoResult')); return; }
   if(typeof XLSX === 'undefined'){
-    alert('XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.');
+    alert(tr('srchNoXlsx'));
     return;
   }
   const rows = searchResultRows.map(item=>item.row);
@@ -2084,7 +2164,7 @@ function clearSearchFilters(){
     if(el) el.value = '';
   });
   searchResultRows = [];
-  document.getElementById('searchStatus').textContent = '검색 조건을 입력한 뒤 검색 버튼을 누르세요.';
+  document.getElementById('searchStatus').textContent = tr('srchInit');
   document.getElementById('searchResultWrap').style.display = 'none';
   document.getElementById('searchResultTable').innerHTML = '';
 }
@@ -2100,7 +2180,7 @@ function exportWideCsv(){
   collectCommon(); collectCurrentMachineInfo();
 
   if(typeof XLSX === 'undefined'){
-    alert('XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.');
+    alert(tr('srchNoXlsx'));
     return;
   }
 
