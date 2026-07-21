@@ -187,6 +187,11 @@
     .trend-sub{font-size:11px;color:var(--muted);margin-top:3px}
     .trend-target{font-size:12px;color:#0f766e;font-weight:800;text-align:right;max-width:520px}
     .trend-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    .mold-filter-box{margin-bottom:10px;padding:9px 10px;border:1px solid #dbeafe;border-radius:10px;background:#f8fafc}
+    .mold-filter-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+    .mold-filter-title{font-size:12px;font-weight:800;color:#334155}
+    .mold-filter-actions{display:flex;gap:5px}.mold-filter-actions button{border:1px solid #cbd5e1;border-radius:7px;background:white;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
+    .mold-filter-list{display:flex;flex-wrap:wrap;gap:6px}.mold-check{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbd5e1;border-radius:999px;background:white;padding:5px 9px;font-size:11px;color:#334155;cursor:pointer;margin:0}.mold-check:has(input:checked){border-color:#2563eb;background:#dbeafe;color:#1e40af;font-weight:800}.mold-check input{width:14px;height:14px;min-height:14px;margin:0;padding:0}
     .trend-canvas-wrap{height:360px;position:relative;border:1px solid var(--line);border-radius:10px;background:white;padding:8px}
     #ipqcTrendCanvas{width:100%;height:100%}
     .trend-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px;pointer-events:none}
@@ -457,6 +462,7 @@
         <div><label>왼쪽 축 측정 항목</label><select id="ipqcMetricA" onchange="drawIpqcTrend()"></select></div>
         <div><label>오른쪽 축 측정 항목</label><select id="ipqcMetricB" onchange="drawIpqcTrend()"></select></div>
       </div>
+      <div class="mold-filter-box"><div class="mold-filter-head"><span class="mold-filter-title">몰드 선택 (단수·복수 선택 가능)</span><span class="mold-filter-actions"><button type="button" onclick="selectAllIpqcMolds(true)">전체 선택</button><button type="button" onclick="selectAllIpqcMolds(false)">선택 해제</button></span></div><div id="ipqcMoldFilters" class="mold-filter-list"><span class="hint">품목을 선택하면 몰드 목록이 표시됩니다.</span></div></div>
       <div class="trend-canvas-wrap"><canvas id="ipqcTrendCanvas"></canvas><div id="ipqcTrendEmpty" class="trend-empty">검색 결과를 불러오면 트렌드를 확인할 수 있습니다.</div></div>
       <div id="ipqcTrendLegend" class="trend-legend"></div>
     </div>
@@ -1956,6 +1962,8 @@ const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
 const SEARCH_ROWS_TIMEOUT_MS = 300000;
 let ipqcTrendSourceRows = [];
 let ipqcTrendSelection = null;
+let ipqcSelectedMolds = new Set();
+let ipqcMoldSelectionKey = '';
 const IPQC_TREND_MEASURES = [12,13,14,15,17,18,19,22,23,24,25,26,27,28,29,30,31,33,34];
 const IPQC_TREND_COLORS = ['#2563eb','#f97316','#16a34a','#9333ea','#dc2626','#0891b2','#ca8a04','#db2777','#4f46e5','#0f766e'];
 
@@ -1977,8 +1985,28 @@ function selectIpqcTrend(resultIdx,col,event){
   const row=searchResultRows[resultIdx]?.row, value=String(row?.[col]??'').trim();
   if(!value) return;
   ipqcTrendSelection={col,value,type:col===6?'SAP PN':'Description'};
+  ipqcMoldSelectionKey='';
+  ipqcSelectedMolds.clear();
   drawIpqcTrend();
   document.querySelector('.trend-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function renderIpqcMoldFilters(molds){
+  const box=document.getElementById('ipqcMoldFilters');if(!box)return;
+  const key=ipqcTrendSelection?`${ipqcTrendSelection.col}|${ipqcTrendSelection.value}`:'';
+  if(key!==ipqcMoldSelectionKey){ipqcMoldSelectionKey=key;ipqcSelectedMolds=new Set(molds);}
+  ipqcSelectedMolds=new Set([...ipqcSelectedMolds].filter(m=>molds.includes(m)));
+  box.innerHTML=molds.length?molds.map(m=>`<label class="mold-check"><input type="checkbox" value="${esc(m)}" ${ipqcSelectedMolds.has(m)?'checked':''} onchange="toggleIpqcMold(this)"><span>몰드 ${esc(m)}</span></label>`).join(''):'<span class="hint">선택 가능한 몰드가 없습니다.</span>';
+}
+
+function toggleIpqcMold(input){
+  input.checked?ipqcSelectedMolds.add(input.value):ipqcSelectedMolds.delete(input.value);
+  drawIpqcTrend(true);
+}
+
+function selectAllIpqcMolds(select){
+  document.querySelectorAll('#ipqcMoldFilters input[type="checkbox"]').forEach(el=>{el.checked=select;select?ipqcSelectedMolds.add(el.value):ipqcSelectedMolds.delete(el.value);});
+  drawIpqcTrend(true);
 }
 
 function trendBounds(values){
@@ -1986,7 +2014,7 @@ function trendBounds(values){
   return [min-spread*.12,max+spread*.12];
 }
 
-function drawIpqcTrend(){
+function drawIpqcTrend(skipMoldRender=false){
   const canvas=document.getElementById('ipqcTrendCanvas'),empty=document.getElementById('ipqcTrendEmpty'),legend=document.getElementById('ipqcTrendLegend'),target=document.getElementById('ipqcTrendTarget');
   if(!canvas||!empty) return;
   const a=Number(document.getElementById('ipqcMetricA')?.value??-1),b=Number(document.getElementById('ipqcMetricB')?.value??-1),active=[a,b].filter(i=>i>=0);
@@ -1998,8 +2026,13 @@ function drawIpqcTrend(){
   if(rows.length){const last=String(rows.at(-1)[0]).slice(0,10),cut=new Date(last+'T00:00:00');cut.setDate(cut.getDate()-29);const cutStr=cut.toISOString().slice(0,10);rows=rows.filter(r=>String(r[0]).slice(0,10)>=cutStr);}
   target.textContent=rows.length?`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${String(rows[0][0]).slice(0,10)} ~ ${String(rows.at(-1)[0]).slice(0,10)} (최근 1개월)`:`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · 측정값 없음`;
   if(!rows.length){empty.textContent='선택한 항목의 측정값이 없습니다.';empty.style.display='grid';legend.innerHTML='';return;}
+  const allMolds=[...new Set(rows.map(r=>String(r[8]??'미지정')))];
+  if(!skipMoldRender) renderIpqcMoldFilters(allMolds);
+  const molds=allMolds.filter(m=>ipqcSelectedMolds.has(m));
+  rows=rows.filter(r=>ipqcSelectedMolds.has(String(r[8]??'미지정')));
+  if(!molds.length){empty.textContent='표시할 몰드를 하나 이상 선택해 주세요.';empty.style.display='grid';legend.innerHTML='';return;}
   empty.style.display='none';
-  const molds=[...new Set(rows.map(r=>String(r[8]??'미지정')))],av=a>=0?rows.map(r=>trendNumber(r[a])).filter(v=>v!==null):[],bv=b>=0?rows.map(r=>trendNumber(r[b])).filter(v=>v!==null):[];
+  const av=a>=0?rows.map(r=>trendNumber(r[a])).filter(v=>v!==null):[],bv=b>=0?rows.map(r=>trendNumber(r[b])).filter(v=>v!==null):[];
   const [amin,amax]=trendBounds(av.length?av:[0,1]),[bmin,bmax]=trendBounds(bv.length?bv:[0,1]),pad={l:a>=0?66:28,r:b>=0?72:28,t:20,b:46},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
   const labels=[...new Set(rows.map(r=>`${String(r[0]).slice(0,10)} ${r[1]||''}`))],x=s=>pad.l+(labels.length===1?cw/2:cw*labels.indexOf(s)/(labels.length-1)),ya=v=>pad.t+(amax-v)/(amax-amin)*ch,yb=v=>pad.t+(bmax-v)/(bmax-bmin)*ch;
   c.font='11px system-ui';
@@ -2007,9 +2040,9 @@ function drawIpqcTrend(){
   if(a>=0){c.save();c.translate(13,pad.t+ch/2);c.rotate(-Math.PI/2);c.fillStyle='#1d4ed8';c.textAlign='center';c.fillText(HEADERS[a],0,0);c.restore();}
   if(b>=0){c.save();c.translate(w-10,pad.t+ch/2);c.rotate(Math.PI/2);c.fillStyle='#c2410c';c.textAlign='center';c.fillText(HEADERS[b],0,0);c.restore();}
   const series=[];if(a>=0)series.push([a,ya,false]);if(b>=0)series.push([b,yb,true]);
-  molds.forEach((m,mi)=>{const color=IPQC_TREND_COLORS[mi%IPQC_TREND_COLORS.length],group=rows.filter(r=>String(r[8]??'미지정')===m);series.forEach(([col,yfn,dash])=>{const pts=group.map(r=>({r,v:trendNumber(r[col])})).filter(p=>p.v!==null);if(!pts.length)return;c.beginPath();pts.forEach((p,i)=>{const px=x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),py=yfn(p.v);i?c.lineTo(px,py):c.moveTo(px,py)});c.strokeStyle=color;c.lineWidth=dash?1.8:2.5;c.setLineDash(dash?[6,4]:[]);c.stroke();c.setLineDash([]);c.fillStyle=color;pts.forEach(p=>{c.beginPath();c.arc(x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),yfn(p.v),2.2,0,Math.PI*2);c.fill();});});});
+  molds.forEach(m=>{const color=IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length],group=rows.filter(r=>String(r[8]??'미지정')===m);series.forEach(([col,yfn,dash])=>{const pts=group.map(r=>({r,v:trendNumber(r[col])})).filter(p=>p.v!==null);if(!pts.length)return;c.beginPath();pts.forEach((p,i)=>{const px=x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),py=yfn(p.v);i?c.lineTo(px,py):c.moveTo(px,py)});c.strokeStyle=color;c.lineWidth=dash?1.8:2.5;c.setLineDash(dash?[6,4]:[]);c.stroke();c.setLineDash([]);c.fillStyle=color;pts.forEach(p=>{c.beginPath();c.arc(x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),yfn(p.v),2.2,0,Math.PI*2);c.fill();});});});
   c.fillStyle='#64748b';c.textAlign='center';const ticks=Math.min(6,labels.length);for(let j=0;j<ticks;j++){const i=Math.round(j*(labels.length-1)/Math.max(1,ticks-1));c.fillText(labels[i].slice(0,10),x(labels[i]),h-16);}
-  legend.innerHTML=molds.map((m,i)=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[i%IPQC_TREND_COLORS.length]}"></i>몰드 ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
+  legend.innerHTML=molds.map(m=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length]}"></i>몰드 ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
 }
 
 function getSearchFilters(){
