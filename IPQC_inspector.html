@@ -455,17 +455,17 @@
     </div>
     <div class="trend-panel">
       <div class="trend-head">
-        <div><div class="trend-title">📈 IPQC 검색 트렌드</div><div class="trend-sub">Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택</div></div>
-        <div id="ipqcTrendTarget" class="trend-target">검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.</div>
+        <div><div class="trend-title" data-i18n="trendTitle">📈 IPQC 검색 트렌드</div><div class="trend-sub" data-i18n="trendSub">Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택</div></div>
+        <div id="ipqcTrendTarget" class="trend-target" data-i18n="trendTargetInit">검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.</div>
       </div>
       <div class="trend-controls">
-        <div><label>왼쪽 축 측정 항목</label><select id="ipqcMetricA" onchange="drawIpqcTrend()"></select></div>
-        <div><label>오른쪽 축 측정 항목</label><select id="ipqcMetricB" onchange="drawIpqcTrend()"></select></div>
-        <div><label>트렌드 시작일</label><input id="ipqcTrendFrom" type="date" onchange="drawIpqcTrend(false,true)"></div>
-        <div><label>트렌드 종료일</label><input id="ipqcTrendTo" type="date" onchange="drawIpqcTrend(false,true)"></div>
+        <div><label data-i18n="trendMetricA">왼쪽 축 측정 항목</label><select id="ipqcMetricA" onchange="drawIpqcTrend()"></select></div>
+        <div><label data-i18n="trendMetricB">오른쪽 축 측정 항목</label><select id="ipqcMetricB" onchange="drawIpqcTrend()"></select></div>
+        <div><label data-i18n="trendFrom">트렌드 시작일</label><input id="ipqcTrendFrom" type="date" onchange="drawIpqcTrend(false,true)"></div>
+        <div><label data-i18n="trendTo">트렌드 종료일</label><input id="ipqcTrendTo" type="date" onchange="drawIpqcTrend(false,true)"></div>
       </div>
-      <div class="mold-filter-box"><div class="mold-filter-head"><span class="mold-filter-title">몰드 선택 (단수·복수 선택 가능)</span><span class="mold-filter-actions"><button type="button" onclick="selectAllIpqcMolds(true)">전체 선택</button><button type="button" onclick="selectAllIpqcMolds(false)">선택 해제</button></span></div><div id="ipqcMoldFilters" class="mold-filter-list"><span class="hint">품목을 선택하면 몰드 목록이 표시됩니다.</span></div></div>
-      <div class="trend-canvas-wrap"><canvas id="ipqcTrendCanvas"></canvas><div id="ipqcTrendEmpty" class="trend-empty">검색 결과를 불러오면 트렌드를 확인할 수 있습니다.</div></div>
+      <div class="mold-filter-box"><div class="mold-filter-head"><span class="mold-filter-title" data-i18n="trendMoldTitle">몰드 선택 (단수·복수 선택 가능)</span><span class="mold-filter-actions"><button type="button" onclick="selectAllIpqcMolds(true)" data-i18n="trendAll">전체 선택</button><button type="button" onclick="selectAllIpqcMolds(false)" data-i18n="trendNone">선택 해제</button></span></div><div id="ipqcMoldFilters" class="mold-filter-list"><span class="hint" data-i18n="trendMoldHint">품목을 선택하면 몰드 목록이 표시됩니다.</span></div></div>
+      <div class="trend-canvas-wrap"><canvas id="ipqcTrendCanvas"></canvas><div id="ipqcTrendEmpty" class="trend-empty" data-i18n="trendEmptyInit">검색 결과를 불러오면 트렌드를 확인할 수 있습니다.</div></div>
       <div id="ipqcTrendLegend" class="trend-legend"></div>
     </div>
   </div>
@@ -853,6 +853,11 @@ const I18N = {
     srchAllCols:' 엑셀 전체 컬럼 데이터를 모두 표시합니다.',
     srchFail:'검색 실패: ',
     srchNoXlsx:'XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.',
+    trendTitle:'📈 IPQC 검색 트렌드', trendSub:'Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택',
+    trendTargetInit:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendMetricA:'왼쪽 축 측정 항목', trendMetricB:'오른쪽 축 측정 항목',
+    trendFrom:'트렌드 시작일', trendTo:'트렌드 종료일', trendMoldTitle:'몰드 선택 (단수·복수 선택 가능)', trendAll:'전체 선택', trendNone:'선택 해제',
+    trendMoldHint:'품목을 선택하면 몰드 목록이 표시됩니다.', trendEmptyInit:'검색 결과를 불러오면 트렌드를 확인할 수 있습니다.', trendNoMeasure:'측정 항목을 하나 이상 선택해 주세요.',
+    trendSelectProduct:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendNoValue:'선택한 항목의 측정값이 없습니다.', trendNoPeriod:'선택 기간에 측정값이 없습니다.', trendSelectMold:'표시할 몰드를 하나 이상 선택해 주세요.', trendMoldPrefix:'몰드', trendNoMold:'선택 가능한 몰드가 없습니다.', trendView:'트렌드 보기',
     machines:'대', rounds:'회',
     submitOk:'✅ 서버에 성공적으로 저장되었습니다!', submitFail:'❌ 서버 저장 실패.',
     submitting:'☁️ 서버에 저장 중...', noInspector:'검사원 이름을 입력하세요.',
@@ -939,6 +944,11 @@ const I18N = {
     srchAllCols:' Showing all Excel columns.',
     srchFail:'Search failed: ',
     srchNoXlsx:'XLSX library not loaded. Check your network connection.',
+    trendTitle:'📈 IPQC Search Trend', trendSub:'Google Sheets ipqc_data · Click SAP PN or Description · Select period and mold',
+    trendTargetInit:'Search first, then click an SAP PN or Description in the results.', trendMetricA:'Left-axis measurement', trendMetricB:'Right-axis measurement',
+    trendFrom:'Trend start date', trendTo:'Trend end date', trendMoldTitle:'Mold selection (single or multiple)', trendAll:'Select All', trendNone:'Clear Selection',
+    trendMoldHint:'Select a product to display available molds.', trendEmptyInit:'Load search results to view the trend.', trendNoMeasure:'Select at least one measurement.',
+    trendSelectProduct:'Search first, then click an SAP PN or Description in the results.', trendNoValue:'No measurement values for the selected item.', trendNoPeriod:'No measurements in the selected period.', trendSelectMold:'Select at least one mold to display.', trendMoldPrefix:'Mold', trendNoMold:'No molds available.', trendView:'View trend',
     machines:'machines', rounds:'rounds',
     submitOk:'✅ Saved to server!', submitFail:'❌ Save failed.',
     submitting:'☁️ Saving...', noInspector:'Please enter inspector name.',
@@ -1025,6 +1035,11 @@ const I18N = {
     srchAllCols:' 顯示 Excel 全部欄位資料。',
     srchFail:'查詢失敗：',
     srchNoXlsx:'尚未載入 XLSX 程式庫，請確認網路連線。',
+    trendTitle:'📈 IPQC 查詢趨勢', trendSub:'Google Sheets ipqc_data · 點擊 SAP PN 或 Description · 選擇期間與模號',
+    trendTargetInit:'查詢後請點擊結果中的 SAP PN 或 Description。', trendMetricA:'左軸量測項目', trendMetricB:'右軸量測項目',
+    trendFrom:'趨勢開始日期', trendTo:'趨勢結束日期', trendMoldTitle:'模號選擇（單選或複選）', trendAll:'全選', trendNone:'取消選擇',
+    trendMoldHint:'選擇產品後顯示可用模號。', trendEmptyInit:'載入查詢結果後可查看趨勢。', trendNoMeasure:'請至少選擇一個量測項目。',
+    trendSelectProduct:'查詢後請點擊結果中的 SAP PN 或 Description。', trendNoValue:'所選項目沒有量測值。', trendNoPeriod:'所選期間沒有量測值。', trendSelectMold:'請至少選擇一個模號。', trendMoldPrefix:'模號', trendNoMold:'沒有可選模號。', trendView:'查看趨勢',
     machines:'台', rounds:'次',
     submitOk:'✅ 儲存成功！', submitFail:'❌ 儲存失敗。',
     submitting:'☁️ 儲存中...', noInspector:'請輸入檢驗員。',
@@ -1111,6 +1126,11 @@ const I18N = {
     srchAllCols:' Hiển thị tất cả các cột Excel.',
     srchFail:'Tìm kiếm thất bại: ',
     srchNoXlsx:'Thư viện XLSX chưa được tải. Kiểm tra kết nối mạng.',
+    trendTitle:'📈 Xu hướng tìm kiếm IPQC', trendSub:'Google Sheets ipqc_data · Nhấp SAP PN hoặc Description · Chọn thời gian và khuôn',
+    trendTargetInit:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendMetricA:'Phép đo trục trái', trendMetricB:'Phép đo trục phải',
+    trendFrom:'Ngày bắt đầu xu hướng', trendTo:'Ngày kết thúc xu hướng', trendMoldTitle:'Chọn khuôn (một hoặc nhiều)', trendAll:'Chọn tất cả', trendNone:'Bỏ chọn',
+    trendMoldHint:'Chọn sản phẩm để hiển thị danh sách khuôn.', trendEmptyInit:'Tải kết quả tìm kiếm để xem xu hướng.', trendNoMeasure:'Chọn ít nhất một phép đo.',
+    trendSelectProduct:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendNoValue:'Không có giá trị đo cho mục đã chọn.', trendNoPeriod:'Không có dữ liệu trong khoảng đã chọn.', trendSelectMold:'Chọn ít nhất một khuôn.', trendMoldPrefix:'Khuôn', trendNoMold:'Không có khuôn.', trendView:'Xem xu hướng',
     machines:'máy', rounds:'lần',
     submitOk:'✅ Đã lưu!', submitFail:'❌ Lỗi.',
     submitting:'☁️ Đang lưu...', noInspector:'Nhập tên nhân viên.',
@@ -1197,6 +1217,11 @@ const I18N = {
     srchAllCols:' Menampilkan semua kolom Excel.',
     srchFail:'Pencarian gagal: ',
     srchNoXlsx:'Pustaka XLSX belum dimuat. Periksa koneksi jaringan.',
+    trendTitle:'📈 Tren Pencarian IPQC', trendSub:'Google Sheets ipqc_data · Klik SAP PN atau Description · Pilih periode dan mold',
+    trendTargetInit:'Cari lalu klik SAP PN atau Description pada hasil.', trendMetricA:'Pengukuran sumbu kiri', trendMetricB:'Pengukuran sumbu kanan',
+    trendFrom:'Tanggal mulai tren', trendTo:'Tanggal akhir tren', trendMoldTitle:'Pilih mold (tunggal atau beberapa)', trendAll:'Pilih Semua', trendNone:'Hapus Pilihan',
+    trendMoldHint:'Pilih produk untuk menampilkan daftar mold.', trendEmptyInit:'Muat hasil pencarian untuk melihat tren.', trendNoMeasure:'Pilih setidaknya satu pengukuran.',
+    trendSelectProduct:'Cari lalu klik SAP PN atau Description pada hasil.', trendNoValue:'Tidak ada nilai pengukuran untuk item ini.', trendNoPeriod:'Tidak ada data pada periode terpilih.', trendSelectMold:'Pilih setidaknya satu mold.', trendMoldPrefix:'Mold', trendNoMold:'Tidak ada mold.', trendView:'Lihat tren',
     machines:'mesin', rounds:'kali',
     submitOk:'✅ Tersimpan!', submitFail:'❌ Gagal.',
     submitting:'☁️ Menyimpan...', noInspector:'Masukkan nama inspector.',
@@ -1287,6 +1312,8 @@ function applyLanguage(){
     const pfn = document.getElementById('planFileName');
     if(pfn) pfn.textContent = tr('planFileHint');
   }
+  initIpqcTrend();
+  if(ipqcTrendSelection) drawIpqcTrend();
   // 설비 탭 재렌더링 (초기화 완료 후)
   if(document.getElementById('machContents')?.children.length>0) renderAll();
 }
@@ -1970,10 +1997,10 @@ const IPQC_TREND_MEASURES = [12,13,14,15,17,18,19,22,23,24,25,26,27,28,29,30,31,
 const IPQC_TREND_COLORS = ['#2563eb','#f97316','#16a34a','#9333ea','#dc2626','#0891b2','#ca8a04','#db2777','#4f46e5','#0f766e'];
 
 function initIpqcTrend(){
-  const options = '<option value="-1">선택 안 함</option>' + IPQC_TREND_MEASURES.map(i=>`<option value="${i}">${esc(HEADERS[i])}</option>`).join('');
+  const options = `<option value="-1">${esc(tr('trendNone'))}</option>` + IPQC_TREND_MEASURES.map(i=>`<option value="${i}">${esc(HEADERS[i])}</option>`).join('');
   const a=document.getElementById('ipqcMetricA'), b=document.getElementById('ipqcMetricB');
   if(!a||!b) return;
-  a.innerHTML=options; b.innerHTML=options; a.value='15'; b.value='19';
+  const prevA=a.value||'15',prevB=b.value||'19';a.innerHTML=options;b.innerHTML=options;a.value=prevA;b.value=prevB;
 }
 
 function trendNumber(v){
@@ -1990,7 +2017,8 @@ function selectIpqcTrend(resultIdx,col,event){
   ipqcMoldSelectionKey='';
   ipqcSelectedMolds.clear();
   const from=document.getElementById('ipqcTrendFrom'),to=document.getElementById('ipqcTrendTo');
-  if(from) from.value=''; if(to) to.value='';
+  const exact=document.getElementById('searchDate')?.value||'',searchedFrom=document.getElementById('searchDateFrom')?.value||'',searchedTo=document.getElementById('searchDateTo')?.value||'';
+  if(from) from.value=exact||searchedFrom; if(to) to.value=exact||searchedTo;
   drawIpqcTrend();
   document.querySelector('.trend-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -2000,7 +2028,7 @@ function renderIpqcMoldFilters(molds){
   const key=ipqcTrendSelection?`${ipqcTrendSelection.col}|${ipqcTrendSelection.value}`:'';
   if(key!==ipqcMoldSelectionKey){ipqcMoldSelectionKey=key;ipqcSelectedMolds=new Set(molds);}
   ipqcSelectedMolds=new Set([...ipqcSelectedMolds].filter(m=>molds.includes(m)));
-  box.innerHTML=molds.length?molds.map(m=>`<label class="mold-check"><input type="checkbox" value="${esc(m)}" ${ipqcSelectedMolds.has(m)?'checked':''} onchange="toggleIpqcMold(this)"><span>몰드 ${esc(m)}</span></label>`).join(''):'<span class="hint">선택 가능한 몰드가 없습니다.</span>';
+  box.innerHTML=molds.length?molds.map(m=>`<label class="mold-check"><input type="checkbox" value="${esc(m)}" ${ipqcSelectedMolds.has(m)?'checked':''} onchange="toggleIpqcMold(this)"><span>${esc(tr('trendMoldPrefix'))} ${esc(m)}</span></label>`).join(''):`<span class="hint">${esc(tr('trendNoMold'))}</span>`;
 }
 
 function toggleIpqcMold(input){
@@ -2024,18 +2052,18 @@ function drawIpqcTrend(skipMoldRender=false){
   const a=Number(document.getElementById('ipqcMetricA')?.value??-1),b=Number(document.getElementById('ipqcMetricB')?.value??-1),active=[a,b].filter(i=>i>=0);
   const wrap=canvas.parentElement,dpr=window.devicePixelRatio||1,w=Math.max(300,wrap.clientWidth-16),h=Math.max(240,wrap.clientHeight-16);
   canvas.width=w*dpr;canvas.height=h*dpr;const c=canvas.getContext('2d');c.scale(dpr,dpr);c.clearRect(0,0,w,h);
-  if(!active.length){empty.textContent='측정 항목을 하나 이상 선택해 주세요.';empty.style.display='grid';legend.innerHTML='';return;}
-  if(!ipqcTrendSelection){empty.textContent='검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.';empty.style.display='grid';legend.innerHTML='';return;}
+  if(!active.length){empty.textContent=tr('trendNoMeasure');empty.style.display='grid';legend.innerHTML='';return;}
+  if(!ipqcTrendSelection){empty.textContent=tr('trendSelectProduct');empty.style.display='grid';legend.innerHTML='';return;}
   let rows=ipqcTrendSourceRows.filter(r=>String(r[ipqcTrendSelection.col]??'').trim()===ipqcTrendSelection.value&&active.some(i=>trendNumber(r[i])!==null)).sort((x,y)=>`${x[0]} ${x[1]||''}`.localeCompare(`${y[0]} ${y[1]||''}`));
   const fromEl=document.getElementById('ipqcTrendFrom'),toEl=document.getElementById('ipqcTrendTo');
   if(rows.length){const last=String(rows.at(-1)[0]).slice(0,10);if(!toEl.value)toEl.value=last;if(!fromEl.value){const cut=new Date(last+'T00:00:00');cut.setDate(cut.getDate()-29);fromEl.value=cut.toISOString().slice(0,10);}rows=rows.filter(r=>{const d=String(r[0]).slice(0,10);return(!fromEl.value||d>=fromEl.value)&&(!toEl.value||d<=toEl.value);});}
-  target.textContent=rows.length?`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${fromEl.value||String(rows[0][0]).slice(0,10)} ~ ${toEl.value||String(rows.at(-1)[0]).slice(0,10)}`:`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · 선택 기간에 측정값 없음`;
-  if(!rows.length){empty.textContent='선택한 항목의 측정값이 없습니다.';empty.style.display='grid';legend.innerHTML='';return;}
+  target.textContent=rows.length?`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${fromEl.value||String(rows[0][0]).slice(0,10)} ~ ${toEl.value||String(rows.at(-1)[0]).slice(0,10)}`:`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${tr('trendNoPeriod')}`;
+  if(!rows.length){empty.textContent=tr('trendNoPeriod');empty.style.display='grid';legend.innerHTML='';return;}
   const allMolds=[...new Set(rows.map(r=>String(r[8]??'미지정')))];
   if(!skipMoldRender) renderIpqcMoldFilters(allMolds);
   const molds=allMolds.filter(m=>ipqcSelectedMolds.has(m));
   rows=rows.filter(r=>ipqcSelectedMolds.has(String(r[8]??'미지정')));
-  if(!molds.length){empty.textContent='표시할 몰드를 하나 이상 선택해 주세요.';empty.style.display='grid';legend.innerHTML='';return;}
+  if(!molds.length){empty.textContent=tr('trendSelectMold');empty.style.display='grid';legend.innerHTML='';return;}
   empty.style.display='none';
   const av=a>=0?rows.map(r=>trendNumber(r[a])).filter(v=>v!==null):[],bv=b>=0?rows.map(r=>trendNumber(r[b])).filter(v=>v!==null):[];
   const [amin,amax]=trendBounds(av.length?av:[0,1]),[bmin,bmax]=trendBounds(bv.length?bv:[0,1]),pad={l:a>=0?66:28,r:b>=0?72:28,t:20,b:46},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
@@ -2047,7 +2075,7 @@ function drawIpqcTrend(skipMoldRender=false){
   const series=[];if(a>=0)series.push([a,ya,false]);if(b>=0)series.push([b,yb,true]);
   molds.forEach(m=>{const color=IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length],group=rows.filter(r=>String(r[8]??'미지정')===m);series.forEach(([col,yfn,dash])=>{const pts=group.map(r=>({r,v:trendNumber(r[col])})).filter(p=>p.v!==null);if(!pts.length)return;c.beginPath();pts.forEach((p,i)=>{const px=x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),py=yfn(p.v);i?c.lineTo(px,py):c.moveTo(px,py)});c.strokeStyle=color;c.lineWidth=dash?1.8:2.5;c.setLineDash(dash?[6,4]:[]);c.stroke();c.setLineDash([]);c.fillStyle=color;pts.forEach(p=>{c.beginPath();c.arc(x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),yfn(p.v),2.2,0,Math.PI*2);c.fill();});});});
   c.fillStyle='#64748b';c.textAlign='center';const ticks=Math.min(6,labels.length);for(let j=0;j<ticks;j++){const i=Math.round(j*(labels.length-1)/Math.max(1,ticks-1));c.fillText(labels[i].slice(0,10),x(labels[i]),h-16);}
-  legend.innerHTML=molds.map(m=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length]}"></i>몰드 ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
+  legend.innerHTML=molds.map(m=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length]}"></i>${esc(tr('trendMoldPrefix'))} ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
 }
 
 function getSearchFilters(){
@@ -2243,7 +2271,7 @@ function renderSearchResults(){
     html += `<tr onclick="openSearchResult(${idx})">`;
     cols.forEach(col=>{
       const clickable=(col===5||col===6)&&String(item.row[col]||'').trim();
-      html += clickable?`<td class="trend-cell" title="트렌드 보기" onclick="selectIpqcTrend(${idx},${col},event)">${esc(item.row[col] || '')}</td>`:`<td>${esc(item.row[col] || '')}</td>`;
+      html += clickable?`<td class="trend-cell" title="${esc(tr('trendView'))}" onclick="selectIpqcTrend(${idx},${col},event)">${esc(item.row[col] || '')}</td>`:`<td>${esc(item.row[col] || '')}</td>`;
     });
     html += '</tr>';
   });
