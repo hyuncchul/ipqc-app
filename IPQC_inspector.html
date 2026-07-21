@@ -180,6 +180,18 @@
     .search-table{font-size:12px}
     .search-table tbody tr{cursor:pointer}
     .search-table tbody tr:hover{background:#eff6ff}
+    .trend-cell{color:#1d4ed8;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+    .trend-panel{margin-top:14px;padding:14px;border:1px solid #bfdbfe;border-radius:12px;background:linear-gradient(180deg,#f8fbff,#fff)}
+    .trend-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .trend-title{font-size:15px;font-weight:900;color:#1e40af}
+    .trend-sub{font-size:11px;color:var(--muted);margin-top:3px}
+    .trend-target{font-size:12px;color:#0f766e;font-weight:800;text-align:right;max-width:520px}
+    .trend-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    .trend-canvas-wrap{height:360px;position:relative;border:1px solid var(--line);border-radius:10px;background:white;padding:8px}
+    #ipqcTrendCanvas{width:100%;height:100%}
+    .trend-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px;pointer-events:none}
+    .trend-legend{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:9px;font-size:11px;color:var(--muted)}
+    .trend-legend-item{display:flex;align-items:center;gap:5px}.trend-swatch{width:20px;height:3px;border-radius:3px}.trend-dash{height:0;border-top:2px dashed #475569}
 
     .footer-space{height:80px}
     @media(max-width:900px){
@@ -194,6 +206,8 @@
       .common-grid{grid-template-columns:repeat(2,1fr)}
       .info-grid{grid-template-columns:1fr 1fr}
       .search-grid{grid-template-columns:1fr}
+      .trend-controls{grid-template-columns:1fr}
+      .trend-canvas-wrap{height:320px}
       .lang-top label{display:none}
       .lang-top select{min-width:110px;font-size:13px}
       header{padding:10px 12px}
@@ -433,6 +447,18 @@
     <div id="searchStatus" class="search-result-meta" data-i18n="srchInit">검색 조건을 입력한 뒤 검색 버튼을 누르세요.</div>
     <div class="table-wrap" id="searchResultWrap" style="display:none;max-height:420px">
       <table id="searchResultTable" class="search-table"></table>
+    </div>
+    <div class="trend-panel">
+      <div class="trend-head">
+        <div><div class="trend-title">📈 IPQC 검색 트렌드</div><div class="trend-sub">Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 시 최근 1개월 · 몰드별 색상</div></div>
+        <div id="ipqcTrendTarget" class="trend-target">검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.</div>
+      </div>
+      <div class="trend-controls">
+        <div><label>왼쪽 축 측정 항목</label><select id="ipqcMetricA" onchange="drawIpqcTrend()"></select></div>
+        <div><label>오른쪽 축 측정 항목</label><select id="ipqcMetricB" onchange="drawIpqcTrend()"></select></div>
+      </div>
+      <div class="trend-canvas-wrap"><canvas id="ipqcTrendCanvas"></canvas><div id="ipqcTrendEmpty" class="trend-empty">검색 결과를 불러오면 트렌드를 확인할 수 있습니다.</div></div>
+      <div id="ipqcTrendLegend" class="trend-legend"></div>
     </div>
   </div>
 
@@ -1928,6 +1954,63 @@ let searchRowsCacheAt = 0;
 let searchRowsError = '';        // '' | 'timeout' | 'error'
 const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
 const SEARCH_ROWS_TIMEOUT_MS = 300000;
+let ipqcTrendSourceRows = [];
+let ipqcTrendSelection = null;
+const IPQC_TREND_MEASURES = [12,13,14,15,17,18,19,22,23,24,25,26,27,28,29,30,31,33,34];
+const IPQC_TREND_COLORS = ['#2563eb','#f97316','#16a34a','#9333ea','#dc2626','#0891b2','#ca8a04','#db2777','#4f46e5','#0f766e'];
+
+function initIpqcTrend(){
+  const options = '<option value="-1">선택 안 함</option>' + IPQC_TREND_MEASURES.map(i=>`<option value="${i}">${esc(HEADERS[i])}</option>`).join('');
+  const a=document.getElementById('ipqcMetricA'), b=document.getElementById('ipqcMetricB');
+  if(!a||!b) return;
+  a.innerHTML=options; b.innerHTML=options; a.value='15'; b.value='19';
+}
+
+function trendNumber(v){
+  if(typeof v==='number') return Number.isFinite(v)?v:null;
+  if(v===null||v===undefined||String(v).trim()==='') return null;
+  const n=Number(String(v).replace(/,/g,'')); return Number.isFinite(n)?n:null;
+}
+
+function selectIpqcTrend(resultIdx,col,event){
+  if(event){event.stopPropagation();event.preventDefault();}
+  const row=searchResultRows[resultIdx]?.row, value=String(row?.[col]??'').trim();
+  if(!value) return;
+  ipqcTrendSelection={col,value,type:col===6?'SAP PN':'Description'};
+  drawIpqcTrend();
+  document.querySelector('.trend-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function trendBounds(values){
+  const min=Math.min(...values),max=Math.max(...values),spread=max-min||Math.abs(max)*.1||1;
+  return [min-spread*.12,max+spread*.12];
+}
+
+function drawIpqcTrend(){
+  const canvas=document.getElementById('ipqcTrendCanvas'),empty=document.getElementById('ipqcTrendEmpty'),legend=document.getElementById('ipqcTrendLegend'),target=document.getElementById('ipqcTrendTarget');
+  if(!canvas||!empty) return;
+  const a=Number(document.getElementById('ipqcMetricA')?.value??-1),b=Number(document.getElementById('ipqcMetricB')?.value??-1),active=[a,b].filter(i=>i>=0);
+  const wrap=canvas.parentElement,dpr=window.devicePixelRatio||1,w=Math.max(300,wrap.clientWidth-16),h=Math.max(240,wrap.clientHeight-16);
+  canvas.width=w*dpr;canvas.height=h*dpr;const c=canvas.getContext('2d');c.scale(dpr,dpr);c.clearRect(0,0,w,h);
+  if(!active.length){empty.textContent='측정 항목을 하나 이상 선택해 주세요.';empty.style.display='grid';legend.innerHTML='';return;}
+  if(!ipqcTrendSelection){empty.textContent='검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.';empty.style.display='grid';legend.innerHTML='';return;}
+  let rows=ipqcTrendSourceRows.filter(r=>String(r[ipqcTrendSelection.col]??'').trim()===ipqcTrendSelection.value&&active.some(i=>trendNumber(r[i])!==null)).sort((x,y)=>`${x[0]} ${x[1]||''}`.localeCompare(`${y[0]} ${y[1]||''}`));
+  if(rows.length){const last=String(rows.at(-1)[0]).slice(0,10),cut=new Date(last+'T00:00:00');cut.setDate(cut.getDate()-29);const cutStr=cut.toISOString().slice(0,10);rows=rows.filter(r=>String(r[0]).slice(0,10)>=cutStr);}
+  target.textContent=rows.length?`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${String(rows[0][0]).slice(0,10)} ~ ${String(rows.at(-1)[0]).slice(0,10)} (최근 1개월)`:`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · 측정값 없음`;
+  if(!rows.length){empty.textContent='선택한 항목의 측정값이 없습니다.';empty.style.display='grid';legend.innerHTML='';return;}
+  empty.style.display='none';
+  const molds=[...new Set(rows.map(r=>String(r[8]??'미지정')))],av=a>=0?rows.map(r=>trendNumber(r[a])).filter(v=>v!==null):[],bv=b>=0?rows.map(r=>trendNumber(r[b])).filter(v=>v!==null):[];
+  const [amin,amax]=trendBounds(av.length?av:[0,1]),[bmin,bmax]=trendBounds(bv.length?bv:[0,1]),pad={l:a>=0?66:28,r:b>=0?72:28,t:20,b:46},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const labels=[...new Set(rows.map(r=>`${String(r[0]).slice(0,10)} ${r[1]||''}`))],x=s=>pad.l+(labels.length===1?cw/2:cw*labels.indexOf(s)/(labels.length-1)),ya=v=>pad.t+(amax-v)/(amax-amin)*ch,yb=v=>pad.t+(bmax-v)/(bmax-bmin)*ch;
+  c.font='11px system-ui';
+  for(let j=0;j<=5;j++){const y=pad.t+ch*j/5;c.strokeStyle='#e2e8f0';c.beginPath();c.moveTo(pad.l,y);c.lineTo(w-pad.r,y);c.stroke();if(a>=0){c.fillStyle='#1d4ed8';c.textAlign='right';c.fillText(Number((amax-(amax-amin)*j/5).toPrecision(5)),pad.l-8,y+4);}if(b>=0){c.fillStyle='#c2410c';c.textAlign='left';c.fillText(Number((bmax-(bmax-bmin)*j/5).toPrecision(5)),w-pad.r+8,y+4);}}
+  if(a>=0){c.save();c.translate(13,pad.t+ch/2);c.rotate(-Math.PI/2);c.fillStyle='#1d4ed8';c.textAlign='center';c.fillText(HEADERS[a],0,0);c.restore();}
+  if(b>=0){c.save();c.translate(w-10,pad.t+ch/2);c.rotate(Math.PI/2);c.fillStyle='#c2410c';c.textAlign='center';c.fillText(HEADERS[b],0,0);c.restore();}
+  const series=[];if(a>=0)series.push([a,ya,false]);if(b>=0)series.push([b,yb,true]);
+  molds.forEach((m,mi)=>{const color=IPQC_TREND_COLORS[mi%IPQC_TREND_COLORS.length],group=rows.filter(r=>String(r[8]??'미지정')===m);series.forEach(([col,yfn,dash])=>{const pts=group.map(r=>({r,v:trendNumber(r[col])})).filter(p=>p.v!==null);if(!pts.length)return;c.beginPath();pts.forEach((p,i)=>{const px=x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),py=yfn(p.v);i?c.lineTo(px,py):c.moveTo(px,py)});c.strokeStyle=color;c.lineWidth=dash?1.8:2.5;c.setLineDash(dash?[6,4]:[]);c.stroke();c.setLineDash([]);c.fillStyle=color;pts.forEach(p=>{c.beginPath();c.arc(x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),yfn(p.v),2.2,0,Math.PI*2);c.fill();});});});
+  c.fillStyle='#64748b';c.textAlign='center';const ticks=Math.min(6,labels.length);for(let j=0;j<ticks;j++){const i=Math.round(j*(labels.length-1)/Math.max(1,ticks-1));c.fillText(labels[i].slice(0,10),x(labels[i]),h-16);}
+  legend.innerHTML=molds.map((m,i)=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[i%IPQC_TREND_COLORS.length]}"></i>몰드 ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
+}
 
 function getSearchFilters(){
   const val = id => (document.getElementById(id)?.value || '').trim();
@@ -2059,6 +2142,8 @@ async function searchServerRecords(){
     searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
     const filters = getSearchFilters();
     const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
+    ipqcTrendSourceRows = searchRowsApiReady ? (rowsResult.rows || []).map(item=>(item.row||[]).slice(0,HEADERS.length)) : [];
+    records.forEach(record=>serverRecordToRows(record).forEach(row=>ipqcTrendSourceRows.push(row.slice(0,HEADERS.length))));
     const seen = new Set();
     records.forEach(record=>{
       serverRecordToRows(record).forEach(row=>{
@@ -2118,7 +2203,10 @@ function renderSearchResults(){
   html += '</tr></thead><tbody>';
   preview.forEach((item, idx)=>{
     html += `<tr onclick="openSearchResult(${idx})">`;
-    cols.forEach(col=>{ html += `<td>${esc(item.row[col] || '')}</td>`; });
+    cols.forEach(col=>{
+      const clickable=(col===5||col===6)&&String(item.row[col]||'').trim();
+      html += clickable?`<td class="trend-cell" title="트렌드 보기" onclick="selectIpqcTrend(${idx},${col},event)">${esc(item.row[col] || '')}</td>`:`<td>${esc(item.row[col] || '')}</td>`;
+    });
     html += '</tr>';
   });
   html += '</tbody>';
@@ -2167,6 +2255,8 @@ function clearSearchFilters(){
   document.getElementById('searchStatus').textContent = tr('srchInit');
   document.getElementById('searchResultWrap').style.display = 'none';
   document.getElementById('searchResultTable').innerHTML = '';
+  ipqcTrendSelection = null;
+  drawIpqcTrend();
 }
 
 function getDeviceId(){
@@ -2584,12 +2674,15 @@ function init(){
   applyLanguage();
   renderHistory();
   renderPnSection();
+  initIpqcTrend();
 }
 
 document.addEventListener('input', e=>{
   const id=e.target.id;
   if(['date','time','shift','inspector'].includes(id)) saveDebounced();
 });
+
+window.addEventListener('resize',()=>{ if(ipqcTrendSelection) drawIpqcTrend(); });
 
 init();
 </script>
