@@ -192,6 +192,8 @@
     .mold-filter-title{font-size:12px;font-weight:800;color:#334155}
     .mold-filter-actions{display:flex;gap:5px}.mold-filter-actions button{border:1px solid #cbd5e1;border-radius:7px;background:white;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
     .mold-filter-list{display:flex;flex-wrap:wrap;gap:6px}.mold-check{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbd5e1;border-radius:999px;background:white;padding:5px 9px;font-size:11px;color:#334155;cursor:pointer;margin:0}.mold-check:has(input:checked){border-color:#2563eb;background:#dbeafe;color:#1e40af;font-weight:800}.mold-check input{width:14px;height:14px;min-height:14px;margin:0;padding:0}
+    .trend-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}.trend-stat-card{border:1px solid #dbeafe;border-radius:10px;background:white;padding:9px 11px}.trend-stat-name{font-size:11px;font-weight:800;color:#334155;margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.trend-stat-values{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.trend-stat-value{background:#f8fafc;border-radius:7px;padding:6px;text-align:center}.trend-stat-value span{display:block;font-size:10px;color:#64748b;margin-bottom:2px}.trend-stat-value b{font-size:14px;color:#1e40af;font-variant-numeric:tabular-nums}
+    .bake-panel{margin-top:14px;padding:14px;border:1px solid #fed7aa;border-radius:12px;background:linear-gradient(180deg,#fffaf5,#fff)}.bake-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:9px}.bake-title{font-size:15px;font-weight:900;color:#9a3412}.bake-status{font-size:11px;color:var(--muted)}.bake-table-wrap{overflow:auto;border:1px solid #fed7aa;border-radius:10px;max-height:420px}.bake-table{width:max-content;min-width:100%;font-size:12px}.bake-table th{background:#fff7ed}.bake-table th:first-child,.bake-table td:first-child{min-width:135px;position:sticky;left:0;z-index:8;background:#fff7ed;text-align:left}.bake-pass{color:#15803d;font-weight:900}.bake-fail{color:#dc2626;font-weight:900}.bake-item-head{min-width:155px;white-space:normal}.bake-item-head small{display:block;color:#64748b;font-weight:500;margin-top:3px}
     .trend-canvas-wrap{height:360px;position:relative;border:1px solid var(--line);border-radius:10px;background:white;padding:8px}
     #ipqcTrendCanvas{width:100%;height:100%}
     .trend-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px;pointer-events:none}
@@ -212,6 +214,7 @@
       .info-grid{grid-template-columns:1fr 1fr}
       .search-grid{grid-template-columns:1fr}
       .trend-controls{grid-template-columns:1fr}
+      .trend-stats{grid-template-columns:1fr}
       .trend-canvas-wrap{height:320px}
       .lang-top label{display:none}
       .lang-top select{min-width:110px;font-size:13px}
@@ -465,8 +468,13 @@
         <div><label data-i18n="trendTo">트렌드 종료일</label><input id="ipqcTrendTo" type="date" onchange="drawIpqcTrend(false,true)"></div>
       </div>
       <div class="mold-filter-box"><div class="mold-filter-head"><span class="mold-filter-title" data-i18n="trendMoldTitle">몰드 선택 (단수·복수 선택 가능)</span><span class="mold-filter-actions"><button type="button" onclick="selectAllIpqcMolds(true)" data-i18n="trendAll">전체 선택</button><button type="button" onclick="selectAllIpqcMolds(false)" data-i18n="trendNone">선택 해제</button></span></div><div id="ipqcMoldFilters" class="mold-filter-list"><span class="hint" data-i18n="trendMoldHint">품목을 선택하면 몰드 목록이 표시됩니다.</span></div></div>
+      <div id="ipqcTrendStats" class="trend-stats"></div>
       <div class="trend-canvas-wrap"><canvas id="ipqcTrendCanvas"></canvas><div id="ipqcTrendEmpty" class="trend-empty" data-i18n="trendEmptyInit">검색 결과를 불러오면 트렌드를 확인할 수 있습니다.</div></div>
       <div id="ipqcTrendLegend" class="trend-legend"></div>
+    </div>
+    <div class="bake-panel">
+      <div class="bake-head"><div><div class="bake-title" data-i18n="bakeTitle">🔥 베이킹 테스트 결과</div><div class="trend-sub" data-i18n="bakeSub">검색 결과의 SAP PN 또는 Description을 클릭하면 날짜와 관계없이 같은 품목의 Bake test 기록을 표시합니다.</div></div><div id="bakeStatus" class="bake-status" data-i18n="bakeInit">서버 검색 후 품목을 선택하세요.</div></div>
+      <div id="bakeResultWrap" class="bake-table-wrap" style="display:none"><table id="bakeResultTable" class="bake-table"></table></div>
     </div>
   </div>
 
@@ -857,7 +865,8 @@ const I18N = {
     trendTargetInit:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendMetricA:'왼쪽 축 측정 항목', trendMetricB:'오른쪽 축 측정 항목',
     trendFrom:'트렌드 시작일', trendTo:'트렌드 종료일', trendMoldTitle:'몰드 선택 (단수·복수 선택 가능)', trendAll:'전체 선택', trendNone:'선택 해제',
     trendMoldHint:'품목을 선택하면 몰드 목록이 표시됩니다.', trendEmptyInit:'검색 결과를 불러오면 트렌드를 확인할 수 있습니다.', trendNoMeasure:'측정 항목을 하나 이상 선택해 주세요.',
-    trendSelectProduct:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendNoValue:'선택한 항목의 측정값이 없습니다.', trendNoPeriod:'선택 기간에 측정값이 없습니다.', trendSelectMold:'표시할 몰드를 하나 이상 선택해 주세요.', trendMoldPrefix:'몰드', trendNoMold:'선택 가능한 몰드가 없습니다.', trendView:'트렌드 보기',
+    trendSelectProduct:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendNoValue:'선택한 항목의 측정값이 없습니다.', trendNoPeriod:'선택 기간에 측정값이 없습니다.', trendSelectMold:'표시할 몰드를 하나 이상 선택해 주세요.', trendMoldPrefix:'몰드', trendNoMold:'선택 가능한 몰드가 없습니다.', trendView:'트렌드 보기', trendMax:'최댓값', trendMin:'최솟값', trendAvg:'평균값',
+    bakeTitle:'🔥 베이킹 테스트 결과', bakeSub:'검색 결과의 SAP PN 또는 Description을 클릭하면 날짜와 관계없이 같은 품목의 Bake test 기록을 표시합니다.', bakeInit:'서버 검색 후 품목을 선택하세요.', bakeSelectItem:'검색 결과에서 SAP PN 또는 Description을 선택하세요.', bakeLoading:'Bake test 시트를 확인하는 중...', bakeNone:'선택한 품목과 일치하는 베이킹 테스트가 없습니다.', bakeFound:'선택한 품목의 베이킹 테스트 {n}건', bakeAccess:'Bake test 시트를 읽을 수 없습니다. Google Sheets 공유 권한을 확인하세요.', bakeMeasure:'측정 항목', bakeRequirement:'요구 조건', bakeMold:'몰드 번호', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'비고', bakeStartEnd:'시작일 → 종료일',
     machines:'대', rounds:'회',
     submitOk:'✅ 서버에 성공적으로 저장되었습니다!', submitFail:'❌ 서버 저장 실패.',
     submitting:'☁️ 서버에 저장 중...', noInspector:'검사원 이름을 입력하세요.',
@@ -948,7 +957,8 @@ const I18N = {
     trendTargetInit:'Search first, then click an SAP PN or Description in the results.', trendMetricA:'Left-axis measurement', trendMetricB:'Right-axis measurement',
     trendFrom:'Trend start date', trendTo:'Trend end date', trendMoldTitle:'Mold selection (single or multiple)', trendAll:'Select All', trendNone:'Clear Selection',
     trendMoldHint:'Select a product to display available molds.', trendEmptyInit:'Load search results to view the trend.', trendNoMeasure:'Select at least one measurement.',
-    trendSelectProduct:'Search first, then click an SAP PN or Description in the results.', trendNoValue:'No measurement values for the selected item.', trendNoPeriod:'No measurements in the selected period.', trendSelectMold:'Select at least one mold to display.', trendMoldPrefix:'Mold', trendNoMold:'No molds available.', trendView:'View trend',
+    trendSelectProduct:'Search first, then click an SAP PN or Description in the results.', trendNoValue:'No measurement values for the selected item.', trendNoPeriod:'No measurements in the selected period.', trendSelectMold:'Select at least one mold to display.', trendMoldPrefix:'Mold', trendNoMold:'No molds available.', trendView:'View trend', trendMax:'Maximum', trendMin:'Minimum', trendAvg:'Average',
+    bakeTitle:'🔥 Baking Test Results', bakeSub:'Click an SAP PN or Description to show all Bake test records for the same item, regardless of date.', bakeInit:'Search the server, then select an item.', bakeSelectItem:'Select an SAP PN or Description in the search results.', bakeLoading:'Loading the Bake test sheet...', bakeNone:'No baking tests match the selected item.', bakeFound:'{n} baking tests for the selected item', bakeAccess:'Cannot read the Bake test sheet. Check Google Sheets sharing permissions.', bakeMeasure:'Measurement', bakeRequirement:'Requirement', bakeMold:'Mold No.', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'Remark', bakeStartEnd:'Start → End',
     machines:'machines', rounds:'rounds',
     submitOk:'✅ Saved to server!', submitFail:'❌ Save failed.',
     submitting:'☁️ Saving...', noInspector:'Please enter inspector name.',
@@ -1039,7 +1049,8 @@ const I18N = {
     trendTargetInit:'查詢後請點擊結果中的 SAP PN 或 Description。', trendMetricA:'左軸量測項目', trendMetricB:'右軸量測項目',
     trendFrom:'趨勢開始日期', trendTo:'趨勢結束日期', trendMoldTitle:'模號選擇（單選或複選）', trendAll:'全選', trendNone:'取消選擇',
     trendMoldHint:'選擇產品後顯示可用模號。', trendEmptyInit:'載入查詢結果後可查看趨勢。', trendNoMeasure:'請至少選擇一個量測項目。',
-    trendSelectProduct:'查詢後請點擊結果中的 SAP PN 或 Description。', trendNoValue:'所選項目沒有量測值。', trendNoPeriod:'所選期間沒有量測值。', trendSelectMold:'請至少選擇一個模號。', trendMoldPrefix:'模號', trendNoMold:'沒有可選模號。', trendView:'查看趨勢',
+    trendSelectProduct:'查詢後請點擊結果中的 SAP PN 或 Description。', trendNoValue:'所選項目沒有量測值。', trendNoPeriod:'所選期間沒有量測值。', trendSelectMold:'請至少選擇一個模號。', trendMoldPrefix:'模號', trendNoMold:'沒有可選模號。', trendView:'查看趨勢', trendMax:'最大值', trendMin:'最小值', trendAvg:'平均值',
+    bakeTitle:'🔥 烘烤測試結果', bakeSub:'點擊 SAP PN 或 Description，顯示相同品項的所有 Bake test 記錄，不限日期。', bakeInit:'查詢伺服器後請選擇品項。', bakeSelectItem:'請在查詢結果中選擇 SAP PN 或 Description。', bakeLoading:'正在載入 Bake test 工作表...', bakeNone:'所選品項沒有相符的烘烤測試。', bakeFound:'所選品項有 {n} 筆烘烤測試', bakeAccess:'無法讀取 Bake test 工作表，請確認分享權限。', bakeMeasure:'量測項目', bakeRequirement:'要求條件', bakeMold:'模號', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'備註', bakeStartEnd:'開始 → 結束',
     machines:'台', rounds:'次',
     submitOk:'✅ 儲存成功！', submitFail:'❌ 儲存失敗。',
     submitting:'☁️ 儲存中...', noInspector:'請輸入檢驗員。',
@@ -1130,7 +1141,8 @@ const I18N = {
     trendTargetInit:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendMetricA:'Phép đo trục trái', trendMetricB:'Phép đo trục phải',
     trendFrom:'Ngày bắt đầu xu hướng', trendTo:'Ngày kết thúc xu hướng', trendMoldTitle:'Chọn khuôn (một hoặc nhiều)', trendAll:'Chọn tất cả', trendNone:'Bỏ chọn',
     trendMoldHint:'Chọn sản phẩm để hiển thị danh sách khuôn.', trendEmptyInit:'Tải kết quả tìm kiếm để xem xu hướng.', trendNoMeasure:'Chọn ít nhất một phép đo.',
-    trendSelectProduct:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendNoValue:'Không có giá trị đo cho mục đã chọn.', trendNoPeriod:'Không có dữ liệu trong khoảng đã chọn.', trendSelectMold:'Chọn ít nhất một khuôn.', trendMoldPrefix:'Khuôn', trendNoMold:'Không có khuôn.', trendView:'Xem xu hướng',
+    trendSelectProduct:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendNoValue:'Không có giá trị đo cho mục đã chọn.', trendNoPeriod:'Không có dữ liệu trong khoảng đã chọn.', trendSelectMold:'Chọn ít nhất một khuôn.', trendMoldPrefix:'Khuôn', trendNoMold:'Không có khuôn.', trendView:'Xem xu hướng', trendMax:'Lớn nhất', trendMin:'Nhỏ nhất', trendAvg:'Trung bình',
+    bakeTitle:'🔥 Kết quả Bake test', bakeSub:'Nhấp SAP PN hoặc Description để xem mọi Bake test của cùng sản phẩm, không giới hạn ngày.', bakeInit:'Tìm trên server rồi chọn sản phẩm.', bakeSelectItem:'Chọn SAP PN hoặc Description trong kết quả.', bakeLoading:'Đang tải sheet Bake test...', bakeNone:'Không có Bake test phù hợp với sản phẩm đã chọn.', bakeFound:'Có {n} Bake test cho sản phẩm đã chọn', bakeAccess:'Không thể đọc sheet Bake test. Kiểm tra quyền chia sẻ.', bakeMeasure:'Hạng mục', bakeRequirement:'Yêu cầu', bakeMold:'Số khuôn', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'Ghi chú', bakeStartEnd:'Bắt đầu → Kết thúc',
     machines:'máy', rounds:'lần',
     submitOk:'✅ Đã lưu!', submitFail:'❌ Lỗi.',
     submitting:'☁️ Đang lưu...', noInspector:'Nhập tên nhân viên.',
@@ -1221,7 +1233,8 @@ const I18N = {
     trendTargetInit:'Cari lalu klik SAP PN atau Description pada hasil.', trendMetricA:'Pengukuran sumbu kiri', trendMetricB:'Pengukuran sumbu kanan',
     trendFrom:'Tanggal mulai tren', trendTo:'Tanggal akhir tren', trendMoldTitle:'Pilih mold (tunggal atau beberapa)', trendAll:'Pilih Semua', trendNone:'Hapus Pilihan',
     trendMoldHint:'Pilih produk untuk menampilkan daftar mold.', trendEmptyInit:'Muat hasil pencarian untuk melihat tren.', trendNoMeasure:'Pilih setidaknya satu pengukuran.',
-    trendSelectProduct:'Cari lalu klik SAP PN atau Description pada hasil.', trendNoValue:'Tidak ada nilai pengukuran untuk item ini.', trendNoPeriod:'Tidak ada data pada periode terpilih.', trendSelectMold:'Pilih setidaknya satu mold.', trendMoldPrefix:'Mold', trendNoMold:'Tidak ada mold.', trendView:'Lihat tren',
+    trendSelectProduct:'Cari lalu klik SAP PN atau Description pada hasil.', trendNoValue:'Tidak ada nilai pengukuran untuk item ini.', trendNoPeriod:'Tidak ada data pada periode terpilih.', trendSelectMold:'Pilih setidaknya satu mold.', trendMoldPrefix:'Mold', trendNoMold:'Tidak ada mold.', trendView:'Lihat tren', trendMax:'Maksimum', trendMin:'Minimum', trendAvg:'Rata-rata',
+    bakeTitle:'🔥 Hasil Bake test', bakeSub:'Klik SAP PN atau Description untuk melihat semua Bake test item yang sama tanpa batas tanggal.', bakeInit:'Cari server lalu pilih item.', bakeSelectItem:'Pilih SAP PN atau Description pada hasil.', bakeLoading:'Memuat sheet Bake test...', bakeNone:'Tidak ada Bake test untuk item yang dipilih.', bakeFound:'{n} Bake test untuk item terpilih', bakeAccess:'Tidak dapat membaca sheet Bake test. Periksa izin berbagi.', bakeMeasure:'Pengukuran', bakeRequirement:'Persyaratan', bakeMold:'No. Mold', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'Keterangan', bakeStartEnd:'Mulai → Selesai',
     machines:'mesin', rounds:'kali',
     submitOk:'✅ Tersimpan!', submitFail:'❌ Gagal.',
     submitting:'☁️ Menyimpan...', noInspector:'Masukkan nama inspector.',
@@ -1314,6 +1327,7 @@ function applyLanguage(){
   }
   initIpqcTrend();
   if(ipqcTrendSelection) drawIpqcTrend();
+  if(bakeMatchedRows.length) renderBakeResults();
   // 설비 탭 재렌더링 (초기화 완료 후)
   if(document.getElementById('machContents')?.children.length>0) renderAll();
 }
@@ -1995,6 +2009,9 @@ let ipqcSelectedMolds = new Set();
 let ipqcMoldSelectionKey = '';
 const IPQC_TREND_MEASURES = [12,13,14,15,17,18,19,22,23,24,25,26,27,28,29,30,31,33,34];
 const IPQC_TREND_COLORS = ['#2563eb','#f97316','#16a34a','#9333ea','#dc2626','#0891b2','#ca8a04','#db2777','#4f46e5','#0f766e'];
+const BAKE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1ytq5HYgmpsHxNLMhf4JNBoLHmyu1xHpEaoDwFd7nUGo/gviz/tq';
+let bakeSheetCache = null;
+let bakeMatchedRows = [];
 
 function initIpqcTrend(){
   const options = `<option value="-1">${esc(tr('trendNone'))}</option>` + IPQC_TREND_MEASURES.map(i=>`<option value="${i}">${esc(HEADERS[i])}</option>`).join('');
@@ -2020,7 +2037,8 @@ function selectIpqcTrend(resultIdx,col,event){
   const exact=document.getElementById('searchDate')?.value||'',searchedFrom=document.getElementById('searchDateFrom')?.value||'',searchedTo=document.getElementById('searchDateTo')?.value||'';
   if(from) from.value=exact||searchedFrom; if(to) to.value=exact||searchedTo;
   drawIpqcTrend();
-  document.querySelector('.trend-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
+  loadBakeTestResults(row);
+  document.querySelector('.bake-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 function renderIpqcMoldFilters(molds){
@@ -2046,9 +2064,21 @@ function trendBounds(values){
   return [min-spread*.12,max+spread*.12];
 }
 
+function renderIpqcTrendStats(rows,columns){
+  const box=document.getElementById('ipqcTrendStats');if(!box)return;
+  box.innerHTML=[...new Set(columns)].map(col=>{
+    const values=rows.map(r=>trendNumber(r[col])).filter(v=>v!==null);
+    if(!values.length)return '';
+    const max=Math.max(...values),min=Math.min(...values),avg=values.reduce((s,v)=>s+v,0)/values.length;
+    const f=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<div class="trend-stat-card"><div class="trend-stat-name">${esc(HEADERS[col])}</div><div class="trend-stat-values"><div class="trend-stat-value"><span>${esc(tr('trendMax'))}</span><b>${f(max)}</b></div><div class="trend-stat-value"><span>${esc(tr('trendMin'))}</span><b>${f(min)}</b></div><div class="trend-stat-value"><span>${esc(tr('trendAvg'))}</span><b>${f(avg)}</b></div></div></div>`;
+  }).join('');
+}
+
 function drawIpqcTrend(skipMoldRender=false){
-  const canvas=document.getElementById('ipqcTrendCanvas'),empty=document.getElementById('ipqcTrendEmpty'),legend=document.getElementById('ipqcTrendLegend'),target=document.getElementById('ipqcTrendTarget');
+  const canvas=document.getElementById('ipqcTrendCanvas'),empty=document.getElementById('ipqcTrendEmpty'),legend=document.getElementById('ipqcTrendLegend'),target=document.getElementById('ipqcTrendTarget'),stats=document.getElementById('ipqcTrendStats');
   if(!canvas||!empty) return;
+  if(stats)stats.innerHTML='';
   const a=Number(document.getElementById('ipqcMetricA')?.value??-1),b=Number(document.getElementById('ipqcMetricB')?.value??-1),active=[a,b].filter(i=>i>=0);
   const wrap=canvas.parentElement,dpr=window.devicePixelRatio||1,w=Math.max(300,wrap.clientWidth-16),h=Math.max(240,wrap.clientHeight-16);
   canvas.width=w*dpr;canvas.height=h*dpr;const c=canvas.getContext('2d');c.scale(dpr,dpr);c.clearRect(0,0,w,h);
@@ -2065,6 +2095,7 @@ function drawIpqcTrend(skipMoldRender=false){
   rows=rows.filter(r=>ipqcSelectedMolds.has(String(r[8]??'미지정')));
   if(!molds.length){empty.textContent=tr('trendSelectMold');empty.style.display='grid';legend.innerHTML='';return;}
   empty.style.display='none';
+  renderIpqcTrendStats(rows,active);
   const av=a>=0?rows.map(r=>trendNumber(r[a])).filter(v=>v!==null):[],bv=b>=0?rows.map(r=>trendNumber(r[b])).filter(v=>v!==null):[];
   const [amin,amax]=trendBounds(av.length?av:[0,1]),[bmin,bmax]=trendBounds(bv.length?bv:[0,1]),pad={l:a>=0?66:28,r:b>=0?72:28,t:20,b:46},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
   const labels=[...new Set(rows.map(r=>`${String(r[0]).slice(0,10)} ${r[1]||''}`))],x=s=>pad.l+(labels.length===1?cw/2:cw*labels.indexOf(s)/(labels.length-1)),ya=v=>pad.t+(amax-v)/(amax-amin)*ch,yb=v=>pad.t+(bmax-v)/(bmax-bmin)*ch;
@@ -2076,6 +2107,60 @@ function drawIpqcTrend(skipMoldRender=false){
   molds.forEach(m=>{const color=IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length],group=rows.filter(r=>String(r[8]??'미지정')===m);series.forEach(([col,yfn,dash])=>{const pts=group.map(r=>({r,v:trendNumber(r[col])})).filter(p=>p.v!==null);if(!pts.length)return;c.beginPath();pts.forEach((p,i)=>{const px=x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),py=yfn(p.v);i?c.lineTo(px,py):c.moveTo(px,py)});c.strokeStyle=color;c.lineWidth=dash?1.8:2.5;c.setLineDash(dash?[6,4]:[]);c.stroke();c.setLineDash([]);c.fillStyle=color;pts.forEach(p=>{c.beginPath();c.arc(x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),yfn(p.v),2.2,0,Math.PI*2);c.fill();});});});
   c.fillStyle='#64748b';c.textAlign='center';const ticks=Math.min(6,labels.length);for(let j=0;j<ticks;j++){const i=Math.round(j*(labels.length-1)/Math.max(1,ticks-1));c.fillText(labels[i].slice(0,10),x(labels[i]),h-16);}
   legend.innerHTML=molds.map(m=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length]}"></i>${esc(tr('trendMoldPrefix'))} ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
+}
+
+async function loadBakeSheet(){
+  if(bakeSheetCache)return bakeSheetCache;
+  try{
+    const result=await sheetJsonp({action:'bakeRows'},60000);
+    if(result&&result.ok&&Array.isArray(result.headers)&&Array.isArray(result.rows)){
+      const headers=result.headers.map(h=>String(h||'').replace(/\s+/g,' ').trim());
+      const rows=result.rows.map((item,rowIndex)=>({rowIndex:item.rowNumber||rowIndex+2,cells:(item.row||[]).map(v=>({v:v??'',f:''}))}));
+      bakeSheetCache={headers,rows};
+      return bakeSheetCache;
+    }
+  }catch(err){console.warn('bakeRows API fallback:',err);}
+  return loadBakeSheetDirect_();
+}
+
+function loadBakeSheetDirect_(){
+  if(bakeSheetCache)return Promise.resolve(bakeSheetCache);
+  return new Promise((resolve,reject)=>{
+    const cb='ipqcBakeCb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),script=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('Bake test timeout'));},15000);
+    function cleanup(){clearTimeout(timer);delete window[cb];script.remove();}
+    window[cb]=response=>{cleanup();if(!response||response.status==='error'||!response.table){reject(new Error('Bake test load failed'));return;}const headers=(response.table.cols||[]).map(c=>String(c.label||c.id||'').replace(/\s+/g,' ').trim());const rows=(response.table.rows||[]).map((r,rowIndex)=>({rowIndex,cells:(r.c||[]).map(c=>({v:c?.v??'',f:c?.f??''}))}));bakeSheetCache={headers,rows};resolve(bakeSheetCache);};
+    script.onerror=()=>{cleanup();reject(new Error('Bake test network error'));};
+    const url=new URL(BAKE_SHEET_URL);url.searchParams.set('sheet','Bake test');url.searchParams.set('tqx',`responseHandler:${cb}`);script.src=url.toString();document.body.appendChild(script);
+  });
+}
+
+function bakeHeaderIndex(headers,...names){const normalized=headers.map(h=>h.toLowerCase().replace(/[^a-z0-9가-힣]+/g,''));for(const name of names){const key=name.toLowerCase().replace(/[^a-z0-9가-힣]+/g,''),idx=normalized.findIndex(h=>h===key||h.includes(key));if(idx>=0)return idx;}return-1;}
+function bakeDisplay(item,idx){if(idx<0)return'';const c=item.cells[idx]||{};return String(c.f||c.v||'').trim();}
+function bakeIsoDate(item,idx,fallbackYear){if(idx<0)return'';const c=item.cells[idx]||{},raw=String(c.v||''),formatted=String(c.f||'').trim();let m=raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);if(m)return`${m[1]}-${String(+m[2]+1).padStart(2,'0')}-${String(+m[3]).padStart(2,'0')}`;m=(formatted||raw).match(/^(?:(\d{4})[\/-])?(\d{1,2})[\/-](\d{1,2})$/);if(m)return`${m[1]||fallbackYear}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;return'';}
+function bakeNorm(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' ');}
+
+async function loadBakeTestResults(selectedRow=null){
+  const status=document.getElementById('bakeStatus'),wrap=document.getElementById('bakeResultWrap'),table=document.getElementById('bakeResultTable');if(!status)return;
+  status.textContent=tr('bakeLoading');wrap.style.display='none';table.innerHTML='';
+  if(!searchResultRows.length){status.textContent=tr('bakeNone');return;}
+  try{
+    const data=await loadBakeSheet(),h=data.headers,start=bakeHeaderIndex(h,'Star Date','Start Date'),end=bakeHeaderIndex(h,'End Date'),sap=bakeHeaderIndex(h,'SAP PN'),desc=bakeHeaderIndex(h,'Description');
+    if(!selectedRow){bakeMatchedRows=[];status.textContent=tr('bakeSelectItem');return;}
+    const matched=new Map();
+    const ipDate=String(selectedRow[0]||'').slice(0,10),year=ipDate.slice(0,4),ipSap=bakeNorm(selectedRow[6]),ipDesc=bakeNorm(selectedRow[5]);data.rows.forEach(item=>{const bSap=bakeNorm(bakeDisplay(item,sap)),bDesc=bakeNorm(bakeDisplay(item,desc));const sameProduct=ipSap?(bSap===ipSap):Boolean(ipDesc&&bDesc===ipDesc);if(sameProduct)matched.set(item.rowIndex,{item,startDate:bakeIsoDate(item,start,year)||bakeDisplay(item,start),endDate:bakeIsoDate(item,end,year)||bakeDisplay(item,end),headers:h});});
+    bakeMatchedRows=[...matched.values()].sort((a,b)=>`${a.startDate}|${a.endDate}`.localeCompare(`${b.startDate}|${b.endDate}`));renderBakeResults();
+  }catch(err){console.warn(err);bakeMatchedRows=[];status.textContent=tr('bakeAccess');wrap.style.display='none';}
+}
+
+function renderBakeResults(){
+  const status=document.getElementById('bakeStatus'),wrap=document.getElementById('bakeResultWrap'),table=document.getElementById('bakeResultTable');if(!status)return;
+  if(!bakeMatchedRows.length){status.textContent=tr('bakeNone');wrap.style.display='none';table.innerHTML='';return;}
+  const headers=bakeMatchedRows[0].headers,idx={sap:bakeHeaderIndex(headers,'SAP PN'),desc:bakeHeaderIndex(headers,'Description'),mold:bakeHeaderIndex(headers,'Mold No'),req:bakeHeaderIndex(headers,'Requirement'),specLive:bakeHeaderIndex(headers,'Spec Live'),specDead:bakeHeaderIndex(headers,'Spec Dead'),beforeLive:bakeHeaderIndex(headers,'Before Live'),beforeDead:bakeHeaderIndex(headers,'Before Dead'),liveMax:bakeHeaderIndex(headers,'Live Max'),deadMax:bakeHeaderIndex(headers,'Dead Max'),result:bakeHeaderIndex(headers,'Pass/Fail'),remark:bakeHeaderIndex(headers,'Remark')};
+  const fields=[[tr('bakeRequirement'),idx.req],['Spec Live',idx.specLive],['Spec Dead',idx.specDead],[tr('bakeBeforeLive'),idx.beforeLive],[tr('bakeBeforeDead'),idx.beforeDead],[tr('bakeLiveMax'),idx.liveMax],[tr('bakeDeadMax'),idx.deadMax],[tr('bakeResult'),idx.result],[tr('bakeRemark'),idx.remark],[tr('bakeMold'),idx.mold]];
+  let html=`<thead><tr><th>${esc(tr('bakeMeasure'))}</th>`+bakeMatchedRows.map(x=>`<th class="bake-item-head"><small>${esc(tr('bakeStartEnd'))}</small>${esc(x.startDate)} → ${esc(x.endDate)}<small>${esc(bakeDisplay(x.item,idx.sap))}<br>${esc(bakeDisplay(x.item,idx.desc))}</small></th>`).join('')+'</tr></thead><tbody>';
+  fields.forEach(([label,col])=>{html+=`<tr><td>${esc(label)}</td>`+bakeMatchedRows.map(x=>{const v=bakeDisplay(x.item,col),cls=label===tr('bakeResult')?(v.toLowerCase()==='pass'?'bake-pass':v.toLowerCase()==='fail'?'bake-fail':''):'';return`<td class="${cls}">${esc(v||'-')}</td>`;}).join('')+'</tr>';});
+  table.innerHTML=html+'</tbody>';wrap.style.display='block';status.textContent=tr('bakeFound').replace('{n}',bakeMatchedRows.length);
 }
 
 function getSearchFilters(){
@@ -2236,6 +2321,7 @@ async function searchServerRecords(){
       return bd.localeCompare(ad);
     });
     renderSearchResults();
+    loadBakeTestResults();
   }catch(err){
     console.error(err);
     status.textContent = tr('srchFail') + err.message;
@@ -2321,6 +2407,9 @@ function clearSearchFilters(){
   document.getElementById('searchStatus').textContent = tr('srchInit');
   document.getElementById('searchResultWrap').style.display = 'none';
   document.getElementById('searchResultTable').innerHTML = '';
+  bakeMatchedRows=[];
+  const bakeStatus=document.getElementById('bakeStatus'),bakeWrap=document.getElementById('bakeResultWrap'),bakeTable=document.getElementById('bakeResultTable');
+  if(bakeStatus)bakeStatus.textContent=tr('bakeInit');if(bakeWrap)bakeWrap.style.display='none';if(bakeTable)bakeTable.innerHTML='';
   ipqcTrendSelection = null;
   drawIpqcTrend();
 }
