@@ -1,0 +1,2850 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <title>IPQC 이력 조회</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+    onerror="document.write('<scr'+'ipt src=\'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js\'><\/scr'+'ipt>')"></script>
+  <style>
+    :root{--bg:#f6f7fb;--card:#fff;--text:#172033;--muted:#667085;--line:#d8dde8;--primary:#2563eb;--ok:#16a34a;--warn:#f97316;--bad:#dc2626;--soft:#eef4ff;--cloud:#0ea5e9;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#1d4ed8,#0f766e);color:white;padding:14px 16px;box-shadow:0 2px 12px #0002}
+    .header-inner{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;max-width:1280px;margin:0 auto}
+    .header-title{min-width:0;flex:1}
+    .lang-top{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+    .lang-top label{color:white;opacity:.95;margin:0;font-size:12px;white-space:nowrap}
+    .lang-top select{width:auto;min-width:140px;height:31px;min-height:31px;padding:0 8px;border-radius:10px;border:1px solid #ffffff55;background:white;color:#172033;font-size:13px}
+    h1{font-size:19px;margin:0 0 4px}.sub{font-size:12px;opacity:.9}
+    .wrap{padding:12px;max-width:1280px;margin:auto}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;box-shadow:0 1px 4px #0000000d}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+    input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:13px;background:#fff}
+    input,select{height:31px;min-height:31px;line-height:19px}
+    input[type="date"],input[type="time"]{line-height:19px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{border:0;border-radius:10px;padding:0 12px;min-height:31px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-weight:700;background:#e5e7eb;color:#111827;cursor:pointer;font-size:13px}
+    .btn.primary{background:var(--primary);color:white}
+    .btn.ok{background:var(--ok);color:white}
+    .btn.warn{background:var(--warn);color:white}
+    .btn.bad{background:var(--bad);color:white}
+    .btn.cloud{background:var(--cloud);color:white}
+    .btn.sm{min-height:24px;padding:0 8px;font-size:11px}
+    .btn:active{transform:scale(.98)}
+    .hint{font-size:12px;color:var(--muted)}
+
+    /* ── 공통 설정 그리드 ── */
+    .common-grid{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:10px;margin-top:10px}
+
+    /* ── 생산계획 업로드 & 설비 선택 ── */
+    .plan-upload-bar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;flex-wrap:wrap}
+    .plan-file-label{font-size:12px;color:#0369a1;font-weight:700;white-space:nowrap}
+    .plan-file-name{font-size:12px;color:#0369a1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .plan-selector{margin-top:12px;display:none}
+    .plan-selector.show{display:block}
+    .plan-selector-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+    .plan-selector-title{font-size:13px;font-weight:800;color:#1d4ed8}
+    .plan-sel-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .mach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:340px;overflow-y:auto;padding:2px}
+    .mach-card{border:2px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;background:white;transition:all .15s;user-select:none;position:relative}
+    .mach-card:hover{border-color:#93c5fd;background:#eff6ff}
+    .mach-card.selected{border-color:#2563eb;background:#dbeafe}
+    .mach-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:16px;font-weight:900;color:#2563eb}
+    .mach-card-id{font-size:18px;font-weight:900;color:#1e40af;line-height:1.2}
+    .mach-card-pn{font-size:11px;font-family:monospace;color:#374151;margin-top:2px;word-break:break-all}
+    .mach-card-desc{font-size:11px;color:#6b7280;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .mach-card-cust{font-size:10px;font-weight:700;color:#059669;margin-top:4px}
+    .plan-apply-bar{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .sel-count-badge{background:#2563eb;color:white;border-radius:999px;padding:4px 14px;font-size:13px;font-weight:800}
+
+    /* ── 설비 탭 바 ── */
+    .mach-tabbar-wrap{position:sticky;top:68px;z-index:15;background:var(--card);padding:6px 0 0;border-bottom:2px solid var(--line);margin-bottom:14px}
+    .mach-tabbar{display:flex;gap:5px;overflow-x:auto;padding-bottom:0;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+    .mach-tab{padding:8px 12px;border-radius:10px 10px 0 0;border:1px solid var(--line);border-bottom:none;background:#f1f5f9;font-size:13px;font-weight:700;white-space:nowrap;flex:0 0 auto;cursor:pointer;color:var(--muted);transition:all .15s;position:relative}
+    .mach-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .mach-tab.done::after{content:'✅';font-size:10px;margin-left:4px}
+    .mach-tab .pct{font-size:10px;font-weight:400;margin-left:3px;opacity:.8}
+
+    /* ── 설비 컨텐츠 ── */
+    .mach-content{display:none}
+    .mach-content.active{display:block}
+    .mach-name-row{display:flex;gap:10px;align-items:flex-end;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin-bottom:14px}
+    .mach-name-row .name-label{font-size:13px;font-weight:800;color:#1e40af;white-space:nowrap;line-height:25px}
+    .mach-name-row input{max-width:200px;font-weight:700;font-size:17px}
+
+    /* ── LTC No. 회차별 입력 ── */
+    .ltc-row-wrap{display:flex;align-items:flex-start;gap:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin:10px 0 14px;flex-wrap:wrap}
+    .ltc-row-label{font-size:12px;font-weight:800;color:#92400e;white-space:nowrap;padding-top:4px;min-width:80px}
+    .ltc-rounds{display:flex;gap:10px;flex-wrap:wrap;flex:1}
+    .ltc-round-cell{display:flex;flex-direction:column;gap:3px;min-width:120px;flex:1}
+    .ltc-round-label{font-size:11px;color:#a16207;font-weight:700}
+    .ltc-round-input{height:28px!important;min-height:28px!important;font-size:13px!important;padding:3px 8px!important;border:1px solid #fde68a!important;border-radius:8px!important;background:#fef9c3!important;width:100%}
+    .ltc-round-input:focus{outline:none;border-color:#f59e0b!important;background:#fffbeb!important}
+
+    /* ── 설비별 정보 그리드 ── */
+    .info-section-title{font-size:13px;font-weight:800;color:#1e40af;margin:0 0 8px;padding:6px 10px;background:#eff6ff;border-radius:8px;border-left:4px solid var(--primary)}
+    .info-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+    /* 설비 정보 입력란 = 공통(31px)의 80% ≈ 25px */
+    .info-grid input,.info-grid select,
+    .mach-name-row input{height:25px!important;min-height:25px!important;font-size:13px!important;padding:3px 8px!important}
+    .mach-name-row .name-label{line-height:25px!important}
+
+    /* ── 측정값 ── */
+    .measure-section-title{font-size:13px;font-weight:800;color:#065f46;margin:0 0 8px;padding:6px 10px;background:#ecfdf5;border-radius:8px;border-left:4px solid var(--ok)}
+    .item-tabs{display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+    .item-tab{padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:white;font-size:13px;white-space:nowrap;flex:0 0 auto;cursor:pointer;color:var(--muted);font-weight:600}
+    .item-tab.active{background:var(--primary);color:white;border-color:var(--primary);font-weight:700}
+    .item-tab.done-tab{border-color:var(--ok);color:var(--ok)}
+    .item-tab.active.done-tab{background:var(--ok);color:white;border-color:var(--ok)}
+    .item-title-bar{font-weight:800;font-size:17px;padding:10px 0 6px;color:#1e40af}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:white;margin-bottom:10px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:8px;text-align:center;white-space:nowrap}
+    th{background:#f1f5f9;font-size:13px;position:sticky;top:0;z-index:5}
+    td:first-child,th:first-child{position:sticky;left:0;background:#f8fafc;z-index:6;text-align:left;font-weight:700;min-width:90px;padding:8px 10px}
+    .measure-input{font-size:15px;text-align:center;padding:3px 6px;min-width:90px;height:25px}
+    .done-cell{background:#ecfdf3!important}
+
+    /* ── 진행률 ── */
+    .mach-progress{margin-bottom:14px}
+    .progress-label{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:3px}
+    .progress-bar{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+    .progress-fill{height:100%;background:var(--ok);transition:width .3s}
+
+    /* ── KPI ── */
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+    .kpi{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px}
+    .kpi b{font-size:20px;display:block}
+
+    /* ── 서버 상태 ── */
+    #cloudStatus{display:none;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;margin:8px 0;text-align:center}
+    #cloudStatus.success{background:#dcfce7;color:#166534;display:block}
+    #cloudStatus.error{background:#fee2e2;color:#991b1b;display:block}
+    #cloudStatus.loading{background:#e0f2fe;color:#0c4a6e;display:block}
+
+    /* ── 히스토리 ── */
+    .hist-item{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+    .hist-item:hover{box-shadow:0 4px 16px #2563eb22;border-color:#93c5fd}
+    .hist-item-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .hist-item-info{flex:1;min-width:0}
+    .hist-item-title{font-weight:700;font-size:14px;margin-bottom:3px}
+    .hist-item-meta{font-size:11px;color:var(--muted)}
+    .hist-item-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    .hist-badge{background:#dcfce7;color:#166534;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700}
+    .hist-badge.no-id{background:#fef9c3;color:#713f12}
+
+    /* ── 모달 ── */
+    #histModal,
+    #measureSummaryModal{position:fixed;inset:0;background:#0007;z-index:100;display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+    #histModal.open,
+    #measureSummaryModal.open{display:flex}
+    .hmodal-box{background:white;border-radius:18px;width:100%;max-width:860px;margin:auto;box-shadow:0 20px 60px #0004}
+    .measure-summary-box{max-width:1180px}
+    .hmodal-header{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:white;padding:14px 18px;border-radius:18px 18px 0 0;display:flex;justify-content:space-between;align-items:center}
+    .hmodal-header h2{margin:0;font-size:16px;font-weight:800}
+    .hmodal-close{background:none;border:0;color:white;font-size:24px;cursor:pointer;line-height:1}
+    .hmodal-body{padding:16px}
+    .htabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:2px solid var(--line)}
+    .htab{padding:8px 14px;border:0;background:none;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+    .htab.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .hpanel{display:none}.hpanel.active{display:block}
+    .edit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .edit-field label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px;font-weight:600}
+    .edit-field input,.edit-field select{font-size:13px;height:38px;min-height:38px;padding:6px 10px}
+    .mval-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
+    .mval-table th{background:#f1f5f9;padding:5px 6px;border:1px solid var(--line);font-weight:700;text-align:center}
+    .mval-table td{border:1px solid var(--line);padding:3px}
+    .mval-input{width:100%;border:1px solid var(--line);border-radius:6px;padding:5px;font-size:13px;text-align:center;min-width:70px}
+    .mval-input:focus{outline:none;border-color:#2563eb;background:#eef4ff}
+    #hSaveStatus{padding:10px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;display:none;margin-top:8px}
+    #hSaveStatus.ok{background:#dcfce7;color:#166534;display:block}
+    #hSaveStatus.err{background:#fee2e2;color:#991b1b;display:block}
+    #hSaveStatus.loading{background:#e0f2fe;color:#0c4a6e;display:block}
+    .view-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+    .view-field{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+    .view-field .vl{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:2px}
+    .view-field .vv{font-size:13px;font-weight:700}
+    .section-div{background:#e0f2fe;color:#0c4a6e;font-weight:800;font-size:12px;padding:6px 10px;border-radius:6px;margin:10px 0 6px}
+    .measure-summary-meta{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .measure-summary-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:white;max-height:70vh}
+    .measure-summary-table{min-width:760px;font-size:12px}
+    .measure-summary-table th{top:0;z-index:7}
+    .measure-summary-table th:first-child{z-index:8}
+    .measure-summary-table td:first-child{min-width:250px;color:#1e40af}
+    .measure-summary-table td.has-value{background:#ecfdf3;font-weight:700}
+    .measure-summary-table td.empty-value{color:#9ca3af;background:#f8fafc}
+    .search-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin-top:12px}
+    .search-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+    .search-result-meta{font-size:12px;color:var(--muted);font-weight:700;margin:10px 0 6px}
+    .search-table{font-size:12px}
+    .search-table tbody tr{cursor:pointer}
+    .search-table tbody tr:hover{background:#eff6ff}
+    .trend-cell{color:#1d4ed8;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+    .trend-panel{margin-top:14px;padding:14px;border:1px solid #bfdbfe;border-radius:12px;background:linear-gradient(180deg,#f8fbff,#fff)}
+    .trend-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .trend-title{font-size:15px;font-weight:900;color:#1e40af}
+    .trend-sub{font-size:11px;color:var(--muted);margin-top:3px}
+    .trend-target{font-size:12px;color:#0f766e;font-weight:800;text-align:right;max-width:520px}
+    .trend-controls{display:grid;grid-template-columns:1fr 1fr minmax(135px,.7fr) minmax(135px,.7fr);gap:10px;margin-bottom:10px}
+    .mold-filter-box{margin-bottom:10px;padding:9px 10px;border:1px solid #dbeafe;border-radius:10px;background:#f8fafc}
+    .mold-filter-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+    .mold-filter-title{font-size:12px;font-weight:800;color:#334155}
+    .mold-filter-actions{display:flex;gap:5px}.mold-filter-actions button{border:1px solid #cbd5e1;border-radius:7px;background:white;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
+    .mold-filter-list{display:flex;flex-wrap:wrap;gap:6px}.mold-check{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbd5e1;border-radius:999px;background:white;padding:5px 9px;font-size:11px;color:#334155;cursor:pointer;margin:0}.mold-check:has(input:checked){border-color:#2563eb;background:#dbeafe;color:#1e40af;font-weight:800}.mold-check input{width:14px;height:14px;min-height:14px;margin:0;padding:0}
+    .trend-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}.trend-stat-card{border:1px solid #dbeafe;border-radius:10px;background:white;padding:9px 11px}.trend-stat-name{font-size:11px;font-weight:800;color:#334155;margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.trend-stat-values{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.trend-stat-value{background:#f8fafc;border-radius:7px;padding:6px;text-align:center}.trend-stat-value span{display:block;font-size:10px;color:#64748b;margin-bottom:2px}.trend-stat-value b{font-size:14px;color:#1e40af;font-variant-numeric:tabular-nums}
+    .bake-panel{margin-top:14px;padding:14px;border:1px solid #fed7aa;border-radius:12px;background:linear-gradient(180deg,#fffaf5,#fff)}.bake-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:9px}.bake-title{font-size:15px;font-weight:900;color:#9a3412}.bake-status{font-size:11px;color:var(--muted)}.bake-table-wrap{overflow:auto;border:1px solid #fed7aa;border-radius:10px;max-height:420px}.bake-table{width:max-content;min-width:100%;font-size:12px}.bake-table th{background:#fff7ed}.bake-table th:first-child,.bake-table td:first-child{min-width:135px;position:sticky;left:0;z-index:8;background:#fff7ed;text-align:left}.bake-pass{color:#15803d;font-weight:900}.bake-fail{color:#dc2626;font-weight:900}.bake-item-head{min-width:155px;white-space:normal}.bake-item-head small{display:block;color:#64748b;font-weight:500;margin-top:3px}
+    .trend-canvas-wrap{height:360px;position:relative;border:1px solid var(--line);border-radius:10px;background:white;padding:8px}
+    #ipqcTrendCanvas{width:100%;height:100%}
+    .trend-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px;pointer-events:none}
+    .trend-legend{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:9px;font-size:11px;color:var(--muted)}
+    .trend-legend-item{display:flex;align-items:center;gap:5px}.trend-swatch{width:20px;height:3px;border-radius:3px}.trend-dash{height:0;border-top:2px dashed #475569}
+
+    .footer-space{height:80px}
+    @media(max-width:900px){
+      .common-grid{grid-template-columns:repeat(3,1fr)}
+      .info-grid{grid-template-columns:repeat(2,1fr)}
+      .summary{grid-template-columns:repeat(2,1fr)}
+      .edit-grid{grid-template-columns:repeat(2,1fr)}
+      .view-grid{grid-template-columns:repeat(2,1fr)}
+      .search-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:600px){
+      .common-grid{grid-template-columns:repeat(2,1fr)}
+      .info-grid{grid-template-columns:1fr 1fr}
+      .search-grid{grid-template-columns:1fr}
+      .trend-controls{grid-template-columns:1fr}
+      .trend-stats{grid-template-columns:1fr}
+      .trend-canvas-wrap{height:320px}
+      .lang-top label{display:none}
+      .lang-top select{min-width:110px;font-size:13px}
+      header{padding:10px 12px}
+      .wrap{padding:8px}
+    }
+    /* 이력 조회 전용 화면: 기존 입력 기능은 내부 호환성을 위해 유지하되 화면에서는 숨깁니다. */
+    .wrap > .card{display:none}
+    .wrap > .card:nth-child(5){display:block}
+    header .header-title h1{font-size:22px}
+    @media(max-width:700px){.wrap{padding:10px}.search-actions .btn{width:100%}}
+  </style>
+</head>
+<body>
+
+<!-- ══ 히스토리 모달 ══ -->
+<div id="histModal">
+  <div class="hmodal-box">
+    <div class="hmodal-header">
+      <h2 id="hModalTitle" data-i18n="hModalTitle">📋 제출 데이터 상세</h2>
+      <button class="hmodal-close" onclick="closeHistModal()">✕</button>
+    </div>
+    <div class="hmodal-body">
+      <div class="htabs">
+        <button class="htab active" onclick="switchHTab('hpanel-view',this)" data-i18n="hTabView">👁 내용 보기</button>
+        <button class="htab" onclick="switchHTab('hpanel-edit',this)" data-i18n="hTabEdit">✏️ 수정하기</button>
+      </div>
+
+      <!-- 보기 패널 -->
+      <div id="hpanel-view" class="hpanel active">
+        <div id="viewCommon"></div>
+        <div id="viewMachines"></div>
+      </div>
+
+      <!-- 수정 패널 -->
+      <div id="hpanel-edit" class="hpanel">
+        <div class="section-div" data-i18n="hCommonInfo">📋 공통 정보</div>
+        <div class="edit-grid" style="margin-bottom:12px">
+          <div class="edit-field"><label data-i18n="hDateLabel">날짜</label><input type="date" id="he_date"></div>
+          <div class="edit-field"><label data-i18n="hTimeLabel">시간</label><input type="time" id="he_time"></div>
+          <div class="edit-field"><label data-i18n="hShiftLabel">SHIFT</label>
+            <select id="he_shift"><option>Day</option><option>Night</option><option>A</option><option>B</option><option>C</option></select>
+          </div>
+          <div class="edit-field"><label data-i18n="hInspectorLabel">QC 검사원</label><input type="text" id="he_inspector"></div>
+        </div>
+        <div id="he_machines_container"></div>
+        <div id="he_values_container"></div>
+      </div>
+
+      <div id="hSaveStatus"></div>
+      <div class="row" style="margin-top:12px;justify-content:flex-end;gap:8px">
+        <button class="btn bad sm" onclick="deleteHistItem()" data-i18n="hDeleteBtn">🗑️ 삭제</button>
+        <button class="btn sm" onclick="closeHistModal()" data-i18n="hCloseBtn">닫기</button>
+        <button class="btn primary sm" id="hSaveBtn" onclick="saveHistEdit()" style="display:none" data-i18n="hSaveBtn">💾 서버 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 항목별 입력값 전체보기 모달 ══ -->
+<div id="measureSummaryModal" onclick="if(event.target.id==='measureSummaryModal') closeMeasureSummary()">
+  <div class="hmodal-box measure-summary-box">
+    <div class="hmodal-header">
+      <h2 data-i18n="measureSummaryTitle">📊 항목별 입력값 전체보기</h2>
+      <button class="hmodal-close" onclick="closeMeasureSummary()">✕</button>
+    </div>
+    <div class="hmodal-body">
+      <div id="measureSummaryMeta" class="measure-summary-meta"></div>
+      <div class="measure-summary-wrap">
+        <table id="measureSummaryTable" class="measure-summary-table"></table>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:flex-end">
+        <button class="btn sm" onclick="closeMeasureSummary()" data-i18n="measureSummaryClose">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 헤더 ══ -->
+<header>
+  <div class="header-inner">
+    <div class="header-title">
+      <h1 data-i18n="appTitle">IPQC 이력 조회</h1>
+      <div class="sub" data-i18n="appSub">검색 · 측정값 트렌드 · 베이킹 테스트 결과</div>
+    </div>
+    <div class="lang-top">
+      <label for="lang" data-i18n="langLabel">언어</label>
+      <select id="lang" onchange="setLang(this.value)">
+        <option value="ko">한국어</option>
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+        <option value="vi">Tiếng Việt</option>
+        <option value="id">Bahasa Indonesia</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ══ 섹션 1: 공통 기본 설정 ══ -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <b data-i18n="s1title">1. 공통 기본 설정</b>
+        <div class="hint" data-i18n="s1hint">날짜 · 시간 · SHIFT · 검사원은 모든 설비 공통</div>
+      </div>
+      <div class="row">
+        <button class="btn primary" onclick="applySetup()" data-i18n="applyBtn">설정 적용</button>
+      </div>
+    </div>
+    <!-- 기본 설정 그리드 (설비수 제거, 5칸) -->
+    <div class="common-grid">
+      <div><label data-i18n="roundCountLabel">검사 횟수</label><select id="roundCount" onchange="applySetup()"></select></div>
+      <div><label data-i18n="dateLabel">날짜</label><input id="date" type="date"></div>
+      <div><label data-i18n="timeLabel">시간</label><input id="time" type="time"></div>
+      <div><label data-i18n="shiftLabel">SHIFT 班別</label>
+        <select id="shift"><option>Day</option><option>Night</option><option>A</option><option>B</option><option>C</option></select>
+      </div>
+      <div><label data-i18n="inspectorLabel">QC 검사원</label><input id="inspector" data-i18n-ph="inspectorPH" placeholder="검사원 이름"></div>
+    </div>
+    <!-- hidden machineCount (내부용) -->
+    <select id="machineCount" style="display:none"></select>
+
+    <!-- 생산계획 업로드 바 -->
+    <div class="plan-upload-bar">
+      <span class="plan-file-label" data-i18n="planFileLabel">📂 생산계획 Excel</span>
+      <span id="planFileName" class="plan-file-name">파일을 선택하세요 (production_plan.xlsx)</span>
+      <button class="btn warn sm" id="manualSelectBtn" onclick="manualSelect()" data-i18n="manualSelectBtn">🔧 수동 선택</button>
+      <button class="btn primary sm" id="excelSelectBtn" onclick="document.getElementById('planFileInput').click()" data-i18n="planFileBtn">📂 파일 선택</button>
+      <button class="btn sm" onclick="clearPlan()" id="planClearBtn" style="display:none" data-i18n="planClearKey">✕ 초기화</button>
+      <input id="planFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadProductionPlan(this)">
+    </div>
+
+    <!-- 설비 선택 패널 -->
+    <div class="plan-selector" id="planSelector">
+      <div class="plan-selector-header">
+        <span class="plan-selector-title" data-i18n="planSelectorTitle">🏭 검사할 설비를 클릭하여 선택하세요</span>
+        <div class="plan-sel-actions">
+          <button class="btn sm" onclick="selectAllMachines()" data-i18n="planSelectAll">전체 선택</button>
+          <button class="btn sm" onclick="deselectAllMachines()" data-i18n="planDeselectAll">전체 해제</button>
+        </div>
+      </div>
+      <div class="mach-grid" id="machGrid"></div>
+      <div class="plan-apply-bar">
+        <button class="btn primary" onclick="applyPlanSelection()" id="planApplyBtn">설비를 선택하세요</button>
+        <span class="sel-count-badge" id="selCountBadge">0대 선택</span>
+        <span class="hint" data-i18n="planHint">선택 후 버튼을 누르면 탭이 생성됩니다</span>
+      </div>
+    </div>
+
+    <div id="setupSyncMsg" style="font-size:12px;color:#2563eb;font-weight:700;margin-top:8px;min-height:18px"></div>
+  </div>
+
+  <!-- ══ 섹션 2: 설비별 탭 입력 ══ -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <div>
+        <b data-i18n="s2title">2. 설비별 정보 및 측정값 입력</b>
+        <div class="hint" data-i18n="s2hint">각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요</div>
+      </div>
+      <div class="row">
+        <button class="btn sm" onclick="prevMachine()" data-i18n="prevMach">◀ 이전 설비</button>
+        <button class="btn primary sm" onclick="nextMachine()" data-i18n="nextMach">다음 설비 ▶</button>
+      </div>
+    </div>
+
+    <!-- 설비 탭 바 -->
+    <div class="mach-tabbar-wrap">
+      <div class="mach-tabbar" id="machTabBar"></div>
+    </div>
+
+    <!-- 설비별 컨텐츠 -->
+    <div id="machContents"></div>
+  </div>
+
+  <!-- ══ 섹션 3: 항목별 측정값 (전체 설비) ══ -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div>
+        <b data-i18n="s3title">3. 항목별 측정값 입력</b>
+        <div class="hint" data-i18n="s3hint">항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다</div>
+      </div>
+      <div class="row">
+        <button class="btn ok sm" onclick="openMeasureSummary()" data-i18n="measureSummaryBtn">전체 입력값 보기</button>
+        <button class="btn sm" onclick="prevItem()" data-i18n="prevItem">◀ 이전 항목</button>
+        <button class="btn primary sm" onclick="nextItem()" data-i18n="nextItem">다음 항목 ▶</button>
+      </div>
+    </div>
+    <!-- 항목 탭 -->
+    <div class="item-tabs" id="itemTabBar" style="margin-bottom:10px"></div>
+    <!-- 현재 항목 제목 -->
+    <div id="itemTitleBar" style="font-size:22px;font-weight:900;color:#1e40af;padding:10px 0 4px;letter-spacing:-0.3px"></div>
+    <div id="itemSubBar" style="font-size:13px;color:var(--muted);margin-bottom:10px"></div>
+    <!-- 전체 설비 측정 테이블 -->
+    <div class="table-wrap">
+      <table id="measureTable"></table>
+    </div>
+  </div>
+
+  <!-- ══ 섹션 4: 저장 ══ -->
+  <div class="card">
+    <b data-i18n="s4title">4. 저장 / 내보내기</b>
+    <div class="summary">
+      <div class="kpi"><label data-i18n="kpiMachLabel">설비 수</label><b id="kpiMachines">0</b></div>
+      <div class="kpi"><label data-i18n="kpiRoundsLabel">검사 횟수</label><b id="kpiRounds">0</b></div>
+      <div class="kpi"><label data-i18n="kpiTotalLabel">총 입력칸</label><b id="kpiTotal">0</b></div>
+      <div class="kpi"><label data-i18n="kpiDoneLabel">완료</label><b id="kpiDone">0</b></div>
+    </div>
+    <div id="cloudStatus"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn cloud" onclick="submitToServer()" data-i18n="submitBtn">☁️ Google Sheet 저장</button>
+      <button class="btn primary" onclick="loadFromServer()" data-i18n="loadServerBtn">🔄 서버에서 불러오기</button>
+      <button class="btn ok" onclick="exportWideCsv()" data-i18n="csvBtn">📥 CSV 로컬 저장</button>
+      <button class="btn" onclick="exportJson()" data-i18n="exportJsonBtn">JSON 백업</button>
+      <button class="btn" onclick="importJsonFile.click()" data-i18n="importJsonBtn">JSON 가져오기</button>
+      <button class="btn bad" onclick="resetAll()" data-i18n="resetBtn">전체 초기화</button>
+      <input id="importJsonFile" type="file" accept=".json" style="display:none" onchange="importJson(event)">
+    </div>
+  </div>
+
+  <!-- ══ 섹션 5: 서버 데이터 검색 ══ -->
+  <div class="card">
+    <b data-i18n="srchTitle">5. 서버 데이터 검색 / Excel 저장</b>
+    <div class="hint" data-i18n="srchHint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div>
+    <div class="search-grid">
+      <div><label data-i18n="srchDate">특정 날짜</label><input id="searchDate" type="date"></div>
+      <div><label data-i18n="srchDateFrom">시작 날짜</label><input id="searchDateFrom" type="date"></div>
+      <div><label data-i18n="srchDateTo">종료 날짜</label><input id="searchDateTo" type="date"></div>
+      <div><label>QC Inspector</label><input id="searchInspector" data-i18n-ph="srchInspectorPH" placeholder="검사원"></div>
+      <div><label>Description</label><input id="searchDesc" placeholder="Description"></div>
+      <div><label>SAP PN</label><input id="searchSap" placeholder="SAP PN"></div>
+      <div><label>Customer</label><input id="searchCustomer" placeholder="Customer"></div>
+      <div><label data-i18n="srchMold">Mold 번호</label><input id="searchMold" placeholder="MOLD"></div>
+      <div><label>LTC No.</label><input id="searchLtc" placeholder="LTC No."></div>
+      <div><label>M/C</label><input id="searchMachine" data-i18n-ph="srchMachinePH" placeholder="예: A07 또는 A07,A08"></div>
+    </div>
+    <div class="search-actions">
+      <button class="btn primary" onclick="searchServerRecords()" data-i18n="srchBtn">🔍 검색</button>
+      <button class="btn ok" onclick="exportSearchResults()" data-i18n="srchExportBtn">📥 검색 결과 Excel 저장</button>
+      <button class="btn" onclick="clearSearchFilters()" data-i18n="srchClearBtn">초기화</button>
+    </div>
+    <div id="searchStatus" class="search-result-meta" data-i18n="srchInit">검색 조건을 입력한 뒤 검색 버튼을 누르세요.</div>
+    <div class="table-wrap" id="searchResultWrap" style="display:none;max-height:420px">
+      <table id="searchResultTable" class="search-table"></table>
+    </div>
+    <div class="trend-panel">
+      <div class="trend-head">
+        <div><div class="trend-title" data-i18n="trendTitle">📈 IPQC 검색 트렌드</div><div class="trend-sub" data-i18n="trendSub">Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택</div></div>
+        <div id="ipqcTrendTarget" class="trend-target" data-i18n="trendTargetInit">검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.</div>
+      </div>
+      <div class="trend-controls">
+        <div><label data-i18n="trendMetricA">왼쪽 축 측정 항목</label><select id="ipqcMetricA" onchange="drawIpqcTrend()"></select></div>
+        <div><label data-i18n="trendMetricB">오른쪽 축 측정 항목</label><select id="ipqcMetricB" onchange="drawIpqcTrend()"></select></div>
+        <div><label data-i18n="trendFrom">트렌드 시작일</label><input id="ipqcTrendFrom" type="date" onchange="drawIpqcTrend(false,true)"></div>
+        <div><label data-i18n="trendTo">트렌드 종료일</label><input id="ipqcTrendTo" type="date" onchange="drawIpqcTrend(false,true)"></div>
+      </div>
+      <div class="mold-filter-box"><div class="mold-filter-head"><span class="mold-filter-title" data-i18n="trendMoldTitle">몰드 선택 (단수·복수 선택 가능)</span><span class="mold-filter-actions"><button type="button" onclick="selectAllIpqcMolds(true)" data-i18n="trendAll">전체 선택</button><button type="button" onclick="selectAllIpqcMolds(false)" data-i18n="trendNone">선택 해제</button></span></div><div id="ipqcMoldFilters" class="mold-filter-list"><span class="hint" data-i18n="trendMoldHint">품목을 선택하면 몰드 목록이 표시됩니다.</span></div></div>
+      <div id="ipqcTrendStats" class="trend-stats"></div>
+      <div class="trend-canvas-wrap"><canvas id="ipqcTrendCanvas"></canvas><div id="ipqcTrendEmpty" class="trend-empty" data-i18n="trendEmptyInit">검색 결과를 불러오면 트렌드를 확인할 수 있습니다.</div></div>
+      <div id="ipqcTrendLegend" class="trend-legend"></div>
+    </div>
+    <div class="bake-panel">
+      <div class="bake-head"><div><div class="bake-title" data-i18n="bakeTitle">🔥 베이킹 테스트 결과</div><div class="trend-sub" data-i18n="bakeSub">검색 결과의 SAP PN 또는 Description을 클릭하면 날짜와 관계없이 같은 품목의 Bake test 기록을 표시합니다.</div></div><div id="bakeStatus" class="bake-status" data-i18n="bakeInit">서버 검색 후 품목을 선택하세요.</div></div>
+      <div id="bakeResultWrap" class="bake-table-wrap" style="display:none"><table id="bakeResultTable" class="bake-table"></table></div>
+    </div>
+  </div>
+
+  <!-- ══ 섹션 6: 파트 번호 추가 등록 ══ -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <b data-i18n="s5title">6. 파트 번호 추가 등록 (Part Number Manager)</b>
+      <span id="pnCountBadge" style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:999px;font-weight:700">0개 추가</span>
+    </div>
+    <div class="hint" style="margin-bottom:10px" data-i18n="pnHint">🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.</div>
+
+    <!-- 신규 추가 영역 -->
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:800;color:#15803d;margin-bottom:8px" data-i18n="pnNewSection">➕ 신규 파트 등록</div>
+      <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:8px;align-items:end">
+        <div>
+          <label style="font-size:11px;color:#166534;font-weight:700" data-i18n="pnSapLabel">SAP PN</label>
+          <input id="pnNewSap" type="text" placeholder="예: 17B05999001LE" style="font-family:monospace;font-size:13px;height:31px">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#166534;font-weight:700" data-i18n="pnDescLabel">Description</label>
+          <input id="pnNewDesc" type="text" placeholder="예: J/L MODULE 5.35X7.00 1.40T" style="font-size:13px;height:31px">
+        </div>
+        <div>
+          <button class="btn ok" onclick="addPnEntry()" style="white-space:nowrap" data-i18n="pnRegBtn">＋ 등록</button>
+        </div>
+      </div>
+      <div id="pnAddMsg" style="font-size:12px;margin-top:6px;min-height:18px"></div>
+    </div>
+
+    <!-- 사용자 추가 목록 -->
+    <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px" data-i18n="pnListTitle">📋 사용자 추가 파트 목록</div>
+    <div style="overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:220px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f1f5f9;position:sticky;top:0">
+          <th style="padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;min-width:160px" data-i18n="pnSapLabel">SAP PN</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--line);text-align:left" data-i18n="pnDescLabel">Description</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--line);width:60px" data-i18n="pnDeleteCol">삭제</th>
+        </tr></thead>
+        <tbody id="pnCustomList">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 내보내기 -->
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm" onclick="exportPnList()" style="background:#0ea5e9;color:white" data-i18n="pnExportBtn">📥 전체 PN 목록 Excel 저장</button>
+      <span class="hint" style="line-height:24px" data-i18n="pnExportHint">기본 DB + 사용자 추가 전체 목록을 .xlsx 로 저장</span>
+    </div>
+  </div>
+
+  <!-- ══ 히스토리 ══ -->
+  <div class="card" id="historyCard" style="display:none">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <b data-i18n="histTitle">📋 이번 기기 제출 기록</b>
+      <button class="btn bad sm" onclick="clearAllHistory()" data-i18n="histClearBtn">🗑️ 전체 기록 삭제</button>
+    </div>
+    <div class="hint" style="margin-bottom:8px" data-i18n="histHint">항목을 탭하면 내용 확인 및 수정할 수 있습니다.</div>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="footer-space"></div>
+</div>
+
+<script>
+// ══ 생산계획 Excel 업로드 & 설비 선택 ══════════════
+let planMachines = [];      // [{machine, sap, desc, material, mold, customer, moldSet}, ...]
+let selectedPlanIdx = new Set(); // 선택된 인덱스
+
+function loadProductionPlan(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){
+    alert('XLSX 라이브러리가 아직 로드되지 않았습니다.\n잠시 후 다시 시도하거나 인터넷 연결을 확인하세요.\n\n(XLSX library not loaded. Please check your internet connection and try again.)');
+    input.value='';
+    return;
+  }
+  document.getElementById('planFileName').textContent = file.name;
+  document.getElementById('planClearBtn').style.display = '';
+  // 수동 선택 / 파일 선택 버튼 숨기기
+  const mb = document.getElementById('manualSelectBtn');
+  const eb = document.getElementById('excelSelectBtn');
+  if(mb) mb.style.display='none';
+  if(eb) eb.style.display='none';
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+      // 헤더 행 찾기 (Machine 컬럼 포함된 행)
+      let headerIdx = 0;
+      for(let i=0;i<Math.min(5,rows.length);i++){
+        if(rows[i].some(c=>String(c).toLowerCase().includes('machine'))){ headerIdx=i; break; }
+      }
+      const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
+      const col = name => headers.findIndex(h=>h.includes(name));
+      const cMachine  = col('machine');
+      const cPart     = col('part');
+      const cDesc     = col('desc');
+      const cMaterial = col('material');
+      const cMold     = col('mold');
+      const cCustomer = col('customer');
+      const cStatus   = col('status');
+
+      planMachines = [];
+      for(let r=headerIdx+1; r<rows.length; r++){
+        const row = rows[r];
+        const machine = String(row[cMachine]||'').trim();
+        if(!machine) continue;
+        planMachines.push({
+          machine,
+          sap:      String(row[cPart]     ||'').trim(),
+          desc:     String(row[cDesc]     ||'').trim(),
+          material: String(row[cMaterial] ||'').trim(),
+          mold:     String(row[cMold]     ||'').trim(),
+          customer: String(row[cCustomer] ||'').trim(),
+          status:   String(row[cStatus]   ||'').trim(),
+        });
+      }
+      selectedPlanIdx = new Set(); // 기본: 선택 없음
+      renderMachGrid();
+      document.getElementById('planSelector').classList.add('show');
+    } catch(err){
+      alert(tr('planExcelError')+': '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+function renderMachGrid(){
+  const grid = document.getElementById('machGrid');
+  grid.innerHTML = planMachines.map((m,i)=>{
+    const sel = selectedPlanIdx.has(i);
+    return `<div class="mach-card${sel?' selected':''}" onclick="toggleMachSel(${i})" id="mc_${i}">
+      <div class="mach-card-id">⚙️ ${m.machine}</div>
+      <div class="mach-card-pn">${m.sap||'—'}</div>
+      <div class="mach-card-desc">${m.desc||'—'}</div>
+      <div class="mach-card-cust">👤 ${m.customer||'—'} ${m.status&&m.status.trim()?'| 🔖'+m.status:''}</div>
+    </div>`;
+  }).join('');
+  updateSelCount();
+}
+
+function toggleMachSel(idx){
+  if(selectedPlanIdx.has(idx)) selectedPlanIdx.delete(idx);
+  else selectedPlanIdx.add(idx);
+  const card = document.getElementById('mc_'+idx);
+  if(card) card.classList.toggle('selected', selectedPlanIdx.has(idx));
+  updateSelCount();
+}
+function selectAllMachines(){ planMachines.forEach((_,i)=>selectedPlanIdx.add(i)); renderMachGrid(); }
+function deselectAllMachines(){ selectedPlanIdx.clear(); renderMachGrid(); }
+function updateSelCount(){
+  const n = selectedPlanIdx.size;
+  document.getElementById('selCountBadge').textContent = n + tr('planSelCount');
+  document.getElementById('planApplyBtn').textContent = n>0 ? `✅ ${n} ${tr('planApplyN')}` : tr('planSelectNone');
+}
+
+function applyPlanSelection(){
+  if(selectedPlanIdx.size===0){ alert(tr('planAlertMin')); return; }
+  collectCommon();
+  state.roundCount = parseInt(document.getElementById('roundCount').value,10)||3;
+  // 선택된 순서(인덱스 순)로 machineInfo 구성
+  const selected = [...selectedPlanIdx].sort((a,b)=>a-b).map(i=>planMachines[i]);
+  state.machineCount = selected.length;
+  state.machineInfo  = selected.map(m=>({
+    ...emptyMachineInfo(),
+    name:     m.machine,
+    sap:      m.sap,
+    desc:     m.desc,
+    material: m.material,
+    mold:     m.mold,
+    customer: m.customer,
+  }));
+  // hidden select 동기화
+  const mc = document.getElementById('machineCount');
+  mc.innerHTML=`<option value="${state.machineCount}">${state.machineCount}</option>`;
+  mc.value = state.machineCount;
+  document.getElementById('roundCount').value = state.roundCount;
+  state.currentMachine = 0;
+  save();
+  renderAll();
+  const msg = document.getElementById('setupSyncMsg');
+  msg.textContent=`✅ ${state.machineCount} ${tr('planLoaded')}`;
+  setTimeout(()=>{msg.textContent=''},3000);
+  // 섹션2로 스크롤
+  setTimeout(()=>{
+    const s2 = document.querySelector('.mach-tabbar-wrap');
+    if(s2) s2.scrollIntoView({behavior:'smooth',block:'start'});
+  },200);
+}
+
+function clearPlan(){
+  planMachines=[]; selectedPlanIdx.clear();
+  document.getElementById('planFileName').textContent=tr('planFileHint');
+  document.getElementById('planClearBtn').style.display='none';
+  document.getElementById('planSelector').classList.remove('show');
+  document.getElementById('machGrid').innerHTML='';
+  // 수동 선택 / 파일 선택 버튼 복원
+  const mb = document.getElementById('manualSelectBtn');
+  const eb = document.getElementById('excelSelectBtn');
+  if(mb) mb.style.display='';
+  if(eb) eb.style.display='';
+}
+
+// ── 수동 설비 선택 ──
+const MANUAL_MACHINES = [
+  // Group A
+  {machine:'A07',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A08',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A09',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A10',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A11',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'A12',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  // Group B
+  {machine:'B13',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B14',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B15',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B16',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B17',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B18',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B19',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B20',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B21',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B22',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B23',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'B24',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  // Group C
+  {machine:'C25',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C26',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C27',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C28',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C29',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+  {machine:'C30',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
+];
+
+function manualSelect(){
+  planMachines = MANUAL_MACHINES.map(m=>({...m}));
+  selectedPlanIdx = new Set();
+  renderMachGrid();
+  document.getElementById('planSelector').classList.add('show');
+  document.getElementById('planFileName').textContent = tr('manualModeActive');
+  document.getElementById('planClearBtn').style.display = '';
+  // 수동선택 / 파일선택 버튼 숨기기
+  const mb = document.getElementById('manualSelectBtn');
+  const eb = document.getElementById('excelSelectBtn');
+  if(mb) mb.style.display='none';
+  if(eb) eb.style.display='none';
+}
+
+function applySetup(){
+  collectCommon();
+  // plan 모드이면 machineCount는 hidden select 값 사용
+  const mcVal = parseInt(document.getElementById('machineCount').value,10)||state.machineCount||1;
+  state.machineCount = mcVal;
+  state.roundCount   = parseInt(document.getElementById('roundCount').value,10);
+  ensureMachineInfo();
+  if(state.currentMachine >= state.machineCount) state.currentMachine = state.machineCount-1;
+  save();
+  renderAll();
+  const msg = document.getElementById('setupSyncMsg');
+  if(msg){ msg.textContent=`✅ ${state.machineCount} ${tr('machines')} / ${state.roundCount} ${tr('rounds')}`; setTimeout(()=>{msg.textContent=''},2500); }
+}
+
+// ══ SAP PN → Description 데이터베이스 (PEAK_PN_List.xlsx, 861개) ══
+const PN_DB_BASE = {"17B02001001LE":"KX MODULE77.8X77.5 5.36 0103 2","17B02002001LE":"TX BG9X11 0.8 1021 2","17B05001001LE":"J/L PBGA 23X23 1.73T","17B05001002LE":"J/L PBGA 23X23 1.73T","17B05002001LE":"J/L PBGA 27X27 1.53T","17B05003001LE":"J/L MODULE-2 5.2X11 1.086T","17B05004001LE":"J/A MODULE 3.38X3.38 0.791T(35.4Yellow P-BIN)","17B05005001LE":"J/A MODULE 3.38X3.38 CO(35.4Yellow P-BIN)","17B05006001LE":"J/A MODULE-1 3.2X3.2 0.54T(35.4mmGreen P-BIN)","17B05007001LE":"J/A MODULE-1 3.2X3.2 COVER(35.4mmGreen P-BIN)","17B05008001LE":"J/A MODULE-2 3.2X3.2 0.79T(35.4mm Blue P-BIN)","17B05009001LE":"J/A MODULE-2 3.2X3.2 COVER(35.4mm Blue P-BIN)","17B05010001LE":"N/V MODULE 14.00X19.73 0.73T (Assembly)","17B05011001LE":"J/L MODULE 7.20X13.01 3.70T (Assembly)","17B05011002LE":"J/L MODULE 7.20X13.01 3.70T (Assembly)","17B05012001LE":"J/L MODULE 7.20X13.01 3.70T (Assembly)","17B05013001LE":"N/V LENS HOLDER 14.00X19.73 0.33T","17B05014001LE":"J/A MODULE 5.35X6.35 1.07T","17B05015001LE":"J/A MODULE 5.35X6.35 CO","17B05016001LE":"J/A MODULE 5.35X6.35 1.07T (BLUE)","17B05017001LE":"J/A MODULE 5.35X6.35 CO (BLUE)","17B05018001LE":"J/L MODULE 7.20X13.01 2.56T","17B05019001LE":"J/A MODULE 3.2X3.2 (CO+PIN)","17B05020001LE":"J/L MODULE 9.0X16.6 3.0T (Assembly)","17B05021001LE":"J/A MODULE 5.35X6.35 1.07T (WHITE)","17B05022001LE":"J/A MODULE 5.35X6.35 CO (WHITE)","17B05023001LE":"J/A MODULE 3.38X3.38 1.09T(35.4mm Green P-BIN)","17B05023002LE":"J/A MODULE 3.38X3.38 1.09T(35.4mm Green P-BIN)","17B05024001LE":"J/A MODULE 3.38X3.38 CO(35.4mm Green P-BIN)","17B05025001LE":"J/A MODULE 3.38X3.38 1.09T(35.4mm Yellow P-BIN)","17B05026001LE":"J/A MODULE 3.38X3.38 CO(35.4mm Yellow P-BIN)","17B05027001LE":"J/A MODULE 3.38X3.38 1.09T(35.4mm Blue P-BIN)","17B05028001LE":"J/A MODULE 3.38X3.38 CO(35.4mm Blue P-BIN)","17B05029001LE":"J/L MODULE 7.20X13.01 3.70T","17B05030001LE":"J/A MODULE 5.35X6.35 COVER (GREEN)","17B05031001LE":"J/A MODULE 5.35X6.35 COVER (BLUE)","17B05032001LE":"J/A MODULE 5.35X6.35 COVER (WHITE)","17B05033001LE":"J/L MODULE 5.20X8.75 1.93T","17B05034001LE":"J/L MODULE 5.20X8.75 0.93T","17B05035001LE":"J/A MODULE 3.38X3.38 CO(35.4mm Yellow P-BIN)(35.4mm Blue P-BIN)","17B05036001LE":"J/A MODULE 3.38X3.38 1.09T (20mm+35.4mm)","17B05037001LE":"J/A MODULE 3.38X3.38 CO (20mm+35.4mm)","17B05038001LE":"J/A MODULE 3.38X3.38 1.09T (20mm)","17B05039001LE":"J/A MODULE 3.38X3.38 CO (20mm)","17B05040001LE":"J/A MODULE 5.35X6.35 0.5T (GREEN)","17B05041001LE":"J/A MODULE 5.35X6.35 0.5T (BLUE)","17B05042001LE":"J/A MODULE 5.35X6.35 0.5T (WHITE)","17B05043001LE":"J/L MODULE 14.50X14.10 2.30T","17B05044001LE":"J/L MODULE 5.60X11.0 1.08T","17B05045001LE":"J/L MODULE 14.50X14.10 2.30T (Assembly)","17B05046001LE":"J/L PBGA 35X35 1.73T","17B05047001LE":"J/L MODULE 10.20X14.50 3.46T","17B05048001LE":"J/L MODULE 10.20X14.50 3.46T (Assembly)","17B05049001LE":"J/L MODULE 7.20X10.10 2.10T","17B05050001LE":"J/L MODULE 7.20X10.10 2.10T (Assembly)","17B05051001LE":"N/V LENS HOLDER 14.00X19.73 0.73T","17B05052001LE":"N/V MODULE 14.00X19.73 0.46T","17B05053001LE":"J/L PBGA 27X27 1.73T","17B05054001LE":"N/V MODULE 14.00X19.73 0.73T","17B05055001LE":"J/L MODULE 9.0X16.6 3.0T","17B05056001LE":"J/L MODULE 5.35X5.35 1.02T","17B05057001LE":"J/L PBGA 25X25 1.73T","17B05058001LE":"J/L PBGA 19X19 1.73T","17B05059001LE":"J/L PBGA 17X17 1.73T","17B05060001LE":"J/L PBGA 15X15 1.73T","17B05061001LE":"J/L MODULE 5.35X5.35 1.02T (Assembly)","17B05062001LE":"J/A MODULE 3.38X3.38 1.09T+CO (Dual: Yellow+Blue)","17B05063001LE":"J/A MODULE 3.38X3.38 1.09T+CO (Dual: Green+Blue)","17B05064001LE":"J/A MODULE 3.38X3.38 1.09T+CO (Dual: Green+Yellow)","17B05065001LE":"J/L MODULE 7.20X10.10 3.70T","17B05066001LE":"J/L MODULE 7.20X10.10 3.70T (Assembly)","17B05067001LE":"J/A MODULE 3.38X3.38 CO (Tri: Green+Yellow+Blue)","17B05068001LE":"J/L MODULE 14.50X14.10 3.09T","17B05069001LE":"J/L MODULE 14.50X14.10 3.09T (Assembly)","17B05070001LE":"J/A MODULE 5.35X6.35 1.07T (CUSTOM)","17B05071001LE":"J/A MODULE 5.35X6.35 CO (CUSTOM)","17B05072001LE":"J/L MODULE 8.85X14.85 3.30T","17B05072002LE":"J/L MODULE 8.85X14.85 3.30T","17B05073001LE":"J/L MODULE 8.85X14.85 3.30T (Assembly)","17B05074001LE":"J/L MODULE 6.35X10.35 1.83T","17B05075001LE":"J/L MODULE 6.35X10.35 1.83T (Assembly)","17B05076001LE":"J/A MODULE 3.38X3.38 1.15T(35.4 Yellow P-BIN) SILVER FRAME","17B05077001LE":"J/A MODULE 3.38X3.38 CO(35.4 Yellow P-BIN) SILVER FRAME","17B05078001LE":"J/A MODULE 3.38X3.38 1.15T(35.4 Green P-BIN) SILVER FRAME","17B05079001LE":"J/A MODULE 3.38X3.38 CO(35.4 Green P-BIN) SILVER FRAME","17B05080001LE":"J/A MODULE 3.38X3.38 1.15T(35.4 Blue P-BIN) SILVER FRAME","17B05081001LE":"J/A MODULE 3.38X3.38 CO(35.4 Blue P-BIN) SILVER FRAME","17B05082001LE":"J/A MODULE 3.38X3.38 1.15T(35.4 Yellow P-BIN) BLACK FRAME","17B05083001LE":"J/A MODULE 3.38X3.38 CO(35.4 Yellow P-BIN) BLACK FRAME","17B05084001LE":"J/A MODULE 3.38X3.38 1.15T(35.4 Green P-BIN) BLACK FRAME","17B05085001LE":"J/A MODULE 3.38X3.38 CO(35.4 Green P-BIN) BLACK FRAME","17B05086001LE":"J/A MODULE 3.38X3.38 1.15T(35.4 Blue P-BIN) BLACK FRAME","17B05087001LE":"J/A MODULE 3.38X3.38 CO(35.4 Blue P-BIN) BLACK FRAME","17B05088001LE":"J/A MODULE 5.35X6.35 0.5T (CUSTOM)","17B05089001LE":"J/L MODULE 8.85X14.85 2.46T","17B05090001LE":"J/L MODULE 8.85X14.85 2.46T (Assembly)","17B05091001LE":"J/L MODULE 6.5X9.5 3.06T","17B05092001LE":"J/L MODULE 6.5X9.5 3.06T (Assembly)","17B05093001LE":"J/L MODULE 5.35X5.35 1.54T","17B05094001LE":"J/L MODULE 5.35X5.35 1.54T (Assembly)","17B05095001LE":"J/L MODULE 7.20X13.01 2.56T (Assembly)","17B05096001LE":"J/L MODULE 5.60X11.0 1.08T (Assembly)","17B05097001LE":"J/L MODULE 6.35X10.35 2.62T","17B05098001LE":"J/L MODULE 6.35X10.35 2.62T (Assembly)","17B05099001LE":"J/L MODULE 5.35X5.35 2.00T","17B05100001LE":"J/L MODULE 5.35X5.35 2.00T (Assembly)","17B05101001LE":"N/V MODULE 8.62X14.12 0.73T (Assembly)","17B05102001LE":"N/V MODULE 8.62X14.12 0.73T","17B05103001LE":"N/V LENS HOLDER 8.62X14.12 0.33T","17B05104001LE":"J/L MODULE 9.1X9.1 1.10T","17B05105001LE":"J/L MODULE 9.1X9.1 1.10T (Assembly)","17B05106001LE":"J/L MODULE 4.25X6.35 0.83T","17B05107001LE":"J/L MODULE 4.25X6.35 0.83T (Assembly)","17B05108001LE":"J/L MODULE 4.35X8.50 1.00T","17B05109001LE":"J/L MODULE 4.35X8.50 1.00T (Assembly)","17B05110001LE":"J/L MODULE 5.20X8.75 2.80T","17B05111001LE":"J/L MODULE 5.20X8.75 2.80T (Assembly)","17B05112001LE":"J/A MODULE 2.5X3.0 0.63T(Green P-BIN)","17B05113001LE":"J/A MODULE 2.5X3.0 0.63T(Blue P-BIN)","17B05114001LE":"J/A MODULE 2.5X3.0 0.63T(Yellow P-BIN)","17B05115001LE":"J/A MODULE 2.5X3.0 CO(Green P-BIN)","17B05116001LE":"J/A MODULE 2.5X3.0 CO(Blue P-BIN)","17B05117001LE":"J/A MODULE 2.5X3.0 CO(Yellow P-BIN)","17B05118001LE":"J/L MODULE 5.20X8.75 1.40T","17B05119001LE":"J/L MODULE 5.20X8.75 1.40T (Assembly)","17B05120001LE":"J/L MODULE 5.20X8.75 1.93T (Assembly)","17B05121001LE":"J/L MODULE 8.0X11.6 1.80T","17B05122001LE":"J/L MODULE 8.0X11.6 1.80T (Assembly)","17B05123001LE":"J/L MODULE 8.0X11.6 2.55T","17B05124001LE":"J/L MODULE 8.0X11.6 2.55T (Assembly)","17B05125001LE":"J/L MODULE 4.20X8.20 1.40T","17B05126001LE":"J/L MODULE 4.20X8.20 1.40T (Assembly)","17B05127001LE":"J/L MODULE 7.50X11.00 2.35T","17B05128001LE":"J/L MODULE 7.50X11.00 2.35T (Assembly)","17B05129001LE":"J/L MODULE 3.25X5.70 0.71T","17B05130001LE":"J/L MODULE 3.25X5.70 0.71T (Assembly)","17B05131001LE":"J/L MODULE 11.5X11.5 2.05T","17B05132001LE":"J/L MODULE 11.5X11.5 2.05T (Assembly)","17B05133001LE":"J/L MODULE 13.0X13.0 2.20T","17B05134001LE":"J/L MODULE 13.0X13.0 2.20T (Assembly)","17B05135001LE":"J/L MODULE 11.0X15.5 2.35T","17B05136001LE":"J/L MODULE 11.0X15.5 2.35T (Assembly)","17B05137001LE":"J/L MODULE 5.20X8.75 0.93T (Assembly)","17B05138001LE":"J/L MODULE 4.35X8.50 1.40T","17B05139001LE":"J/L MODULE 4.35X8.50 1.40T (Assembly)","17B05140001LE":"J/L MODULE 4.35X8.50 0.67T","17B05141001LE":"J/L MODULE 4.35X8.50 0.67T (Assembly)","17B05142001LE":"J/A MODULE 4.50X5.50 1.34T(Green P-BIN)","17B05143001LE":"J/A MODULE 4.50X5.50 CO(Green P-BIN)","17B05144001LE":"J/A MODULE 4.50X5.50 1.34T(Blue P-BIN)","17B05145001LE":"J/A MODULE 4.50X5.50 CO(Blue P-BIN)","17B05146001LE":"J/A MODULE 4.50X5.50 1.34T(Yellow P-BIN)","17B05147001LE":"J/A MODULE 4.50X5.50 CO(Yellow P-BIN)","17B05148001LE":"J/L MODULE 7.20X10.10 1.40T","17B05149001LE":"J/L MODULE 7.20X10.10 1.40T (Assembly)","17B05150001LE":"J/L MODULE 6.35X10.35 1.10T","17B05151001LE":"J/L MODULE 6.35X10.35 1.10T (Assembly)","17B05152001LE":"J/L MODULE 11.0X11.0 1.85T","17B05153001LE":"J/L MODULE 11.0X11.0 1.85T (Assembly)","17B05154001LE":"J/L MODULE 6.5X9.5 1.70T","17B05155001LE":"J/L MODULE 6.5X9.5 1.70T (Assembly)","17B05156001LE":"J/L MODULE 6.5X6.5 1.50T","17B05157001LE":"J/L MODULE 6.5X6.5 1.50T (Assembly)","17B05158001LE":"J/L MODULE 11.5X11.5 1.35T","17B05159001LE":"J/L MODULE 11.5X11.5 1.35T (Assembly)","17B05160001LE":"J/L MODULE 4.35X8.50 2.08T","17B05161001LE":"J/L MODULE 4.35X8.50 2.08T (Assembly)","17B05162001LE":"J/L MODULE 5.35X5.35 0.60T","17B05163001LE":"J/L MODULE 5.35X5.35 0.60T (Assembly)","17B05164001LE":"J/L MODULE 4.35X6.35 1.10T","17B05165001LE":"J/L MODULE 4.35X6.35 1.10T (Assembly)","17B05166001LE":"J/L MODULE 5.35X7.00 1.40T","17B05167001LE":"J/L MODULE 5.35X7.00 1.40T (Assembly)","17B05168001LE":"J/L MODULE 6.5X9.5 2.32T","17B05169001LE":"J/L MODULE 6.5X9.5 2.32T (Assembly)","17B05170001LE":"J/L MODULE 5.35X5.35 0.90T","17B05171001LE":"J/L MODULE 5.35X5.35 0.90T (Assembly)","17B05172001LE":"J/L MODULE 7.50X10.50 1.60T","17B05173001LE":"J/L MODULE 7.50X10.50 1.60T (Assembly)","17B05174001LE":"J/L MODULE 5.60X11.0 2.05T","17B05175001LE":"J/L MODULE 5.60X11.0 2.05T (Assembly)","17B05176001LE":"J/L MODULE 7.50X11.00 1.60T","17B05177001LE":"J/L MODULE 7.50X11.00 1.60T (Assembly)","17B05178001LE":"J/L MODULE 5.35X7.00 0.82T","17B05179001LE":"J/L MODULE 5.35X7.00 0.82T (Assembly)","17B05180001LE":"J/L MODULE 7.20X13.01 1.43T","17B05181001LE":"J/L MODULE 7.20X13.01 1.43T (Assembly)","17B05182001LE":"J/L MODULE 6.5X9.5 2.80T","17B05183001LE":"J/L MODULE 6.5X9.5 2.80T (Assembly)","17B05184001LE":"J/L MODULE 5.20X8.75 3.55T","17B05185001LE":"J/L MODULE 5.20X8.75 3.55T (Assembly)","17B05186001LE":"J/L MODULE 8.85X14.85 1.50T","17B05187001LE":"J/L MODULE 8.85X14.85 1.50T (Assembly)","17B05188001LE":"J/L MODULE 4.35X8.50 1.80T","17B05189001LE":"J/L MODULE 4.35X8.50 1.80T (Assembly)","17B05190001LE":"J/L MODULE 5.35X5.35 1.30T","17B05191001LE":"J/L MODULE 5.35X5.35 1.30T (Assembly)","17B05192001LE":"J/L MODULE 5.35X5.35 2.35T","17B05193001LE":"J/L MODULE 5.35X5.35 2.35T (Assembly)","17B05194001LE":"J/L MODULE 7.50X10.50 2.13T","17B05195001LE":"J/L MODULE 7.50X10.50 2.13T (Assembly)","17B05196001LE":"J/L MODULE 11.0X15.5 1.60T","17B05197001LE":"J/L MODULE 11.0X15.5 1.60T (Assembly)","17B05198001LE":"J/L MODULE 4.20X8.20 0.82T","17B05199001LE":"J/L MODULE 4.20X8.20 0.82T (Assembly)","17B05200001LE":"J/L MODULE 6.5X6.5 2.25T","17B05201001LE":"J/L MODULE 6.5X6.5 2.25T (Assembly)","17B05202001LE":"J/L MODULE 4.35X6.35 0.60T","17B05203001LE":"J/L MODULE 4.35X6.35 0.60T (Assembly)","17B05204001LE":"J/L MODULE 8.5X12.5 2.08T","17B05205001LE":"J/L MODULE 8.5X12.5 2.08T (Assembly)","17B05206001LE":"J/L MODULE 5.20X8.75 2.25T","17B05207001LE":"J/L MODULE 5.20X8.75 2.25T (Assembly)","17B05208001LE":"J/L MODULE 6.35X10.35 2.15T","17B05209001LE":"J/L MODULE 6.35X10.35 2.15T (Assembly)","17B05210001LE":"J/L MODULE 5.35X5.35 1.75T","17B05211001LE":"J/L MODULE 5.35X5.35 1.75T (Assembly)","17B05212001LE":"J/L MODULE 4.35X8.50 0.30T","17B05213001LE":"J/L MODULE 4.35X8.50 0.30T (Assembly)","17B05214001LE":"J/L MODULE 5.35X5.35 0.40T","17B05215001LE":"J/L MODULE 5.35X5.35 0.40T (Assembly)","17B05216001LE":"J/L MODULE 5.60X11.0 1.50T","17B05217001LE":"J/L MODULE 5.60X11.0 1.50T (Assembly)","17B05218001LE":"J/L MODULE 8.0X11.6 1.20T","17B05219001LE":"J/L MODULE 8.0X11.6 1.20T (Assembly)","17B05220001LE":"J/L MODULE 6.5X9.5 1.10T","17B05221001LE":"J/L MODULE 6.5X9.5 1.10T (Assembly)","17B05222001LE":"J/L MODULE 5.35X7.00 1.85T","17B05223001LE":"J/L MODULE 5.35X7.00 1.85T (Assembly)","17B05224001LE":"J/L MODULE 8.85X14.85 4.00T","17B05225001LE":"J/L MODULE 8.85X14.85 4.00T (Assembly)","17B05226001LE":"J/L MODULE 11.0X15.5 3.00T","17B05227001LE":"J/L MODULE 11.0X15.5 3.00T (Assembly)","17B05228001LE":"J/L MODULE 7.50X11.00 3.05T","17B05229001LE":"J/L MODULE 7.50X11.00 3.05T (Assembly)","17B05230001LE":"J/L MODULE 9.1X9.1 2.00T","17B05231001LE":"J/L MODULE 9.1X9.1 2.00T (Assembly)","17B05232001LE":"J/L MODULE 6.35X10.35 0.55T","17B05233001LE":"J/L MODULE 6.35X10.35 0.55T (Assembly)","17B05234001LE":"J/L MODULE 5.35X7.00 2.40T","17B05235001LE":"J/L MODULE 5.35X7.00 2.40T (Assembly)","17B05236001LE":"J/L MODULE 7.50X11.00 0.96T","17B05237001LE":"J/L MODULE 7.50X11.00 0.96T (Assembly)","17B05238001LE":"J/L MODULE 4.35X8.50 3.20T","17B05239001LE":"J/L MODULE 4.35X8.50 3.20T (Assembly)","17B05240001LE":"J/L MODULE 3.25X5.70 1.35T","17B05241001LE":"J/L MODULE 3.25X5.70 1.35T (Assembly)","17B05242001LE":"J/L MODULE 5.35X5.35 3.10T","17B05243001LE":"J/L MODULE 5.35X5.35 3.10T (Assembly)","17B05244001LE":"J/L MODULE 7.20X13.01 0.80T","17B05245001LE":"J/L MODULE 7.20X13.01 0.80T (Assembly)","17B05246001LE":"J/L MODULE 6.5X9.5 0.65T","17B05247001LE":"J/L MODULE 6.5X9.5 0.65T (Assembly)","17B05248001LE":"J/L MODULE 11.0X11.0 2.55T","17B05249001LE":"J/L MODULE 11.0X11.0 2.55T (Assembly)","17B05250001LE":"J/L MODULE 13.0X13.0 1.35T","17B05251001LE":"J/L MODULE 13.0X13.0 1.35T (Assembly)","17B05252001LE":"J/L MODULE 9.0X16.6 1.50T","17B05253001LE":"J/L MODULE 9.0X16.6 1.50T (Assembly)","17B05254001LE":"J/L MODULE 7.20X10.10 0.87T","17B05255001LE":"J/L MODULE 7.20X10.10 0.87T (Assembly)","17B05256001LE":"J/L MODULE 5.60X11.0 0.55T","17B05257001LE":"J/L MODULE 5.60X11.0 0.55T (Assembly)","17B05258001LE":"J/L MODULE 6.5X6.5 0.90T","17B05259001LE":"J/L MODULE 6.5X6.5 0.90T (Assembly)","17B05260001LE":"J/L MODULE 7.20X10.10 2.75T","17B05261001LE":"J/L MODULE 7.20X10.10 2.75T (Assembly)","17B05262001LE":"J/L MODULE 7.20X10.10 3.35T","17B05263001LE":"J/L MODULE 7.20X10.10 3.35T (Assembly)","17B05264001LE":"J/L MODULE 4.35X8.50 2.55T","17B05265001LE":"J/L MODULE 4.35X8.50 2.55T (Assembly)","17B05266001LE":"J/L MODULE 5.20X8.75 0.50T","17B05267001LE":"J/L MODULE 5.20X8.75 0.50T (Assembly)","17B05268001LE":"J/L MODULE 8.0X11.6 0.90T","17B05269001LE":"J/L MODULE 8.0X11.6 0.90T (Assembly)","17B05270001LE":"J/L MODULE 5.35X7.00 3.05T","17B05271001LE":"J/L MODULE 5.35X7.00 3.05T (Assembly)","17B05272001LE":"J/L MODULE 6.35X10.35 3.30T","17B05273001LE":"J/L MODULE 6.35X10.35 3.30T (Assembly)","17B05274001LE":"J/L MODULE 7.50X10.50 0.73T","17B05275001LE":"J/L MODULE 7.50X10.50 0.73T (Assembly)","17B05276001LE":"J/L MODULE 5.35X5.35 4.20T","17B05277001LE":"J/L MODULE 5.35X5.35 4.20T (Assembly)","17B05278001LE":"J/L MODULE 4.35X6.35 1.55T","17B05279001LE":"J/L MODULE 4.35X6.35 1.55T (Assembly)","17B05280001LE":"J/L MODULE 8.5X12.5 1.30T","17B05281001LE":"J/L MODULE 8.5X12.5 1.30T (Assembly)","17B05282001LE":"J/L MODULE 9.0X16.6 2.15T","17B05283001LE":"J/L MODULE 9.0X16.6 2.15T (Assembly)","17B05284001LE":"J/L MODULE 4.20X8.20 1.90T","17B05285001LE":"J/L MODULE 4.20X8.20 1.90T (Assembly)","17B05286001LE":"J/L MODULE 6.35X10.35 1.65T","17B05287001LE":"J/L MODULE 6.35X10.35 1.65T (Assembly)","17B05288001LE":"J/L MODULE 5.35X7.00 2.85T","17B05289001LE":"J/L MODULE 5.35X7.00 2.85T (Assembly)","17B05290001LE":"J/L MODULE 7.20X10.10 1.87T","17B05291001LE":"J/L MODULE 7.20X10.10 1.87T (Assembly)","17B05292001LE":"J/L MODULE 8.85X14.85 0.73T","17B05293001LE":"J/L MODULE 8.85X14.85 0.73T (Assembly)","17B05294001LE":"J/L MODULE 7.50X10.50 3.50T","17B05295001LE":"J/L MODULE 7.50X10.50 3.50T (Assembly)","17B05296001LE":"J/L MODULE 5.20X8.75 4.15T","17B05297001LE":"J/L MODULE 5.20X8.75 4.15T (Assembly)","17B05298001LE":"J/L MODULE 8.0X11.6 3.22T","17B05299001LE":"J/L MODULE 8.0X11.6 3.22T (Assembly)","17B05300001LE":"J/L MODULE 7.20X13.01 1.70T","17B05301001LE":"J/L MODULE 7.20X13.01 1.70T (Assembly)","17B05302001LE":"J/L MODULE 9.1X9.1 2.75T","17B05303001LE":"J/L MODULE 9.1X9.1 2.75T (Assembly)","17B05304001LE":"J/L MODULE 4.35X6.35 2.10T","17B05305001LE":"J/L MODULE 4.35X6.35 2.10T (Assembly)","17B05306001LE":"J/L MODULE 7.50X11.00 2.70T","17B05307001LE":"J/L MODULE 7.50X11.00 2.70T (Assembly)","17B05308001LE":"J/L MODULE 11.0X15.5 2.00T","17B05309001LE":"J/L MODULE 11.0X15.5 2.00T (Assembly)","17B05310001LE":"J/L MODULE 11.5X11.5 3.70T","17B05311001LE":"J/L MODULE 11.5X11.5 3.70T (Assembly)","17B05312001LE":"J/L MODULE 13.0X13.0 2.90T","17B05313001LE":"J/L MODULE 13.0X13.0 2.90T (Assembly)","17B05314001LE":"J/L MODULE 14.50X14.10 1.65T","17B05315001LE":"J/L MODULE 14.50X14.10 1.65T (Assembly)","17B05316001LE":"J/L MODULE 9.0X16.6 0.85T","17B05317001LE":"J/L MODULE 9.0X16.6 0.85T (Assembly)","17B05318001LE":"J/L MODULE 11.0X11.0 1.25T","17B05319001LE":"J/L MODULE 11.0X11.0 1.25T (Assembly)","17B05320001LE":"J/L MODULE 4.20X8.20 2.55T","17B05321001LE":"J/L MODULE 4.20X8.20 2.55T (Assembly)","17B05322001LE":"J/L MODULE 7.20X13.01 2.15T","17B05323001LE":"J/L MODULE 7.20X13.01 2.15T (Assembly)","17B05324001LE":"J/L MODULE 3.25X5.70 0.36T","17B05325001LE":"J/L MODULE 3.25X5.70 0.36T (Assembly)","17B05326001LE":"J/L MODULE 3.25X5.70 1.90T","17B05327001LE":"J/L MODULE 3.25X5.70 1.90T (Assembly)","17B05328001LE":"J/L MODULE 6.5X6.5 3.00T","17B05329001LE":"J/L MODULE 6.5X6.5 3.00T (Assembly)","17B05330001LE":"J/L MODULE 8.5X12.5 3.50T","17B05331001LE":"J/L MODULE 8.5X12.5 3.50T (Assembly)","17B05332001LE":"J/L MODULE 6.5X6.5 0.45T","17B05333001LE":"J/L MODULE 6.5X6.5 0.45T (Assembly)","17B05334001LE":"J/L MODULE 9.0X16.6 4.30T","17B05335001LE":"J/L MODULE 9.0X16.6 4.30T (Assembly)","17B05336001LE":"J/L MODULE 6.5X9.5 4.00T","17B05337001LE":"J/L MODULE 6.5X9.5 4.00T (Assembly)","17B05338001LE":"J/L MODULE 5.20X8.75 1.65T","17B05339001LE":"J/L MODULE 5.20X8.75 1.65T (Assembly)","17B05340001LE":"J/L MODULE 4.35X6.35 2.65T","17B05341001LE":"J/L MODULE 4.35X6.35 2.65T (Assembly)","17B05342001LE":"J/L MODULE 8.85X14.85 4.70T","17B05343001LE":"J/L MODULE 8.85X14.85 4.70T (Assembly)","17B05344001LE":"J/L MODULE 7.20X10.10 4.05T","17B05345001LE":"J/L MODULE 7.20X10.10 4.05T (Assembly)","17B05346001LE":"J/L MODULE 5.35X7.00 3.65T","17B05347001LE":"J/L MODULE 5.35X7.00 3.65T (Assembly)","17B05348001LE":"J/L MODULE 7.50X10.50 4.20T","17B05349001LE":"J/L MODULE 7.50X10.50 4.20T (Assembly)","17B05350001LE":"J/L MODULE 6.35X10.35 4.00T","17B05351001LE":"J/L MODULE 6.35X10.35 4.00T (Assembly)","17B05352001LE":"J/L MODULE 4.35X8.50 4.00T","17B05353001LE":"J/L MODULE 4.35X8.50 4.00T (Assembly)","17B05354001LE":"J/L MODULE 7.20X13.01 4.35T","17B05355001LE":"J/L MODULE 7.20X13.01 4.35T (Assembly)","17B05356001LE":"J/L MODULE 6.5X6.5 3.60T","17B05357001LE":"J/L MODULE 6.5X6.5 3.60T (Assembly)","17B05358001LE":"J/L MODULE 6.5X9.5 3.45T","17B05359001LE":"J/L MODULE 6.5X9.5 3.45T (Assembly)","17B05360001LE":"J/L MODULE 5.35X5.35 5.10T","17B05361001LE":"J/L MODULE 5.35X5.35 5.10T (Assembly)","17B05362001LE":"J/L MODULE 11.5X11.5 1.70T","17B05363001LE":"J/L MODULE 11.5X11.5 1.70T (Assembly)","17B05364001LE":"J/L MODULE 11.0X11.0 3.20T","17B05365001LE":"J/L MODULE 11.0X11.0 3.20T (Assembly)","17B05366001LE":"J/L MODULE 9.1X9.1 0.53T","17B05367001LE":"J/L MODULE 9.1X9.1 0.53T (Assembly)","17B05368001LE":"J/L MODULE 7.50X10.50 1.12T","17B05369001LE":"J/L MODULE 7.50X10.50 1.12T (Assembly)","17B05370001LE":"J/L MODULE 14.50X14.10 3.86T","17B05371001LE":"J/L MODULE 14.50X14.10 3.86T (Assembly)","17B05372001LE":"J/L MODULE 13.0X13.0 3.55T","17B05373001LE":"J/L MODULE 13.0X13.0 3.55T (Assembly)","17B05374001LE":"J/L MODULE 11.0X15.5 4.00T","17B05375001LE":"J/L MODULE 11.0X15.5 4.00T (Assembly)","17B05376001LE":"J/L MODULE 8.5X12.5 4.30T","17B05377001LE":"J/L MODULE 8.5X12.5 4.30T (Assembly)","17B05378001LE":"J/L MODULE 4.20X8.20 3.25T","17B05379001LE":"J/L MODULE 4.20X8.20 3.25T (Assembly)","17B05380001LE":"J/L MODULE 4.20X8.20 2.15T","17B05381001LE":"J/L MODULE 4.20X8.20 2.15T (Assembly)","17B05382001LE":"J/L MODULE 8.0X11.6 3.95T","17B05383001LE":"J/L MODULE 8.0X11.6 3.95T (Assembly)","17B05384001LE":"J/L MODULE 3.25X5.70 2.40T","17B05385001LE":"J/L MODULE 3.25X5.70 2.40T (Assembly)","17B05386001LE":"J/L MODULE 5.60X11.0 2.50T","17B05387001LE":"J/L MODULE 5.60X11.0 2.50T (Assembly)","17B05388001LE":"J/L MODULE 9.0X16.6 1.13T","17B05389001LE":"J/L MODULE 9.0X16.6 1.13T (Assembly)","17B05390001LE":"J/L MODULE 14.50X14.10 0.80T","17B05391001LE":"J/L MODULE 14.50X14.10 0.80T (Assembly)","17B05392001LE":"J/L MODULE 11.5X11.5 4.55T","17B05393001LE":"J/L MODULE 11.5X11.5 4.55T (Assembly)","17B05394001LE":"J/L MODULE 3.25X5.70 2.90T","17B05395001LE":"J/L MODULE 3.25X5.70 2.90T (Assembly)","17B05396001LE":"J/L MODULE 7.50X11.00 4.05T","17B05397001LE":"J/L MODULE 7.50X11.00 4.05T (Assembly)","17B05398001LE":"J/L MODULE 11.0X15.5 4.70T","17B05399001LE":"J/L MODULE 11.0X15.5 4.70T (Assembly)","17B05400001LE":"J/L MODULE 4.35X6.35 3.25T","17B05401001LE":"J/L MODULE 4.35X6.35 3.25T (Assembly)","17B05402001LE":"J/L MODULE 8.85X14.85 5.40T","17B05403001LE":"J/L MODULE 8.85X14.85 5.40T (Assembly)","17B05404001LE":"J/L MODULE 13.0X13.0 4.25T","17B05405001LE":"J/L MODULE 13.0X13.0 4.25T (Assembly)","17B05406001LE":"J/L MODULE 9.1X9.1 3.55T","17B05407001LE":"J/L MODULE 9.1X9.1 3.55T (Assembly)","17B05408001LE":"J/L MODULE 14.50X14.10 4.60T","17B05409001LE":"J/L MODULE 14.50X14.10 4.60T (Assembly)","17B05410001LE":"J/L MODULE 5.60X11.0 3.25T","17B05411001LE":"J/L MODULE 5.60X11.0 3.25T (Assembly)","17B05412001LE":"J/L MODULE 9.0X16.6 4.95T","17B05413001LE":"J/L MODULE 9.0X16.6 4.95T (Assembly)","17B05414001LE":"J/L MODULE 11.0X11.0 4.00T","17B05415001LE":"J/L MODULE 11.0X11.0 4.00T (Assembly)","17B05416001LE":"J/L MODULE 8.5X12.5 5.00T","17B05417001LE":"J/L MODULE 8.5X12.5 5.00T (Assembly)","17B05418001LE":"J/L MODULE 12.0X12.0 2.00T","17B05419001LE":"J/L MODULE 12.0X12.0 2.00T (Assembly)","17B05420001LE":"J/L MODULE 12.0X12.0 1.20T","17B05421001LE":"J/L MODULE 12.0X12.0 1.20T (Assembly)","17B05422001LE":"J/L MODULE 12.0X12.0 3.00T","17B05423001LE":"J/L MODULE 12.0X12.0 3.00T (Assembly)","17B05424001LE":"J/L MODULE 12.0X12.0 0.55T","17B05425001LE":"J/L MODULE 12.0X12.0 0.55T (Assembly)","17B05426001LE":"J/L MODULE 12.0X12.0 3.95T","17B05427001LE":"J/L MODULE 12.0X12.0 3.95T (Assembly)","17B05428001LE":"J/L MODULE 4.35X6.35 3.85T","17B05429001LE":"J/L MODULE 4.35X6.35 3.85T (Assembly)","17B05430001LE":"J/L MODULE 6.35X10.35 4.65T","17B05431001LE":"J/L MODULE 6.35X10.35 4.65T (Assembly)","17B05432001LE":"J/L MODULE 6.5X6.5 4.25T","17B05433001LE":"J/L MODULE 6.5X6.5 4.25T (Assembly)","17B05434001LE":"J/L MODULE 12.0X12.0 4.90T","17B05435001LE":"J/L MODULE 12.0X12.0 4.90T (Assembly)","17B05436001LE":"J/L MODULE 4.35X8.50 4.70T","17B05437001LE":"J/L MODULE 4.35X8.50 4.70T (Assembly)","17B05438001LE":"J/L MODULE 6.5X9.5 4.65T","17B05439001LE":"J/L MODULE 6.5X9.5 4.65T (Assembly)","17B05440001LE":"J/L MODULE 3.25X5.70 3.40T","17B05441001LE":"J/L MODULE 3.25X5.70 3.40T (Assembly)","17B05442001LE":"J/L MODULE 11.0X15.5 5.45T","17B05443001LE":"J/L MODULE 11.0X15.5 5.45T (Assembly)","17B05444001LE":"J/L MODULE 7.20X10.10 4.75T","17B05445001LE":"J/L MODULE 7.20X10.10 4.75T (Assembly)","17B05446001LE":"J/L MODULE 7.50X11.00 4.70T","17B05447001LE":"J/L MODULE 7.50X11.00 4.70T (Assembly)","17B05448001LE":"J/L MODULE 5.35X7.00 4.25T","17B05449001LE":"J/L MODULE 5.35X7.00 4.25T (Assembly)","17B05450001LE":"J/L MODULE 7.50X10.50 4.90T","17B05451001LE":"J/L MODULE 7.50X10.50 4.90T (Assembly)","17B05452001LE":"J/L MODULE 8.0X11.6 4.70T","17B05453001LE":"J/L MODULE 8.0X11.6 4.70T (Assembly)","17B05454001LE":"J/L MODULE 5.20X8.75 4.85T","17B05455001LE":"J/L MODULE 5.20X8.75 4.85T (Assembly)","17B05456001LE":"J/L MODULE 7.20X13.01 5.05T","17B05457001LE":"J/L MODULE 7.20X13.01 5.05T (Assembly)","17B05458001LE":"J/L MODULE 8.85X14.85 5.95T","17B05459001LE":"J/L MODULE 8.85X14.85 5.95T (Assembly)","17B05460001LE":"J/L MODULE 5.60X11.0 4.00T","17B05461001LE":"J/L MODULE 5.60X11.0 4.00T (Assembly)","17B05462001LE":"J/L MODULE 8.5X12.5 5.65T","17B05463001LE":"J/L MODULE 8.5X12.5 5.65T (Assembly)","17B05464001LE":"J/L MODULE 9.0X16.6 5.60T","17B05465001LE":"J/L MODULE 9.0X16.6 5.60T (Assembly)","17B05466001LE":"J/L MODULE 5.35X5.35 5.85T","17B05467001LE":"J/L MODULE 5.35X5.35 5.85T (Assembly)","17B05468001LE":"J/L MODULE 9.1X9.1 4.25T","17B05469001LE":"J/L MODULE 9.1X9.1 4.25T (Assembly)","17B05470001LE":"J/L MODULE 7.20X13.01 5.70T","17B05471001LE":"J/L MODULE 7.20X13.01 5.70T (Assembly)","17B05472001LE":"J/L MODULE 11.0X11.0 4.75T","17B05473001LE":"J/L MODULE 11.0X11.0 4.75T (Assembly)","17B05474001LE":"J/L MODULE 13.0X13.0 4.95T","17B05475001LE":"J/L MODULE 13.0X13.0 4.95T (Assembly)","17B05476001LE":"J/L MODULE 11.5X11.5 5.40T","17B05477001LE":"J/L MODULE 11.5X11.5 5.40T (Assembly)","17B05478001LE":"J/L MODULE 14.50X14.10 5.40T","17B05479001LE":"J/L MODULE 14.50X14.10 5.40T (Assembly)","17B05480001LE":"J/L MODULE 11.0X15.5 6.20T","17B05481001LE":"J/L MODULE 11.0X15.5 6.20T (Assembly)","17B05482001LE":"J/L MODULE 12.0X12.0 5.85T","17B05483001LE":"J/L MODULE 12.0X12.0 5.85T (Assembly)","17B05484001LE":"J/L MODULE 9.0X16.6 6.30T","17B05485001LE":"J/L MODULE 9.0X16.6 6.30T (Assembly)","17B05486001LE":"J/L MODULE 8.5X12.5 6.35T","17B05487001LE":"J/L MODULE 8.5X12.5 6.35T (Assembly)","17B05488001LE":"J/L MODULE 14.50X14.10 6.15T","17B05489001LE":"J/L MODULE 14.50X14.10 6.15T (Assembly)","17B05490001LE":"J/L MODULE 7.50X11.00 5.40T","17B05491001LE":"J/L MODULE 7.50X11.00 5.40T (Assembly)","17B05492001LE":"J/L MODULE 7.50X10.50 5.55T","17B05493001LE":"J/L MODULE 7.50X10.50 5.55T (Assembly)","17B05494001LE":"J/L MODULE 5.60X11.0 4.75T","17B05495001LE":"J/L MODULE 5.60X11.0 4.75T (Assembly)","17B05496001LE":"J/L MODULE 8.85X14.85 6.70T","17B05497001LE":"J/L MODULE 8.85X14.85 6.70T (Assembly)","17B05498001LE":"J/L MODULE 4.20X8.20 3.95T","17B05499001LE":"J/L MODULE 4.20X8.20 3.95T (Assembly)","17B05500001LE":"J/L MODULE 13.0X13.0 5.65T","17B05501001LE":"J/L MODULE 13.0X13.0 5.65T (Assembly)","17B05502001LE":"J/L MODULE 8.0X11.6 5.45T","17B05503001LE":"J/L MODULE 8.0X11.6 5.45T (Assembly)","17B05504001LE":"J/L MODULE 4.35X6.35 4.55T","17B05505001LE":"J/L MODULE 4.35X6.35 4.55T (Assembly)","17B05506001LE":"J/L MODULE 6.5X9.5 5.30T","17B05507001LE":"J/L MODULE 6.5X9.5 5.30T (Assembly)","17B05508001LE":"J/L MODULE 4.35X8.50 5.45T","17B05509001LE":"J/L MODULE 4.35X8.50 5.45T (Assembly)","17B05510001LE":"J/L MODULE 5.35X7.00 4.90T","17B05511001LE":"J/L MODULE 5.35X7.00 4.90T (Assembly)","17B05512001LE":"J/L MODULE 6.35X10.35 5.35T","17B05513001LE":"J/L MODULE 6.35X10.35 5.35T (Assembly)","17B05514001LE":"J/L MODULE 7.20X10.10 5.50T","17B05515001LE":"J/L MODULE 7.20X10.10 5.50T (Assembly)","17B05516001LE":"J/L MODULE 11.0X11.0 5.55T","17B05517001LE":"J/L MODULE 11.0X11.0 5.55T (Assembly)","17B05518001LE":"J/L MODULE 11.5X11.5 6.10T","17B05519001LE":"J/L MODULE 11.5X11.5 6.10T (Assembly)","17B05520001LE":"J/L MODULE 9.1X9.1 5.00T","17B05521001LE":"J/L MODULE 9.1X9.1 5.00T (Assembly)","17B05522001LE":"J/L MODULE 6.5X6.5 5.00T","17B05523001LE":"J/L MODULE 6.5X6.5 5.00T (Assembly)","17B05524001LE":"J/L MODULE 3.25X5.70 3.90T","17B05525001LE":"J/L MODULE 3.25X5.70 3.90T (Assembly)","17B05526001LE":"J/L MODULE 4.20X8.20 4.60T","17B05527001LE":"J/L MODULE 4.20X8.20 4.60T (Assembly)","17B05528001LE":"J/L MODULE 12.0X12.0 6.80T","17B05529001LE":"J/L MODULE 12.0X12.0 6.80T (Assembly)","17B05530001LE":"J/L MODULE 5.35X5.35 6.55T","17B05531001LE":"J/L MODULE 5.35X5.35 6.55T (Assembly)","17B05532001LE":"J/L MODULE 5.20X8.75 5.55T","17B05533001LE":"J/L MODULE 5.20X8.75 5.55T (Assembly)","17B05534001LE":"J/L MODULE 4.35X6.35 5.25T","17B05535001LE":"J/L MODULE 4.35X6.35 5.25T (Assembly)","17B05536001LE":"J/L MODULE 14.50X14.10 6.95T","17B05537001LE":"J/L MODULE 14.50X14.10 6.95T (Assembly)","17B05538001LE":"J/L MODULE 7.50X11.00 6.10T","17B05539001LE":"J/L MODULE 7.50X11.00 6.10T (Assembly)","17B05540001LE":"J/L MODULE 7.20X13.01 6.35T","17B05541001LE":"J/L MODULE 7.20X13.01 6.35T (Assembly)","17B05542001LE":"J/L MODULE 4.35X8.50 6.20T","17B05543001LE":"J/L MODULE 4.35X8.50 6.20T (Assembly)","17B05544001LE":"J/L MODULE 8.85X14.85 7.45T","17B05545001LE":"J/L MODULE 8.85X14.85 7.45T (Assembly)","17B05546001LE":"J/L MODULE 9.0X16.6 7.00T","17B05547001LE":"J/L MODULE 9.0X16.6 7.00T (Assembly)","17B05548001LE":"J/L MODULE 6.35X10.35 6.05T","17B05549001LE":"J/L MODULE 6.35X10.35 6.05T (Assembly)","17B05550001LE":"J/L MODULE 7.50X10.50 6.25T","17B05551001LE":"J/L MODULE 7.50X10.50 6.25T (Assembly)","17B05552001LE":"J/L MODULE 6.5X9.5 6.00T","17B05553001LE":"J/L MODULE 6.5X9.5 6.00T (Assembly)","17B05554001LE":"J/L MODULE 8.0X11.6 6.20T","17B05555001LE":"J/L MODULE 8.0X11.6 6.20T (Assembly)","17B05556001LE":"J/L MODULE 5.60X11.0 5.55T","17B05557001LE":"J/L MODULE 5.60X11.0 5.55T (Assembly)","17B05558001LE":"J/L MODULE 5.35X7.00 5.55T","17B05559001LE":"J/L MODULE 5.35X7.00 5.55T (Assembly)","17B05560001LE":"J/L MODULE 13.0X13.0 6.40T","17B05561001LE":"J/L MODULE 13.0X13.0 6.40T (Assembly)","17B05562001LE":"J/L MODULE 4.20X8.20 5.30T","17B05563001LE":"J/L MODULE 4.20X8.20 5.30T (Assembly)","17B05564001LE":"J/L MODULE 11.5X11.5 6.80T","17B05565001LE":"J/L MODULE 11.5X11.5 6.80T (Assembly)","17B05566001LE":"J/L MODULE 11.0X11.0 6.40T","17B05567001LE":"J/L MODULE 11.0X11.0 6.40T (Assembly)","17B05568001LE":"J/L MODULE 12.0X12.0 7.80T","17B05569001LE":"J/L MODULE 12.0X12.0 7.80T (Assembly)","17B05570001LE":"J/L MODULE 9.1X9.1 5.80T","17B05571001LE":"J/L MODULE 9.1X9.1 5.80T (Assembly)","17B05572001LE":"J/L MODULE 6.5X6.5 5.75T","17B05573001LE":"J/L MODULE 6.5X6.5 5.75T (Assembly)","17B05574001LE":"J/L MODULE 11.0X15.5 7.00T","17B05575001LE":"J/L MODULE 11.0X15.5 7.00T (Assembly)","17B05576001LE":"J/L MODULE 7.20X10.10 6.30T","17B05577001LE":"J/L MODULE 7.20X10.10 6.30T (Assembly)","17B05578001LE":"J/L MODULE 8.5X12.5 7.05T","17B05579001LE":"J/L MODULE 8.5X12.5 7.05T (Assembly)","17B05580001LE":"J/L MODULE 14.50X14.10 7.80T","17B05581001LE":"J/L MODULE 14.50X14.10 7.80T (Assembly)","17B05582001LE":"J/L MODULE 5.20X8.75 6.30T","17B05583001LE":"J/L MODULE 5.20X8.75 6.30T (Assembly)","17B05584001LE":"J/L MODULE 4.35X6.35 5.95T","17B05585001LE":"J/L MODULE 4.35X6.35 5.95T (Assembly)","17B05586001LE":"J/L MODULE 6.35X10.35 6.80T","17B05587001LE":"J/L MODULE 6.35X10.35 6.80T (Assembly)","17B05588001LE":"J/L MODULE 7.50X11.00 6.85T","17B05589001LE":"J/L MODULE 7.50X11.00 6.85T (Assembly)","17B05590001LE":"J/L MODULE 4.35X8.50 6.95T","17B05591001LE":"J/L MODULE 4.35X8.50 6.95T (Assembly)","17B05592001LE":"J/L MODULE 8.85X14.85 8.25T","17B05593001LE":"J/L MODULE 8.85X14.85 8.25T (Assembly)","17B05594001LE":"J/L MODULE 7.50X10.50 7.00T","17B05595001LE":"J/L MODULE 7.50X10.50 7.00T (Assembly)","17B05596001LE":"J/L MODULE 9.0X16.6 7.70T","17B05597001LE":"J/L MODULE 9.0X16.6 7.70T (Assembly)","17B05598001LE":"J/L MODULE 8.0X11.6 7.00T","17B05599001LE":"J/L MODULE 8.0X11.6 7.00T (Assembly)","17B05600001LE":"J/L MODULE 9.1X9.1 6.60T","17B05601001LE":"J/L MODULE 9.1X9.1 6.60T (Assembly)","17B05602001LE":"J/L MODULE 5.60X11.0 6.35T","17B05603001LE":"J/L MODULE 5.60X11.0 6.35T (Assembly)","17B05604001LE":"J/L MODULE 5.35X7.00 6.25T","17B05605001LE":"J/L MODULE 5.35X7.00 6.25T (Assembly)","17B05606001LE":"J/L MODULE 13.0X13.0 7.20T","17B05607001LE":"J/L MODULE 13.0X13.0 7.20T (Assembly)","17B05608001LE":"J/L MODULE 12.0X12.0 8.80T","17B05609001LE":"J/L MODULE 12.0X12.0 8.80T (Assembly)","17B05610001LE":"J/L MODULE 11.0X11.0 7.30T","17B05611001LE":"J/L MODULE 11.0X11.0 7.30T (Assembly)","17B05612001LE":"J/L MODULE 11.5X11.5 7.55T","17B05613001LE":"J/L MODULE 11.5X11.5 7.55T (Assembly)","17B05614001LE":"J/L MODULE 6.5X6.5 6.55T","17B05615001LE":"J/L MODULE 6.5X6.5 6.55T (Assembly)","17B05616001LE":"J/L MODULE 6.5X9.5 6.80T","17B05617001LE":"J/L MODULE 6.5X9.5 6.80T (Assembly)","17B05618001LE":"J/L MODULE 6.35X10.35 7.55T","17B05619001LE":"J/L MODULE 6.35X10.35 7.55T (Assembly)","17B05620001LE":"J/L MODULE 7.20X13.01 7.10T","17B05621001LE":"J/L MODULE 7.20X13.01 7.10T (Assembly)","17B05622001LE":"J/L MODULE 11.0X15.5 7.80T","17B05623001LE":"J/L MODULE 11.0X15.5 7.80T (Assembly)","17B05624001LE":"J/L MODULE 5.20X8.75 7.10T","17B05625001LE":"J/L MODULE 5.20X8.75 7.10T (Assembly)","17B05626001LE":"J/L MODULE 8.5X12.5 7.85T","17B05627001LE":"J/L MODULE 8.5X12.5 7.85T (Assembly)","17B05628001LE":"J/L MODULE 14.50X14.10 8.65T","17B05629001LE":"J/L MODULE 14.50X14.10 8.65T (Assembly)","17B05630001LE":"J/L MODULE 7.20X10.10 7.20T","17B05631001LE":"J/L MODULE 7.20X10.10 7.20T (Assembly)","17B05632001LE":"J/L MODULE 4.35X6.35 6.65T","17B05633001LE":"J/L MODULE 4.35X6.35 6.65T (Assembly)","17B05634001LE":"J/L MODULE 4.20X8.20 6.10T","17B05635001LE":"J/L MODULE 4.20X8.20 6.10T (Assembly)","17B05636001LE":"J/L MODULE 7.50X11.00 7.65T","17B05637001LE":"J/L MODULE 7.50X11.00 7.65T (Assembly)","17B05638001LE":"J/L MODULE 4.35X8.50 7.75T","17B05639001LE":"J/L MODULE 4.35X8.50 7.75T (Assembly)","17B05640001LE":"J/L MODULE 4.35X6.35 7.40T","17B05641001LE":"J/L MODULE 4.35X6.35 7.40T (Assembly)","17B05642001LE":"J/L MODULE 7.50X10.50 7.85T","17B05643001LE":"J/L MODULE 7.50X10.50 7.85T (Assembly)","17B05644001LE":"J/L MODULE 5.35X7.00 7.00T","17B05645001LE":"J/L MODULE 5.35X7.00 7.00T (Assembly)","17B05646001LE":"J/L MODULE 5.60X11.0 7.20T","17B05647001LE":"J/L MODULE 5.60X11.0 7.20T (Assembly)","17B05648001LE":"J/L MODULE 8.0X11.6 7.85T","17B05649001LE":"J/L MODULE 8.0X11.6 7.85T (Assembly)","17B05650001LE":"J/L MODULE 9.0X16.6 8.50T","17B05651001LE":"J/L MODULE 9.0X16.6 8.50T (Assembly)","17B05652001LE":"J/L MODULE 8.85X14.85 9.10T","17B05653001LE":"J/L MODULE 8.85X14.85 9.10T (Assembly)","17B05654001LE":"J/L MODULE 13.0X13.0 8.10T","17B05655001LE":"J/L MODULE 13.0X13.0 8.10T (Assembly)","17B05656001LE":"J/L MODULE 6.5X9.5 7.60T","17B05657001LE":"J/L MODULE 6.5X9.5 7.60T (Assembly)","17B05658001LE":"J/L MODULE 4.20X8.20 6.90T","17B05659001LE":"J/L MODULE 4.20X8.20 6.90T (Assembly)","17B05660001LE":"J/L MODULE 9.1X9.1 7.45T","17B05661001LE":"J/L MODULE 9.1X9.1 7.45T (Assembly)","17B05662001LE":"J/L MODULE 11.0X11.0 8.25T","17B05663001LE":"J/L MODULE 11.0X11.0 8.25T (Assembly)","17B05664001LE":"J/L MODULE 11.5X11.5 8.40T","17B05665001LE":"J/L MODULE 11.5X11.5 8.40T (Assembly)","17B05666001LE":"J/L MODULE 5.20X8.75 8.00T","17B05667001LE":"J/L MODULE 5.20X8.75 8.00T (Assembly)","17B05668001LE":"J/L MODULE 12.0X12.0 9.90T","17B05669001LE":"J/L MODULE 12.0X12.0 9.90T (Assembly)","17B05670001LE":"J/L MODULE 6.5X6.5 7.40T","17B05671001LE":"J/L MODULE 6.5X6.5 7.40T (Assembly)","17B05672001LE":"J/L MODULE 7.20X13.01 8.00T","17B05673001LE":"J/L MODULE 7.20X13.01 8.00T (Assembly)","17B05674001LE":"J/L MODULE 11.0X15.5 8.70T","17B05675001LE":"J/L MODULE 11.0X15.5 8.70T (Assembly)","17B05676001LE":"J/L MODULE 14.50X14.10 9.55T","17B05677001LE":"J/L MODULE 14.50X14.10 9.55T (Assembly)","17B05678001LE":"J/L MODULE 6.35X10.35 8.35T","17B05679001LE":"J/L MODULE 6.35X10.35 8.35T (Assembly)","17B05680001LE":"J/L MODULE 8.5X12.5 8.70T","17B05681001LE":"J/L MODULE 8.5X12.5 8.70T (Assembly)","17B05682001LE":"J/L MODULE 7.50X11.00 8.55T","17B05683001LE":"J/L MODULE 7.50X11.00 8.55T (Assembly)","17B05684001LE":"J/L MODULE 7.20X10.10 8.20T","17B05685001LE":"J/L MODULE 7.20X10.10 8.20T (Assembly)","17B05686001LE":"J/L MODULE 7.50X10.50 8.75T","17B05687001LE":"J/L MODULE 7.50X10.50 8.75T (Assembly)","17B05688001LE":"J/L MODULE 8.0X11.6 8.75T","17B05689001LE":"J/L MODULE 8.0X11.6 8.75T (Assembly)","17B05690001LE":"J/L MODULE 9.0X16.6 9.30T","17B05691001LE":"J/L MODULE 9.0X16.6 9.30T (Assembly)","17B05692001LE":"J/L MODULE 13.0X13.0 9.05T","17B05693001LE":"J/L MODULE 13.0X13.0 9.05T (Assembly)","17B05694001LE":"J/L MODULE 4.35X8.50 8.65T","17B05695001LE":"J/L MODULE 4.35X8.50 8.65T (Assembly)","17B05696001LE":"J/L MODULE 6.5X9.5 8.55T","17B05697001LE":"J/L MODULE 6.5X9.5 8.55T (Assembly)","17B05698001LE":"J/L MODULE 5.35X7.00 7.90T","17B05699001LE":"J/L MODULE 5.35X7.00 7.90T (Assembly)","17B05700001LE":"J/L MODULE 5.60X11.0 8.15T","17B05701001LE":"J/L MODULE 5.60X11.0 8.15T (Assembly)","17B05702001LE":"J/L MODULE 8.85X14.85 10.00T","17B05703001LE":"J/L MODULE 8.85X14.85 10.00T (Assembly)","17B05704001LE":"J/L MODULE 4.20X8.20 7.75T","17B05705001LE":"J/L MODULE 4.20X8.20 7.75T (Assembly)","17B05706001LE":"J/L MODULE 6.5X6.5 8.30T","17B05707001LE":"J/L MODULE 6.5X6.5 8.30T (Assembly)","17B05708001LE":"J/L MODULE 9.1X9.1 8.35T","17B05709001LE":"J/L MODULE 9.1X9.1 8.35T (Assembly)","17B05710001LE":"J/L MODULE 4.35X6.35 8.25T","17B05711001LE":"J/L MODULE 4.35X6.35 8.25T (Assembly)","17B05712001LE":"J/L MODULE 5.20X8.75 8.95T","17B05713001LE":"J/L MODULE 5.20X8.75 8.95T (Assembly)","17B05714001LE":"J/L MODULE 11.0X11.0 9.30T","17B05715001LE":"J/L MODULE 11.0X11.0 9.30T (Assembly)","17B05716001LE":"J/L MODULE 11.5X11.5 9.30T","17B05717001LE":"J/L MODULE 11.5X11.5 9.30T (Assembly)","17B05718001LE":"J/L MODULE 6.35X10.35 9.20T","17B05719001LE":"J/L MODULE 6.35X10.35 9.20T (Assembly)","17B05720001LE":"J/L MODULE 7.20X13.01 9.00T","17B05721001LE":"J/L MODULE 7.20X13.01 9.00T (Assembly)","17B05722001LE":"J/L MODULE 7.50X10.50 9.65T","17B05723001LE":"J/L MODULE 7.50X10.50 9.65T (Assembly)","17B05724001LE":"J/L MODULE 12.0X12.0 11.00T","17B05725001LE":"J/L MODULE 12.0X12.0 11.00T (Assembly)","17B05726001LE":"J/L MODULE 7.50X11.00 9.55T","17B05727001LE":"J/L MODULE 7.50X11.00 9.55T (Assembly)","17B05728001LE":"J/L MODULE 11.0X15.5 9.65T","17B05729001LE":"J/L MODULE 11.0X15.5 9.65T (Assembly)","17B05730001LE":"J/L MODULE 9.0X16.6 10.25T","17B05731001LE":"J/L MODULE 9.0X16.6 10.25T (Assembly)","17B05732001LE":"J/L MODULE 7.20X10.10 9.30T","17B05733001LE":"J/L MODULE 7.20X10.10 9.30T (Assembly)","17B05734001LE":"J/L MODULE 8.0X11.6 9.70T","17B05735001LE":"J/L MODULE 8.0X11.6 9.70T (Assembly)","17B05736001LE":"J/L MODULE 8.5X12.5 9.60T","17B05737001LE":"J/L MODULE 8.5X12.5 9.60T (Assembly)","17B05738001LE":"J/L MODULE 5.60X11.0 9.15T","17B05739001LE":"J/L MODULE 5.60X11.0 9.15T (Assembly)","17B05740001LE":"J/L MODULE 14.50X14.10 10.50T","17B05741001LE":"J/L MODULE 14.50X14.10 10.50T (Assembly)","17B05742001LE":"J/L MODULE 13.0X13.0 10.05T","17B05743001LE":"J/L MODULE 13.0X13.0 10.05T (Assembly)","17B05744001LE":"J/L MODULE 4.35X8.50 9.65T","17B05745001LE":"J/L MODULE 4.35X8.50 9.65T (Assembly)","17B05746001LE":"J/L MODULE 6.5X9.5 9.55T","17B05747001LE":"J/L MODULE 6.5X9.5 9.55T (Assembly)","17B05748001LE":"J/L MODULE 4.20X8.20 8.70T","17B05749001LE":"J/L MODULE 4.20X8.20 8.70T (Assembly)","17B05750001LE":"J/L MODULE 6.5X6.5 9.20T","17B05751001LE":"J/L MODULE 6.5X6.5 9.20T (Assembly)","17B05752001LE":"J/L MODULE 9.1X9.1 9.30T","17B05753001LE":"J/L MODULE 9.1X9.1 9.30T (Assembly)","17B05754001LE":"J/L MODULE 4.35X6.35 9.10T","17B05755001LE":"J/L MODULE 4.35X6.35 9.10T (Assembly)","17B05756001LE":"J/L MODULE 5.35X7.00 8.85T","17B05757001LE":"J/L MODULE 5.35X7.00 8.85T (Assembly)","17B05758001LE":"J/L MODULE 4.35X8.50 10.75T","17B05759001LE":"J/L MODULE 4.35X8.50 10.75T (Assembly)","17B05760001LE":"J/L MODULE 5.20X8.75 9.95T","17B05761001LE":"J/L MODULE 5.20X8.75 9.95T (Assembly)","17B05762001LE":"J/L MODULE 8.85X14.85 11.00T","17B05763001LE":"J/L MODULE 8.85X14.85 11.00T (Assembly)","17B05764001LE":"J/L MODULE 11.0X11.0 10.50T","17B05765001LE":"J/L MODULE 11.0X11.0 10.50T (Assembly)","17B05766001LE":"J/L MODULE 11.0X15.5 10.65T","17B05767001LE":"J/L MODULE 11.0X15.5 10.65T (Assembly)","17B05768001LE":"J/L MODULE 6.35X10.35 10.20T","17B05769001LE":"J/L MODULE 6.35X10.35 10.20T (Assembly)","17B05770001LE":"J/L MODULE 7.50X11.00 10.55T","17B05771001LE":"J/L MODULE 7.50X11.00 10.55T (Assembly)","17B05772001LE":"J/L MODULE 11.5X11.5 10.30T","17B05773001LE":"J/L MODULE 11.5X11.5 10.30T (Assembly)","17B05774001LE":"J/L MODULE 13.0X13.0 11.10T","17B05775001LE":"J/L MODULE 13.0X13.0 11.10T (Assembly)","17B05776001LE":"J/L MODULE 9.0X16.6 11.30T","17B05777001LE":"J/L MODULE 9.0X16.6 11.30T (Assembly)","17B05778001LE":"J/L MODULE 7.20X13.01 10.10T","17B05779001LE":"J/L MODULE 7.20X13.01 10.10T (Assembly)","17B05780001LE":"J/L MODULE 14.50X14.10 11.50T","17B05781001LE":"J/L MODULE 14.50X14.10 11.50T (Assembly)","17B05782001LE":"J/L MODULE 8.5X12.5 10.55T","17B05783001LE":"J/L MODULE 8.5X12.5 10.55T (Assembly)","17B05784001LE":"J/L MODULE 8.0X11.6 10.70T","17B05785001LE":"J/L MODULE 8.0X11.6 10.70T (Assembly)","17B05786001LE":"J/L MODULE 7.20X10.10 10.40T","17B05787001LE":"J/L MODULE 7.20X10.10 10.40T (Assembly)","17B05788001LE":"J/L MODULE 12.0X12.0 12.25T","17B05789001LE":"J/L MODULE 12.0X12.0 12.25T (Assembly)","17B05790001LE":"J/L MODULE 6.5X9.5 10.60T","17B05791001LE":"J/L MODULE 6.5X9.5 10.60T (Assembly)","17B05792001LE":"J/L MODULE 7.50X10.50 10.65T","17B05793001LE":"J/L MODULE 7.50X10.50 10.65T (Assembly)","17B05794001LE":"J/L PBGA 31X31 1.73T","17B05795001LE":"J/L PBGA 31X31 1.73T"};
+
+// 사용자 추가 PN (localStorage 저장)
+function getPnDbCustom(){
+  try{ return JSON.parse(localStorage.getItem('ipqc_pn_custom')||'{}'); }
+  catch(e){ return {}; }
+}
+function savePnDbCustom(obj){ localStorage.setItem('ipqc_pn_custom', JSON.stringify(obj)); }
+
+// 통합 조회 (대소문자 무관, 사용자 추가 우선)
+function lookupDesc(sapPN){
+  if(!sapPN) return '';
+  const key = sapPN.trim().toUpperCase();
+  const custom = getPnDbCustom();
+  for(const k of Object.keys(custom)){ if(k.toUpperCase()===key) return custom[k]; }
+  for(const k of Object.keys(PN_DB_BASE)){ if(k.toUpperCase()===key) return PN_DB_BASE[k]; }
+  return '';
+}
+
+// SAP PN 입력 → Description 자동채움
+function onSapPnInput(el, m){
+  saveDebounced();
+  const desc = lookupDesc(el.value);
+  const descEl = document.getElementById('mi_'+m+'_desc');
+  if(desc){
+    el.title = desc;
+    el.style.background = '#f0fdf4';
+    el.style.borderColor = '#16a34a';
+    if(descEl && !descEl.value){ descEl.value = desc; saveDebounced(); }
+    setTimeout(()=>{ el.style.background=''; el.style.borderColor=''; }, 2500);
+  } else {
+    el.title = '';
+    el.style.background = '';
+    el.style.borderColor = '';
+  }
+}
+
+// 섹션5: 파트 번호 관리 렌더링
+function renderPnSection(){
+  const custom = getPnDbCustom();
+  const keys = Object.keys(custom);
+  let rows = keys.length===0
+    ? `<tr><td colspan="3" style="text-align:center;color:#9ca3af;padding:12px">${tr('pnEmpty')}</td></tr>`
+    : keys.map(k=>`<tr>
+        <td style="padding:5px 8px;font-family:monospace;font-size:12px">${k}</td>
+        <td style="padding:5px 8px;font-size:12px">${custom[k]}</td>
+        <td style="padding:4px"><button class="btn bad sm" onclick="deletePn('${k.replace(/'/g,"\\'")}'">${tr('pnDeleteBtn')}</button></td>
+      </tr>`).join('');
+  document.getElementById('pnCustomList').innerHTML = rows;
+  document.getElementById('pnCountBadge').textContent = keys.length + tr('pnCountSuffix');
+}
+function addPnEntry(){
+  const sapEl = document.getElementById('pnNewSap');
+  const descEl = document.getElementById('pnNewDesc');
+  const sap = (sapEl.value||'').trim();
+  const desc = (descEl.value||'').trim();
+  if(!sap){ alert(tr('pnAlertNoSap')); sapEl.focus(); return; }
+  if(!desc){ alert(tr('pnAlertNoDesc')); descEl.focus(); return; }
+  const custom = getPnDbCustom();
+  const existing = PN_DB_BASE[sap] || PN_DB_BASE[sap.toUpperCase()];
+  if(existing){ if(!confirm(`${tr('pnConfirmOverwrite')}\n${sap} → ${existing}`)) return; }
+  custom[sap] = desc;
+  savePnDbCustom(custom);
+  sapEl.value=''; descEl.value='';
+  renderPnSection();
+  // 성공 표시
+  const msg = document.getElementById('pnAddMsg');
+  msg.textContent=tr('pnAdded'); msg.style.color='#16a34a';
+  setTimeout(()=>{ msg.textContent=''; }, 2500);
+}
+function deletePn(sap){
+  if(!confirm(`${tr('pnConfirmDelete')}\n${sap}`)) return;
+  const custom = getPnDbCustom();
+  delete custom[sap];
+  savePnDbCustom(custom);
+  renderPnSection();
+}
+function exportPnList(){
+  if(typeof XLSX === 'undefined'){
+    alert(tr('srchNoXlsx'));
+    return;
+  }
+  const custom = getPnDbCustom();
+  const all = Object.assign({}, PN_DB_BASE, custom);
+  const wb = XLSX.utils.book_new();
+  const rows = [['SAP PN','Description','Source']];
+  Object.keys(PN_DB_BASE).forEach(k=>{ rows.push([k, PN_DB_BASE[k], 'BASE']); });
+  Object.keys(custom).forEach(k=>{ rows.push([k, custom[k], 'USER']); });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:22},{wch:55},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws, 'PN List');
+  XLSX.writeFile(wb, 'PEAK_PN_List_Updated.xlsx');
+}
+
+// ══ Google Sheets Web App 설정 ═══════════════════
+// Google Apps Script 배포 후 Web App URL을 아래에 붙여넣으세요.
+const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfASScDbCaXhKN8qfYzzNm3U5CaD10EFjMnKFGaTNHuyd3VR6KES6cggMvkn08rpg/exec';
+
+// ══ i18n ══════════════════════════════════════════
+const I18N = {
+  ko:{
+    srchTitle:'IPQC 이력 검색 / Excel 저장',
+    srchHint:'Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.',
+    srchDate:'특정 날짜', srchDateFrom:'시작 날짜', srchDateTo:'종료 날짜', srchMold:'Mold 번호',
+    srchInspectorPH:'검사원', srchMachinePH:'예: A07 또는 A07,A08',
+    srchBtn:'🔍 검색', srchExportBtn:'📥 검색 결과 Excel 저장', srchClearBtn:'초기화',
+    srchInit:'검색 조건을 입력한 뒤 검색 버튼을 누르세요.',
+    srchSearching:'서버에서 검색 중...',
+    srchLoadingRows:'서버에서 검색 중... (연도별 시트 데이터 로딩 중 - 데이터가 많아 3~5분 걸릴 수 있습니다. 창을 닫지 말고 기다려 주세요)',
+    srchResultCount:'검색 결과 {n}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.',
+    srchNoResult:'검색 결과가 없습니다.',
+    srchTimeoutNote:' 단, 연도별 시트(2026) 데이터 로딩이 시간 초과되어 이번 검색에 포함되지 않았습니다. 잠시 후 [검색]을 다시 눌러 주세요.',
+    srchRowsFailNote:' 단, 연도별 시트(2026) 데이터 로딩에 실패해 이번 검색에 포함되지 않았습니다. 잠시 후 다시 시도해 주세요.',
+    srchOldDeployNote:' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.',
+    srchAllCols:' 엑셀 전체 컬럼 데이터를 모두 표시합니다.',
+    srchFail:'검색 실패: ',
+    srchNoXlsx:'XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.',
+    trendTitle:'📈 IPQC 검색 트렌드', trendSub:'Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택',
+    trendTargetInit:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendMetricA:'왼쪽 축 측정 항목', trendMetricB:'오른쪽 축 측정 항목',
+    trendFrom:'트렌드 시작일', trendTo:'트렌드 종료일', trendMoldTitle:'몰드 선택 (단수·복수 선택 가능)', trendAll:'전체 선택', trendNone:'선택 해제',
+    trendMoldHint:'품목을 선택하면 몰드 목록이 표시됩니다.', trendEmptyInit:'검색 결과를 불러오면 트렌드를 확인할 수 있습니다.', trendNoMeasure:'측정 항목을 하나 이상 선택해 주세요.',
+    trendSelectProduct:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendNoValue:'선택한 항목의 측정값이 없습니다.', trendNoPeriod:'선택 기간에 측정값이 없습니다.', trendSelectMold:'표시할 몰드를 하나 이상 선택해 주세요.', trendMoldPrefix:'몰드', trendNoMold:'선택 가능한 몰드가 없습니다.', trendView:'트렌드 보기', trendMax:'최댓값', trendMin:'최솟값', trendAvg:'평균값',
+    bakeTitle:'🔥 베이킹 테스트 결과', bakeSub:'검색 결과의 SAP PN 또는 Description을 클릭하면 날짜와 관계없이 같은 품목의 Bake test 기록을 표시합니다.', bakeInit:'서버 검색 후 품목을 선택하세요.', bakeSelectItem:'검색 결과에서 SAP PN 또는 Description을 선택하세요.', bakeLoading:'Bake test 시트를 확인하는 중...', bakeNone:'선택한 품목과 일치하는 베이킹 테스트가 없습니다.', bakeFound:'선택한 품목의 베이킹 테스트 {n}건', bakeAccess:'Bake test 시트를 읽을 수 없습니다. Google Sheets 공유 권한을 확인하세요.', bakeMeasure:'측정 항목', bakeRequirement:'요구 조건', bakeMold:'몰드 번호', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'비고', bakeStartEnd:'시작일 → 종료일',
+    machines:'대', rounds:'회',
+    submitOk:'✅ 서버에 성공적으로 저장되었습니다!', submitFail:'❌ 서버 저장 실패.',
+    submitting:'☁️ 서버에 저장 중...', noInspector:'검사원 이름을 입력하세요.',
+    noData:'저장할 측정값이 없습니다.', confirmReset:'모든 입력 데이터를 삭제하시겠습니까?',
+    importOk:'가져오기 완료.', importFail:'JSON 파일을 읽을 수 없습니다.',
+    appTitle:'IPQC 이력 조회', appSub:'검색 · 측정값 트렌드 · 베이킹 테스트 결과',
+    langLabel:'언어',
+    s1title:'1. 공통 기본 설정', s1hint:'날짜 · 시간 · SHIFT · 검사원은 모든 설비 공통',
+    applyBtn:'설정 적용', autoNameBtn:'설비명 자동',
+    machineCountLabel:'설비 수', roundCountLabel:'검사 횟수',
+    dateLabel:'날짜', timeLabel:'시간', shiftLabel:'SHIFT 班別',
+    inspectorLabel:'QC 검사원', inspectorPH:'검사원 이름',
+    s2title:'2. 설비별 정보 및 측정값 입력', s2hint:'각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요',
+    prevMach:'◀ 이전 설비', nextMach:'다음 설비 ▶',
+    s3title:'3. 항목별 측정값 입력', s3hint:'항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다',
+    measureSummaryBtn:'전체 입력값 보기', measureSummaryTitle:'📊 항목별 입력값 전체보기',
+    measureSummaryClose:'닫기', measureSummaryEmpty:'표시할 설비가 없습니다.',
+    measureSummaryMeta:'항목별 입력값',
+    prevItem:'◀ 이전 항목', nextItem:'다음 항목 ▶',
+    machNameLabel:'⚙️ 설비명 M/C No.', machNamePH:'예: A01',
+    progressLabel:'측정 완료율', infoTitle:'📋 설비 정보 (이 설비만 적용)',
+    descLabel:'Description 料號', sapLabel:'SAP PN', customerLabel:'Customer',
+    moldLabel:'MOLD 模號', datecodeLabel:'Datecode', ltcLabel:'LTC No. 批號',
+    visualLabel:'VISUAL 외관', resultLabel:'RESULT 결과',
+    approvalLabel:'Approval 승인자', materialLabel:'Remark / Material',
+    ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
+    mcHeader:'설비 / M/C',
+    s4title:'4. 저장 / 내보내기',
+    kpiMachLabel:'설비 수', kpiRoundsLabel:'검사 횟수', kpiTotalLabel:'총 입력칸', kpiDoneLabel:'완료',
+    submitBtn:'☁️ Google Sheet 저장', loadServerBtn:'🔄 서버에서 불러오기', csvBtn:'📥 Excel 저장 (.xlsx)',
+    sheetUrlMissing:'Google Apps Script Web App URL을 먼저 설정하세요.',
+    serverLoading:'🔄 서버에서 불러오는 중...', serverLoadOk:'✅ 서버 데이터를 불러왔습니다.',
+    serverLoadFail:'❌ 서버 불러오기 실패', serverNoData:'서버에 저장된 데이터가 없습니다.',
+    exportJsonBtn:'JSON 백업', importJsonBtn:'JSON 가져오기', resetBtn:'전체 초기화',
+    histTitle:'📋 이번 기기 제출 기록', histClearBtn:'🗑️ 전체 기록 삭제',
+    histHint:'항목을 탭하면 내용 확인 및 수정할 수 있습니다.',
+    doneOf:'입력 완료',
+    ltcRound:'Round', descPH:'SAP PN 입력 시 자동채움', sapPH:'예: 17B05001001LE',
+    machTabEmpty:'설비를 선택하면 여기에 탭이 생성됩니다',
+    planFileLabel:'📂 생산계획 Excel', planFileHint:'파일을 선택하세요 (production_plan.xlsx)',
+    planFileBtn:'📂 파일 선택', planClearKey:'✕ 초기화',
+    manualSelectBtn:'🔧 수동 선택', manualModeActive:'수동 선택 모드',
+    planSelectorTitle:'🏭 검사할 설비를 클릭하여 선택하세요',
+    planSelectAll:'전체 선택', planDeselectAll:'전체 해제',
+    planHint:'선택 후 버튼을 누르면 탭이 생성됩니다',
+    planSelCount:'대 선택', planApplyN:'대로 검사 시작',
+    planSelectNone:'설비를 선택하세요',
+    planAlertMin:'설비를 1대 이상 선택하세요.',
+    planLoaded:'대 설비가 로드되었습니다!',
+    planExcelError:'Excel 파일 읽기 실패',
+    s5title:'6. 파트 번호 추가 등록 (Part Number Manager)',
+    pnHint:'🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.',
+    pnNewSection:'➕ 신규 파트 등록', pnSapLabel:'SAP PN', pnDescLabel:'Description',
+    pnRegBtn:'＋ 등록', pnListTitle:'📋 사용자 추가 파트 목록',
+    pnEmpty:'등록된 파트 없음', pnDeleteCol:'삭제', pnDeleteBtn:'삭제',
+    pnExportBtn:'📥 전체 PN 목록 Excel 저장',
+    pnExportHint:'기본 DB + 사용자 추가 전체 목록을 .xlsx 로 저장',
+    pnCountSuffix:'개 추가',
+    pnAlertNoSap:'SAP PN을 입력하세요.', pnAlertNoDesc:'Description을 입력하세요.',
+    pnConfirmOverwrite:'기본 DB에 이미 있습니다. 덮어쓰시겠습니까?',
+    pnConfirmDelete:'삭제하시겠습니까?', pnAdded:'✅ 등록되었습니다!',
+    hModalTitle:'📋 제출 데이터 상세', hTabView:'👁 내용 보기', hTabEdit:'✏️ 수정하기',
+    hCommonInfo:'📋 공통 정보', hDateLabel:'날짜', hTimeLabel:'시간',
+    hShiftLabel:'SHIFT', hInspectorLabel:'QC 검사원',
+    hDeleteBtn:'🗑️ 삭제', hCloseBtn:'닫기', hSaveBtn:'💾 서버 저장',
+    hMeasureSection:'📐 측정값', hClearHistConfirm:'이번 기기의 제출 기록을 모두 삭제하시겠습니까?\n(서버 데이터는 삭제되지 않습니다)',
+    hNoFbId:'⚠️ 서버 ID가 없어 서버 수정이 불가합니다.', hNoFbIdAlert:'서버 ID가 없어 저장할 수 없습니다.',
+    hSaving:'💾 서버에 저장 중...', hSaveOk:'✅ 서버에 성공적으로 저장되었습니다!', hSaveFail:'❌ 저장 실패: ',
+  },
+  en:{
+    srchTitle:'IPQC History Search / Excel Export',
+    srchHint:'Search data saved in Google Sheet by conditions. Click a result row to see details.',
+    srchDate:'Exact Date', srchDateFrom:'Start Date', srchDateTo:'End Date', srchMold:'Mold No.',
+    srchInspectorPH:'Inspector', srchMachinePH:'e.g. A07 or A07,A08',
+    srchBtn:'🔍 Search', srchExportBtn:'📥 Export Results to Excel', srchClearBtn:'Reset',
+    srchInit:'Enter search conditions and press Search.',
+    srchSearching:'Searching server...',
+    srchLoadingRows:'Searching server... (Loading yearly sheet data - may take 3-5 minutes due to large data. Please keep this window open)',
+    srchResultCount:'{n} results - click a row to see details.',
+    srchNoResult:'No results found.',
+    srchTimeoutNote:' Note: yearly sheet (2026) data loading timed out and was not included in this search. Please press Search again shortly.',
+    srchRowsFailNote:' Note: failed to load yearly sheet (2026) data; not included in this search. Please try again shortly.',
+    srchOldDeployNote:' Note: the Apps Script deployment is outdated, so yearly sheets like 2026 could not be searched yet.',
+    srchAllCols:' Showing all Excel columns.',
+    srchFail:'Search failed: ',
+    srchNoXlsx:'XLSX library not loaded. Check your network connection.',
+    trendTitle:'📈 IPQC Search Trend', trendSub:'Google Sheets ipqc_data · Click SAP PN or Description · Select period and mold',
+    trendTargetInit:'Search first, then click an SAP PN or Description in the results.', trendMetricA:'Left-axis measurement', trendMetricB:'Right-axis measurement',
+    trendFrom:'Trend start date', trendTo:'Trend end date', trendMoldTitle:'Mold selection (single or multiple)', trendAll:'Select All', trendNone:'Clear Selection',
+    trendMoldHint:'Select a product to display available molds.', trendEmptyInit:'Load search results to view the trend.', trendNoMeasure:'Select at least one measurement.',
+    trendSelectProduct:'Search first, then click an SAP PN or Description in the results.', trendNoValue:'No measurement values for the selected item.', trendNoPeriod:'No measurements in the selected period.', trendSelectMold:'Select at least one mold to display.', trendMoldPrefix:'Mold', trendNoMold:'No molds available.', trendView:'View trend', trendMax:'Maximum', trendMin:'Minimum', trendAvg:'Average',
+    bakeTitle:'🔥 Baking Test Results', bakeSub:'Click an SAP PN or Description to show all Bake test records for the same item, regardless of date.', bakeInit:'Search the server, then select an item.', bakeSelectItem:'Select an SAP PN or Description in the search results.', bakeLoading:'Loading the Bake test sheet...', bakeNone:'No baking tests match the selected item.', bakeFound:'{n} baking tests for the selected item', bakeAccess:'Cannot read the Bake test sheet. Check Google Sheets sharing permissions.', bakeMeasure:'Measurement', bakeRequirement:'Requirement', bakeMold:'Mold No.', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'Remark', bakeStartEnd:'Start → End',
+    machines:'machines', rounds:'rounds',
+    submitOk:'✅ Saved to server!', submitFail:'❌ Save failed.',
+    submitting:'☁️ Saving...', noInspector:'Please enter inspector name.',
+    noData:'No measurement values to save.', confirmReset:'Delete all input data?',
+    importOk:'Import completed.', importFail:'Cannot read JSON file.',
+    appTitle:'IPQC History Viewer', appSub:'Search · Measurement trends · Baking test results',
+    langLabel:'Language',
+    s1title:'1. Common Settings', s1hint:'Date · Time · SHIFT · Inspector shared by all machines',
+    applyBtn:'Apply', autoNameBtn:'Auto Names',
+    machineCountLabel:'Machines', roundCountLabel:'Rounds',
+    dateLabel:'Date', timeLabel:'Time', shiftLabel:'SHIFT',
+    inspectorLabel:'QC Inspector', inspectorPH:'Inspector name',
+    s2title:'2. Per-Machine Info & Measurements', s2hint:'Select a machine tab to enter info and measurements',
+    prevMach:'◀ Prev Machine', nextMach:'Next Machine ▶',
+    s3title:'3. Measurements by Item', s3hint:'Select an item to enter values for all machines at once',
+    measureSummaryBtn:'View All Values', measureSummaryTitle:'📊 All Measurement Values',
+    measureSummaryClose:'Close', measureSummaryEmpty:'No machines to display.',
+    measureSummaryMeta:'Measurement values by item',
+    prevItem:'◀ Prev Item', nextItem:'Next Item ▶',
+    machNameLabel:'⚙️ Machine No.', machNamePH:'e.g. A01',
+    progressLabel:'Completion', infoTitle:'📋 Machine Info (this machine only)',
+    descLabel:'Description', sapLabel:'SAP PN', customerLabel:'Customer',
+    moldLabel:'MOLD No.', datecodeLabel:'Datecode', ltcLabel:'LTC No.',
+    visualLabel:'VISUAL', resultLabel:'RESULT',
+    approvalLabel:'Approval', materialLabel:'Remark / Material',
+    ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
+    mcHeader:'Machine / M/C',
+    s4title:'4. Save & Export',
+    kpiMachLabel:'Machines', kpiRoundsLabel:'Rounds', kpiTotalLabel:'Total Cells', kpiDoneLabel:'Done',
+    submitBtn:'☁️ Save to Google Sheet', loadServerBtn:'🔄 Load from Server', csvBtn:'📥 Save Excel (.xlsx)',
+    sheetUrlMissing:'Please set the Google Apps Script Web App URL first.',
+    serverLoading:'🔄 Loading from server...', serverLoadOk:'✅ Server data loaded.',
+    serverLoadFail:'❌ Server load failed', serverNoData:'No saved data on the server.',
+    exportJsonBtn:'JSON Backup', importJsonBtn:'Import JSON', resetBtn:'Reset All',
+    histTitle:'📋 Recent Submissions', histClearBtn:'🗑️ Clear All',
+    histHint:'Tap an item to view or edit.',
+    doneOf:'Completed',
+    ltcRound:'Round', descPH:'Auto-fill from SAP PN', sapPH:'e.g. 17B05001001LE',
+    machTabEmpty:'Select machines above to create tabs here',
+    planFileLabel:'📂 Production Plan Excel', planFileHint:'Select a file (production_plan.xlsx)',
+    planFileBtn:'📂 Select File', planClearKey:'✕ Clear',
+    manualSelectBtn:'🔧 Manual Select', manualModeActive:'Manual Selection Mode',
+    planSelectorTitle:'🏭 Click machines to select for inspection',
+    planSelectAll:'Select All', planDeselectAll:'Deselect All',
+    planHint:'After selecting, click Apply to create tabs',
+    planSelCount:' selected', planApplyN:'machines – Start',
+    planSelectNone:'Select machines first',
+    planAlertMin:'Please select at least 1 machine.',
+    planLoaded:'machines loaded!',
+    planExcelError:'Excel read failed',
+    s5title:'6. Part Number Manager',
+    pnHint:'🔍 Base DB: 861 SAP PNs · Auto-fill on SAP PN input · Add unregistered PNs below.',
+    pnNewSection:'➕ Register New Part', pnSapLabel:'SAP PN', pnDescLabel:'Description',
+    pnRegBtn:'＋ Add', pnListTitle:'📋 User-added Parts',
+    pnEmpty:'No parts registered', pnDeleteCol:'Delete', pnDeleteBtn:'Delete',
+    pnExportBtn:'📥 Export Full PN List (Excel)',
+    pnExportHint:'Exports base DB + user-added list as .xlsx',
+    pnCountSuffix:' added',
+    pnAlertNoSap:'Please enter SAP PN.', pnAlertNoDesc:'Please enter Description.',
+    pnConfirmOverwrite:'Already in base DB. Overwrite?',
+    pnConfirmDelete:'Delete this entry?', pnAdded:'✅ Registered!',
+    hModalTitle:'📋 Submission Details', hTabView:'👁 View', hTabEdit:'✏️ Edit',
+    hCommonInfo:'📋 Common Info', hDateLabel:'Date', hTimeLabel:'Time',
+    hShiftLabel:'SHIFT', hInspectorLabel:'QC Inspector',
+    hDeleteBtn:'🗑️ Delete', hCloseBtn:'Close', hSaveBtn:'💾 Save to Server',
+    hMeasureSection:'📐 Measurements', hClearHistConfirm:'Delete all submission records on this device?\n(Server data will NOT be deleted)',
+    hNoFbId:'⚠️ No server ID — cannot edit on server.', hNoFbIdAlert:'No server ID. Cannot save.',
+    hSaving:'💾 Saving to server...', hSaveOk:'✅ Saved to server!', hSaveFail:'❌ Save failed: ',
+  },
+  zh:{
+    srchTitle:'IPQC 歷史記錄查詢 / Excel 匯出',
+    srchHint:'依條件查詢儲存在 Google Sheet 的資料，點擊結果列可查看詳細內容。',
+    srchDate:'指定日期', srchDateFrom:'開始日期', srchDateTo:'結束日期', srchMold:'模號',
+    srchInspectorPH:'檢驗員', srchMachinePH:'例：A07 或 A07,A08',
+    srchBtn:'🔍 查詢', srchExportBtn:'📥 查詢結果匯出 Excel', srchClearBtn:'重設',
+    srchInit:'輸入查詢條件後按查詢按鈕。',
+    srchSearching:'伺服器查詢中...',
+    srchLoadingRows:'伺服器查詢中...（正在載入年度工作表資料，資料量大約需 3~5 分鐘，請勿關閉視窗）',
+    srchResultCount:'查詢結果 {n} 筆 - 點擊列可查看詳細內容。',
+    srchNoResult:'查無資料。',
+    srchTimeoutNote:' 註：年度工作表(2026)資料載入逾時，未包含在本次查詢中。請稍後再按一次查詢。',
+    srchRowsFailNote:' 註：年度工作表(2026)資料載入失敗，未包含在本次查詢中。請稍後再試。',
+    srchOldDeployNote:' 註：Apps Script 並非最新部署，尚無法查詢 2026 等年度工作表。',
+    srchAllCols:' 顯示 Excel 全部欄位資料。',
+    srchFail:'查詢失敗：',
+    srchNoXlsx:'尚未載入 XLSX 程式庫，請確認網路連線。',
+    trendTitle:'📈 IPQC 查詢趨勢', trendSub:'Google Sheets ipqc_data · 點擊 SAP PN 或 Description · 選擇期間與模號',
+    trendTargetInit:'查詢後請點擊結果中的 SAP PN 或 Description。', trendMetricA:'左軸量測項目', trendMetricB:'右軸量測項目',
+    trendFrom:'趨勢開始日期', trendTo:'趨勢結束日期', trendMoldTitle:'模號選擇（單選或複選）', trendAll:'全選', trendNone:'取消選擇',
+    trendMoldHint:'選擇產品後顯示可用模號。', trendEmptyInit:'載入查詢結果後可查看趨勢。', trendNoMeasure:'請至少選擇一個量測項目。',
+    trendSelectProduct:'查詢後請點擊結果中的 SAP PN 或 Description。', trendNoValue:'所選項目沒有量測值。', trendNoPeriod:'所選期間沒有量測值。', trendSelectMold:'請至少選擇一個模號。', trendMoldPrefix:'模號', trendNoMold:'沒有可選模號。', trendView:'查看趨勢', trendMax:'最大值', trendMin:'最小值', trendAvg:'平均值',
+    bakeTitle:'🔥 烘烤測試結果', bakeSub:'點擊 SAP PN 或 Description，顯示相同品項的所有 Bake test 記錄，不限日期。', bakeInit:'查詢伺服器後請選擇品項。', bakeSelectItem:'請在查詢結果中選擇 SAP PN 或 Description。', bakeLoading:'正在載入 Bake test 工作表...', bakeNone:'所選品項沒有相符的烘烤測試。', bakeFound:'所選品項有 {n} 筆烘烤測試', bakeAccess:'無法讀取 Bake test 工作表，請確認分享權限。', bakeMeasure:'量測項目', bakeRequirement:'要求條件', bakeMold:'模號', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'備註', bakeStartEnd:'開始 → 結束',
+    machines:'台', rounds:'次',
+    submitOk:'✅ 儲存成功！', submitFail:'❌ 儲存失敗。',
+    submitting:'☁️ 儲存中...', noInspector:'請輸入檢驗員。',
+    noData:'無量測值。', confirmReset:'清除全部資料？',
+    importOk:'匯入完成', importFail:'無法讀取JSON。',
+    appTitle:'IPQC 歷史記錄查詢', appSub:'查詢 · 量測趨勢 · 烘烤測試結果',
+    langLabel:'語言',
+    s1title:'1. 共通基本設定', s1hint:'日期·時間·班別·檢驗員為所有設備共通',
+    applyBtn:'套用設定', autoNameBtn:'自動設備名',
+    machineCountLabel:'設備數', roundCountLabel:'檢驗次數',
+    dateLabel:'日期', timeLabel:'時間', shiftLabel:'班別',
+    inspectorLabel:'QC 檢驗員', inspectorPH:'檢驗員姓名',
+    s2title:'2. 各設備資訊及量測值輸入', s2hint:'選擇設備標籤輸入設備資訊及量測值',
+    prevMach:'◀ 上一個', nextMach:'下一個 ▶',
+    s3title:'3. 各項目量測值輸入', s3hint:'選擇項目可同時輸入所有設備的量測值',
+    measureSummaryBtn:'查看全部輸入值', measureSummaryTitle:'📊 各項目輸入值總覽',
+    measureSummaryClose:'關閉', measureSummaryEmpty:'沒有可顯示的設備。',
+    measureSummaryMeta:'各項目輸入值',
+    prevItem:'◀ 上一項', nextItem:'下一項 ▶',
+    machNameLabel:'⚙️ 設備名 M/C No.', machNamePH:'例：A01',
+    progressLabel:'完成率', infoTitle:'📋 設備資訊（僅此設備）',
+    descLabel:'Description 料號', sapLabel:'SAP PN', customerLabel:'Customer',
+    moldLabel:'MOLD 模號', datecodeLabel:'Datecode', ltcLabel:'LTC No. 批號',
+    visualLabel:'VISUAL 外觀', resultLabel:'RESULT 結果',
+    approvalLabel:'Approval 審核者', materialLabel:'備註 / Material',
+    ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
+    mcHeader:'設備 / M/C',
+    s4title:'4. 儲存及匯出',
+    kpiMachLabel:'設備數', kpiRoundsLabel:'檢驗次數', kpiTotalLabel:'總輸入格', kpiDoneLabel:'完成',
+    submitBtn:'☁️ 儲存到 Google Sheet', loadServerBtn:'🔄 從伺服器載入', csvBtn:'📥 Excel儲存 (.xlsx)',
+    sheetUrlMissing:'請先設定 Google Apps Script Web App URL。',
+    serverLoading:'🔄 正在從伺服器載入...', serverLoadOk:'✅ 已載入伺服器資料。',
+    serverLoadFail:'❌ 伺服器載入失敗', serverNoData:'伺服器沒有已儲存的資料。',
+    exportJsonBtn:'JSON備份', importJsonBtn:'匯入JSON', resetBtn:'全部清除',
+    histTitle:'📋 最近提交記錄', histClearBtn:'🗑️ 清除記錄',
+    histHint:'點擊項目可查看及修改。',
+    doneOf:'已完成',
+    ltcRound:'Round', descPH:'輸入SAP PN自動填入', sapPH:'例：17B05001001LE',
+    machTabEmpty:'選擇設備後將在此顯示標籤',
+    planFileLabel:'📂 生產計劃 Excel', planFileHint:'請選擇檔案 (production_plan.xlsx)',
+    planFileBtn:'📂 選擇檔案', planClearKey:'✕ 清除',
+    manualSelectBtn:'🔧 手動選擇', manualModeActive:'手動選擇模式',
+    planSelectorTitle:'🏭 點擊選擇要檢驗的設備',
+    planSelectAll:'全選', planDeselectAll:'全不選',
+    planHint:'選擇後按套用按鈕建立標籤',
+    planSelCount:'台已選', planApplyN:'台開始檢驗',
+    planSelectNone:'請選擇設備',
+    planAlertMin:'請至少選擇1台設備。',
+    planLoaded:'台設備已載入！',
+    planExcelError:'Excel讀取失敗',
+    s5title:'6. 零件號碼追加登録 (Part Number Manager)',
+    pnHint:'🔍 基本DB：861個SAP PN · 輸入SAP PN自動填入Description · 未登録零件請在此追加。',
+    pnNewSection:'➕ 新增零件', pnSapLabel:'SAP PN', pnDescLabel:'Description',
+    pnRegBtn:'＋ 登録', pnListTitle:'📋 使用者追加零件',
+    pnEmpty:'無登録零件', pnDeleteCol:'刪除', pnDeleteBtn:'刪除',
+    pnExportBtn:'📥 匯出全部PN清單 (Excel)',
+    pnExportHint:'基本DB+使用者追加全部清單匯出為.xlsx',
+    pnCountSuffix:'個追加',
+    pnAlertNoSap:'請輸入SAP PN。', pnAlertNoDesc:'請輸入Description。',
+    pnConfirmOverwrite:'基本DB已有此項。覆蓋？',
+    pnConfirmDelete:'確定刪除？', pnAdded:'✅ 已登録！',
+    hModalTitle:'📋 提交資料詳情', hTabView:'👁 查看', hTabEdit:'✏️ 修改',
+    hCommonInfo:'📋 共通資訊', hDateLabel:'日期', hTimeLabel:'時間',
+    hShiftLabel:'班別', hInspectorLabel:'QC 檢驗員',
+    hDeleteBtn:'🗑️ 刪除', hCloseBtn:'關閉', hSaveBtn:'💾 伺服器儲存',
+    hMeasureSection:'📐 量測值', hClearHistConfirm:'確定刪除此裝置所有提交記錄？\n（伺服器資料不會刪除）',
+    hNoFbId:'⚠️ 無伺服器ID，無法修改。', hNoFbIdAlert:'無伺服器ID，無法儲存。',
+    hSaving:'💾 儲存中...', hSaveOk:'✅ 儲存成功！', hSaveFail:'❌ 儲存失敗: ',
+  },
+  vi:{
+    srchTitle:'Tra cứu lịch sử IPQC / Xuất Excel',
+    srchHint:'Tìm kiếm dữ liệu đã lưu trong Google Sheet theo điều kiện. Nhấp vào hàng kết quả để xem chi tiết.',
+    srchDate:'Ngày cụ thể', srchDateFrom:'Ngày bắt đầu', srchDateTo:'Ngày kết thúc', srchMold:'Số Mold',
+    srchInspectorPH:'Kiểm tra viên', srchMachinePH:'VD: A07 hoặc A07,A08',
+    srchBtn:'🔍 Tìm kiếm', srchExportBtn:'📥 Xuất kết quả ra Excel', srchClearBtn:'Đặt lại',
+    srchInit:'Nhập điều kiện tìm kiếm rồi nhấn nút Tìm kiếm.',
+    srchSearching:'Đang tìm trên máy chủ...',
+    srchLoadingRows:'Đang tìm trên máy chủ... (Đang tải dữ liệu sheet theo năm - có thể mất 3-5 phút do dữ liệu lớn. Vui lòng không đóng cửa sổ)',
+    srchResultCount:'{n} kết quả - nhấp vào hàng để xem chi tiết.',
+    srchNoResult:'Không tìm thấy kết quả.',
+    srchTimeoutNote:' Lưu ý: tải dữ liệu sheet năm (2026) quá thời gian nên chưa được bao gồm trong lần tìm này. Vui lòng nhấn Tìm kiếm lại sau.',
+    srchRowsFailNote:' Lưu ý: tải dữ liệu sheet năm (2026) thất bại; chưa được bao gồm trong lần tìm này. Vui lòng thử lại sau.',
+    srchOldDeployNote:' Lưu ý: bản triển khai Apps Script chưa phải mới nhất nên chưa tìm được các sheet năm như 2026.',
+    srchAllCols:' Hiển thị tất cả các cột Excel.',
+    srchFail:'Tìm kiếm thất bại: ',
+    srchNoXlsx:'Thư viện XLSX chưa được tải. Kiểm tra kết nối mạng.',
+    trendTitle:'📈 Xu hướng tìm kiếm IPQC', trendSub:'Google Sheets ipqc_data · Nhấp SAP PN hoặc Description · Chọn thời gian và khuôn',
+    trendTargetInit:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendMetricA:'Phép đo trục trái', trendMetricB:'Phép đo trục phải',
+    trendFrom:'Ngày bắt đầu xu hướng', trendTo:'Ngày kết thúc xu hướng', trendMoldTitle:'Chọn khuôn (một hoặc nhiều)', trendAll:'Chọn tất cả', trendNone:'Bỏ chọn',
+    trendMoldHint:'Chọn sản phẩm để hiển thị danh sách khuôn.', trendEmptyInit:'Tải kết quả tìm kiếm để xem xu hướng.', trendNoMeasure:'Chọn ít nhất một phép đo.',
+    trendSelectProduct:'Tìm kiếm rồi nhấp SAP PN hoặc Description trong kết quả.', trendNoValue:'Không có giá trị đo cho mục đã chọn.', trendNoPeriod:'Không có dữ liệu trong khoảng đã chọn.', trendSelectMold:'Chọn ít nhất một khuôn.', trendMoldPrefix:'Khuôn', trendNoMold:'Không có khuôn.', trendView:'Xem xu hướng', trendMax:'Lớn nhất', trendMin:'Nhỏ nhất', trendAvg:'Trung bình',
+    bakeTitle:'🔥 Kết quả Bake test', bakeSub:'Nhấp SAP PN hoặc Description để xem mọi Bake test của cùng sản phẩm, không giới hạn ngày.', bakeInit:'Tìm trên server rồi chọn sản phẩm.', bakeSelectItem:'Chọn SAP PN hoặc Description trong kết quả.', bakeLoading:'Đang tải sheet Bake test...', bakeNone:'Không có Bake test phù hợp với sản phẩm đã chọn.', bakeFound:'Có {n} Bake test cho sản phẩm đã chọn', bakeAccess:'Không thể đọc sheet Bake test. Kiểm tra quyền chia sẻ.', bakeMeasure:'Hạng mục', bakeRequirement:'Yêu cầu', bakeMold:'Số khuôn', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'Ghi chú', bakeStartEnd:'Bắt đầu → Kết thúc',
+    machines:'máy', rounds:'lần',
+    submitOk:'✅ Đã lưu!', submitFail:'❌ Lỗi.',
+    submitting:'☁️ Đang lưu...', noInspector:'Nhập tên nhân viên.',
+    noData:'Không có giá trị.', confirmReset:'Xóa hết?',
+    importOk:'Xong.', importFail:'Lỗi JSON.',
+    appTitle:'Tra cứu lịch sử IPQC', appSub:'Tìm kiếm · Xu hướng đo · Kết quả Bake test',
+    langLabel:'Ngôn ngữ',
+    s1title:'1. Cài đặt chung', s1hint:'Ngày · Giờ · Ca · Nhân viên dùng chung cho tất cả',
+    applyBtn:'Áp dụng', autoNameBtn:'Tên tự động',
+    machineCountLabel:'Số máy', roundCountLabel:'Số lần đo',
+    dateLabel:'Ngày', timeLabel:'Giờ', shiftLabel:'Ca',
+    inspectorLabel:'Nhân viên QC', inspectorPH:'Tên nhân viên',
+    s2title:'2. Thông tin & đo theo máy', s2hint:'Chọn tab máy để nhập thông tin và giá trị đo',
+    prevMach:'◀ Máy trước', nextMach:'Máy sau ▶',
+    s3title:'3. Giá trị đo theo hạng mục', s3hint:'Chọn hạng mục để nhập tất cả máy cùng lúc',
+    measureSummaryBtn:'Xem tất cả giá trị', measureSummaryTitle:'📊 Toàn bộ giá trị đo',
+    measureSummaryClose:'Đóng', measureSummaryEmpty:'Không có máy để hiển thị.',
+    measureSummaryMeta:'Giá trị đo theo hạng mục',
+    prevItem:'◀ Trước', nextItem:'Sau ▶',
+    machNameLabel:'⚙️ Tên máy M/C No.', machNamePH:'VD: A01',
+    progressLabel:'Tiến độ', infoTitle:'📋 Thông tin máy (máy này)',
+    descLabel:'Description 料號', sapLabel:'SAP PN', customerLabel:'Customer',
+    moldLabel:'MOLD 模號', datecodeLabel:'Datecode', ltcLabel:'LTC No. 批號',
+    visualLabel:'VISUAL', resultLabel:'RESULT',
+    approvalLabel:'Approval', materialLabel:'Ghi chú / Material',
+    ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
+    mcHeader:'Máy / M/C',
+    s4title:'4. Lưu & Xuất',
+    kpiMachLabel:'Số máy', kpiRoundsLabel:'Số lần', kpiTotalLabel:'Tổng ô', kpiDoneLabel:'Xong',
+    submitBtn:'☁️ Lưu vào Google Sheet', loadServerBtn:'🔄 Tải từ server', csvBtn:'📥 Lưu Excel (.xlsx)',
+    sheetUrlMissing:'Vui lòng thiết lập URL Web App của Google Apps Script trước.',
+    serverLoading:'🔄 Đang tải từ server...', serverLoadOk:'✅ Đã tải dữ liệu server.',
+    serverLoadFail:'❌ Tải server thất bại', serverNoData:'Không có dữ liệu đã lưu trên server.',
+    exportJsonBtn:'Sao lưu JSON', importJsonBtn:'Nhập JSON', resetBtn:'Xóa tất cả',
+    histTitle:'📋 Lịch sử nộp', histClearBtn:'🗑️ Xóa lịch sử',
+    histHint:'Nhấn để xem hoặc chỉnh sửa.',
+    doneOf:'Đã xong',
+    ltcRound:'Lần', descPH:'Tự động điền từ SAP PN', sapPH:'VD: 17B05001001LE',
+    machTabEmpty:'Chọn máy ở trên để tạo tab tại đây',
+    planFileLabel:'📂 Kế hoạch sản xuất Excel', planFileHint:'Chọn tệp (production_plan.xlsx)',
+    planFileBtn:'📂 Chọn tệp', planClearKey:'✕ Xóa',
+    manualSelectBtn:'🔧 Chọn thủ công', manualModeActive:'Chế độ chọn thủ công',
+    planSelectorTitle:'🏭 Nhấp để chọn máy cần kiểm tra',
+    planSelectAll:'Chọn tất cả', planDeselectAll:'Bỏ chọn tất cả',
+    planHint:'Sau khi chọn, nhấn Áp dụng để tạo tab',
+    planSelCount:' máy đã chọn', planApplyN:'máy – Bắt đầu',
+    planSelectNone:'Chọn máy trước',
+    planAlertMin:'Vui lòng chọn ít nhất 1 máy.',
+    planLoaded:'máy đã tải!',
+    planExcelError:'Lỗi đọc Excel',
+    s5title:'6. Quản lý số bộ phận (Part Number Manager)',
+    pnHint:'🔍 DB cơ bản: 861 SAP PN · Tự động điền khi nhập SAP PN · Thêm PN chưa đăng ký bên dưới.',
+    pnNewSection:'➕ Đăng ký bộ phận mới', pnSapLabel:'SAP PN', pnDescLabel:'Description',
+    pnRegBtn:'＋ Đăng ký', pnListTitle:'📋 Bộ phận người dùng thêm',
+    pnEmpty:'Chưa có bộ phận', pnDeleteCol:'Xóa', pnDeleteBtn:'Xóa',
+    pnExportBtn:'📥 Xuất danh sách PN đầy đủ (Excel)',
+    pnExportHint:'Xuất DB cơ bản + người dùng thêm thành .xlsx',
+    pnCountSuffix:' đã thêm',
+    pnAlertNoSap:'Vui lòng nhập SAP PN.', pnAlertNoDesc:'Vui lòng nhập Description.',
+    pnConfirmOverwrite:'Đã có trong DB cơ bản. Ghi đè?',
+    pnConfirmDelete:'Xóa mục này?', pnAdded:'✅ Đã đăng ký!',
+    hModalTitle:'📋 Chi tiết nộp', hTabView:'👁 Xem', hTabEdit:'✏️ Chỉnh sửa',
+    hCommonInfo:'📋 Thông tin chung', hDateLabel:'Ngày', hTimeLabel:'Giờ',
+    hShiftLabel:'Ca', hInspectorLabel:'Nhân viên QC',
+    hDeleteBtn:'🗑️ Xóa', hCloseBtn:'Đóng', hSaveBtn:'💾 Lưu lên Server',
+    hMeasureSection:'📐 Giá trị đo', hClearHistConfirm:'Xóa tất cả hồ sơ nộp trên thiết bị này?\n(Dữ liệu server sẽ KHÔNG bị xóa)',
+    hNoFbId:'⚠️ Không có ID server — không thể chỉnh sửa.', hNoFbIdAlert:'Không có ID server. Không thể lưu.',
+    hSaving:'💾 Đang lưu...', hSaveOk:'✅ Đã lưu!', hSaveFail:'❌ Lỗi lưu: ',
+  },
+  id:{
+    srchTitle:'Pencarian Riwayat IPQC / Ekspor Excel',
+    srchHint:'Cari data yang tersimpan di Google Sheet berdasarkan kondisi. Klik baris hasil untuk melihat detail.',
+    srchDate:'Tanggal Tertentu', srchDateFrom:'Tanggal Mulai', srchDateTo:'Tanggal Selesai', srchMold:'No. Mold',
+    srchInspectorPH:'Inspektur', srchMachinePH:'cth: A07 atau A07,A08',
+    srchBtn:'🔍 Cari', srchExportBtn:'📥 Ekspor Hasil ke Excel', srchClearBtn:'Reset',
+    srchInit:'Masukkan kondisi pencarian lalu tekan tombol Cari.',
+    srchSearching:'Mencari di server...',
+    srchLoadingRows:'Mencari di server... (Memuat data sheet tahunan - bisa memakan waktu 3-5 menit karena data besar. Jangan tutup jendela ini)',
+    srchResultCount:'{n} hasil - klik baris untuk melihat detail.',
+    srchNoResult:'Tidak ada hasil.',
+    srchTimeoutNote:' Catatan: pemuatan data sheet tahunan (2026) melebihi batas waktu dan tidak disertakan dalam pencarian ini. Silakan tekan Cari lagi nanti.',
+    srchRowsFailNote:' Catatan: gagal memuat data sheet tahunan (2026); tidak disertakan dalam pencarian ini. Coba lagi nanti.',
+    srchOldDeployNote:' Catatan: deployment Apps Script belum terbaru sehingga sheet tahunan seperti 2026 belum bisa dicari.',
+    srchAllCols:' Menampilkan semua kolom Excel.',
+    srchFail:'Pencarian gagal: ',
+    srchNoXlsx:'Pustaka XLSX belum dimuat. Periksa koneksi jaringan.',
+    trendTitle:'📈 Tren Pencarian IPQC', trendSub:'Google Sheets ipqc_data · Klik SAP PN atau Description · Pilih periode dan mold',
+    trendTargetInit:'Cari lalu klik SAP PN atau Description pada hasil.', trendMetricA:'Pengukuran sumbu kiri', trendMetricB:'Pengukuran sumbu kanan',
+    trendFrom:'Tanggal mulai tren', trendTo:'Tanggal akhir tren', trendMoldTitle:'Pilih mold (tunggal atau beberapa)', trendAll:'Pilih Semua', trendNone:'Hapus Pilihan',
+    trendMoldHint:'Pilih produk untuk menampilkan daftar mold.', trendEmptyInit:'Muat hasil pencarian untuk melihat tren.', trendNoMeasure:'Pilih setidaknya satu pengukuran.',
+    trendSelectProduct:'Cari lalu klik SAP PN atau Description pada hasil.', trendNoValue:'Tidak ada nilai pengukuran untuk item ini.', trendNoPeriod:'Tidak ada data pada periode terpilih.', trendSelectMold:'Pilih setidaknya satu mold.', trendMoldPrefix:'Mold', trendNoMold:'Tidak ada mold.', trendView:'Lihat tren', trendMax:'Maksimum', trendMin:'Minimum', trendAvg:'Rata-rata',
+    bakeTitle:'🔥 Hasil Bake test', bakeSub:'Klik SAP PN atau Description untuk melihat semua Bake test item yang sama tanpa batas tanggal.', bakeInit:'Cari server lalu pilih item.', bakeSelectItem:'Pilih SAP PN atau Description pada hasil.', bakeLoading:'Memuat sheet Bake test...', bakeNone:'Tidak ada Bake test untuk item yang dipilih.', bakeFound:'{n} Bake test untuk item terpilih', bakeAccess:'Tidak dapat membaca sheet Bake test. Periksa izin berbagi.', bakeMeasure:'Pengukuran', bakeRequirement:'Persyaratan', bakeMold:'No. Mold', bakeBeforeLive:'Before Live', bakeBeforeDead:'Before Dead', bakeLiveMax:'Live Max', bakeDeadMax:'Dead Max', bakeResult:'Pass/Fail', bakeRemark:'Keterangan', bakeStartEnd:'Mulai → Selesai',
+    machines:'mesin', rounds:'kali',
+    submitOk:'✅ Tersimpan!', submitFail:'❌ Gagal.',
+    submitting:'☁️ Menyimpan...', noInspector:'Masukkan nama inspector.',
+    noData:'Tidak ada nilai.', confirmReset:'Hapus semua?',
+    importOk:'Selesai.', importFail:'Gagal baca JSON.',
+    appTitle:'Riwayat Pemeriksaan IPQC', appSub:'Pencarian · Tren pengukuran · Hasil Bake test',
+    langLabel:'Bahasa',
+    s1title:'1. Pengaturan Dasar', s1hint:'Tanggal · Waktu · Shift · Inspektor berlaku untuk semua',
+    applyBtn:'Terapkan', autoNameBtn:'Nama Otomatis',
+    machineCountLabel:'Jumlah Mesin', roundCountLabel:'Putaran',
+    dateLabel:'Tanggal', timeLabel:'Waktu', shiftLabel:'Shift',
+    inspectorLabel:'Inspektor QC', inspectorPH:'Nama inspektor',
+    s2title:'2. Info & Pengukuran per Mesin', s2hint:'Pilih tab mesin untuk memasukkan info dan pengukuran',
+    prevMach:'◀ Mesin Sebelumnya', nextMach:'Mesin Berikutnya ▶',
+    s3title:'3. Nilai Ukur per Item', s3hint:'Pilih item untuk memasukkan semua mesin sekaligus',
+    measureSummaryBtn:'Lihat Semua Nilai', measureSummaryTitle:'📊 Semua Nilai Pengukuran',
+    measureSummaryClose:'Tutup', measureSummaryEmpty:'Tidak ada mesin untuk ditampilkan.',
+    measureSummaryMeta:'Nilai pengukuran per item',
+    prevItem:'◀ Sebelumnya', nextItem:'Berikutnya ▶',
+    machNameLabel:'⚙️ Nama Mesin M/C No.', machNamePH:'mis: A01',
+    progressLabel:'Kemajuan', infoTitle:'📋 Info Mesin (mesin ini saja)',
+    descLabel:'Description 料號', sapLabel:'SAP PN', customerLabel:'Customer',
+    moldLabel:'MOLD 模號', datecodeLabel:'Datecode', ltcLabel:'LTC No. 批號',
+    visualLabel:'VISUAL', resultLabel:'RESULT',
+    approvalLabel:'Approval', materialLabel:'Keterangan / Material',
+    ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
+    mcHeader:'Mesin / M/C',
+    s4title:'4. Simpan & Ekspor',
+    kpiMachLabel:'Mesin', kpiRoundsLabel:'Putaran', kpiTotalLabel:'Total Sel', kpiDoneLabel:'Selesai',
+    submitBtn:'☁️ Simpan ke Google Sheet', loadServerBtn:'🔄 Muat dari Server', csvBtn:'📥 Simpan Excel (.xlsx)',
+    sheetUrlMissing:'Atur URL Web App Google Apps Script terlebih dahulu.',
+    serverLoading:'🔄 Memuat dari server...', serverLoadOk:'✅ Data server berhasil dimuat.',
+    serverLoadFail:'❌ Gagal memuat server', serverNoData:'Tidak ada data tersimpan di server.',
+    exportJsonBtn:'Backup JSON', importJsonBtn:'Impor JSON', resetBtn:'Reset Semua',
+    histTitle:'📋 Riwayat Pengiriman', histClearBtn:'🗑️ Hapus Semua',
+    histHint:'Ketuk item untuk melihat atau mengedit.',
+    doneOf:'Selesai',
+    ltcRound:'Ronde', descPH:'Isi otomatis dari SAP PN', sapPH:'mis: 17B05001001LE',
+    machTabEmpty:'Pilih mesin di atas untuk membuat tab di sini',
+    planFileLabel:'📂 Rencana Produksi Excel', planFileHint:'Pilih file (production_plan.xlsx)',
+    planFileBtn:'📂 Pilih File', planClearKey:'✕ Reset',
+    manualSelectBtn:'🔧 Pilih Manual', manualModeActive:'Mode Pemilihan Manual',
+    planSelectorTitle:'🏭 Klik untuk memilih mesin yang akan diperiksa',
+    planSelectAll:'Pilih Semua', planDeselectAll:'Batal Pilih Semua',
+    planHint:'Setelah memilih, klik Terapkan untuk membuat tab',
+    planSelCount:' mesin dipilih', planApplyN:'mesin – Mulai',
+    planSelectNone:'Pilih mesin dahulu',
+    planAlertMin:'Pilih minimal 1 mesin.',
+    planLoaded:'mesin berhasil dimuat!',
+    planExcelError:'Gagal membaca Excel',
+    s5title:'6. Manajemen Nomor Part (Part Number Manager)',
+    pnHint:'🔍 DB Dasar: 861 SAP PN · Auto-isi saat input SAP PN · Tambahkan PN baru di bawah.',
+    pnNewSection:'➕ Daftarkan Part Baru', pnSapLabel:'SAP PN', pnDescLabel:'Description',
+    pnRegBtn:'＋ Daftar', pnListTitle:'📋 Part Tambahan Pengguna',
+    pnEmpty:'Belum ada part', pnDeleteCol:'Hapus', pnDeleteBtn:'Hapus',
+    pnExportBtn:'📥 Ekspor Daftar PN Lengkap (Excel)',
+    pnExportHint:'Ekspor DB dasar + tambahan pengguna sebagai .xlsx',
+    pnCountSuffix:' ditambahkan',
+    pnAlertNoSap:'Masukkan SAP PN.', pnAlertNoDesc:'Masukkan Description.',
+    pnConfirmOverwrite:'Sudah ada di DB dasar. Timpa?',
+    pnConfirmDelete:'Hapus item ini?', pnAdded:'✅ Terdaftar!',
+    hModalTitle:'📋 Detail Pengiriman', hTabView:'👁 Lihat', hTabEdit:'✏️ Edit',
+    hCommonInfo:'📋 Info Umum', hDateLabel:'Tanggal', hTimeLabel:'Waktu',
+    hShiftLabel:'Shift', hInspectorLabel:'Inspektor QC',
+    hDeleteBtn:'🗑️ Hapus', hCloseBtn:'Tutup', hSaveBtn:'💾 Simpan ke Server',
+    hMeasureSection:'📐 Nilai Ukur', hClearHistConfirm:'Hapus semua riwayat pengiriman di perangkat ini?\n(Data server TIDAK akan dihapus)',
+    hNoFbId:'⚠️ Tidak ada ID server — tidak dapat mengedit.', hNoFbIdAlert:'Tidak ada ID server. Tidak dapat menyimpan.',
+    hSaving:'💾 Menyimpan...', hSaveOk:'✅ Tersimpan!', hSaveFail:'❌ Gagal menyimpan: ',
+  }
+};
+function tr(k){ return (I18N[state?.lang||'ko']||I18N.ko)[k] || I18N.ko[k] || k; }
+function setLang(v){ state.lang=v; save(); applyLanguage(); }
+function applyLanguage(){
+  const lang = state?.lang||'ko';
+  document.documentElement.lang = lang;
+  const el = document.getElementById('lang');
+  if(el) el.value = lang;
+  // 정적 data-i18n 요소 업데이트
+  document.querySelectorAll('[data-i18n]').forEach(e=>{ e.textContent=tr(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>{ e.placeholder=tr(e.dataset.i18nPh); });
+  rebuildCountOptions();
+  // 동적 UI 재렌더링
+  renderPnSection();
+  updateSelCount();
+  // 파일 미선택 상태이면 planFileName 힌트 갱신
+  const clearBtn = document.getElementById('planClearBtn');
+  if(clearBtn && clearBtn.style.display==='none'){
+    const pfn = document.getElementById('planFileName');
+    if(pfn) pfn.textContent = tr('planFileHint');
+  }
+  initIpqcTrend();
+  if(ipqcTrendSelection) drawIpqcTrend();
+  if(bakeMatchedRows.length) renderBakeResults();
+  // 설비 탭 재렌더링 (초기화 완료 후)
+  if(document.getElementById('machContents')?.children.length>0) renderAll();
+}
+function rebuildCountOptions(){
+  // machineCount는 hidden select (plan에서 자동설정) → 건드리지 않음
+  const rc=document.getElementById('roundCount');
+  if(!rc) return;
+  const rVal=state.roundCount||3;
+  rc.innerHTML=''; for(let i=1;i<=5;i++) rc.innerHTML+=`<option value="${i}">${i} ${tr('rounds')}</option>`;
+  rc.value=rVal;
+  // machineCount hidden select 동기화
+  const mc=document.getElementById('machineCount');
+  if(mc && (mc.options.length===0 || !mc.querySelector(`option[value="${state.machineCount}"]`))){
+    mc.innerHTML=`<option value="${state.machineCount||1}">${state.machineCount||1}</option>`;
+    mc.value = state.machineCount||1;
+  }
+}
+
+// ══ 측정 항목 ══════════════════════════════════════
+const HEADERS=['DATE 日期','TIME 時間','M/C 機台','SHIFT 班別','QC inspector 檢驗員','Description 料號','SAP PN','Customer','MOLD 模號','Datecode','LTC No. 批號','VISUAL外觀','OL總長','OW總寬','ST外疊合高','Warpage彎度','Where 位置','C/C 凹凸度','SR表面電阻','Weight重量','RESULT結果','Approval 審核者','TSMC EL 3點 最大值','一般客戶 EL','TSMC SKH 量測10點結果','TSMC SKH 量測4點結果','TSMC 20片 ST 量測4點 最大值','TSMC 20片 ST 量測4點 最小值','TTSMC 單片ST  量測4點 最大值','TSMC 單片ST  量測4點 最小值','ASE / SPIL SKH 量測 4點結果','AASEK SR表面電阻 (2pin)','Remark/Material','Material Ratio（%）','Remark'];
+function colName(n){let s='';while(n>0){let m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+const RAW_ITEMS = HEADERS.slice(12,32).map((name,idx)=>({key:idx, col:idx+12, code:colName(idx+13), name}));
+const REMARK_ITEM = {key:'remark', col:34, code:colName(35), name:'Remark'};
+const ITEMS = RAW_ITEMS.filter(item=>item.key!==8 && item.key!==9).concat(RAW_ITEMS.filter(item=>item.key===8 || item.key===9), [REMARK_ITEM]);
+
+// ══ 상태 ══════════════════════════════════════════
+const LSKEY   = 'ipqc_pad_v3';
+const HIST_KEY = 'ipqc_submit_history_v2';
+
+function emptyMachineInfo(){
+  return {name:'',desc:'',sap:'',customer:'',mold:'',datecode:'',ltc:'',ltcRounds:[],visual:'OK',result:'PASS',approval:'',material:'',ratio:'',sess:''};
+}
+// ltcRounds 배열을 라운드 수에 맞게 보정
+function ensureLtcRounds(mi){
+  if(!mi.ltcRounds) mi.ltcRounds = [];
+  while(mi.ltcRounds.length < state.roundCount) mi.ltcRounds.push(mi.ltc||'');
+  mi.ltcRounds = mi.ltcRounds.slice(0, state.roundCount);
+}
+
+let state = {
+  lang: 'ko',
+  machineCount: 0,
+  roundCount: 3,
+  currentMachine: 0,
+  currentItem: 0,       // 현재 선택된 측정 항목 (M~AF)
+  common: {date:'',time:'',shift:'Day',inspector:''},
+  machineInfo: [],      // 설비별 정보 배열
+  values: {}            // {i|m|r: value}
+};
+
+// ══ 저장 / 불러오기 ══════════════════════════════
+function save(){
+  collectCommon();
+  collectCurrentMachineInfo();
+  localStorage.setItem(LSKEY, JSON.stringify(state));
+  updateKpi();
+}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(LSKEY)||'null');
+    if(s) state=Object.assign(state,s);
+    // 필수 숫자 필드 안전장치
+    if(typeof state.currentItem !== 'number') state.currentItem = 0;
+    if(typeof state.currentMachine !== 'number') state.currentMachine = 0;
+    // plan 방식으로 전환: 이전 localStorage에 machineCount>0이 있어도
+    // machineInfo가 비어있으면 생산계획에서 다시 선택해야 하므로 초기화
+    if(!state.machineInfo || state.machineInfo.length === 0){
+      state.machineCount = 0;
+    }
+  }catch(e){}
+}
+function collectCommon(){
+  ['date','time','shift','inspector'].forEach(id=>{
+    const el=document.getElementById(id); if(el) state.common[id]=el.value;
+  });
+}
+function applyCommonToForm(){
+  Object.entries(state.common||{}).forEach(([k,v])=>{ const el=document.getElementById(k); if(el) el.value=v; });
+}
+function ensureMachineInfo(){
+  while(state.machineInfo.length < state.machineCount){
+    const idx = state.machineInfo.length;
+    state.machineInfo.push({...emptyMachineInfo(), name:'A'+String(idx+1).padStart(2,'0')});
+  }
+  state.machineInfo = state.machineInfo.slice(0, state.machineCount);
+}
+function collectCurrentMachineInfo(){
+  const m = state.currentMachine;
+  if(!state.machineInfo[m]) state.machineInfo[m] = emptyMachineInfo();
+  const info = state.machineInfo[m];
+  const nameEl = document.getElementById(`mname_${m}`);
+  if(nameEl) info.name = nameEl.value;
+  ['desc','sap','customer','mold','datecode','visual','result','approval','material','ratio','sess'].forEach(f=>{
+    const el = document.getElementById(`mi_${m}_${f}`); if(el) info[f] = el.value;
+  });
+  // LTC No. 라운드별 수집
+  ensureLtcRounds(info);
+  for(let r=0;r<state.roundCount;r++){
+    const el = document.getElementById(`ltc_${m}_${r}`);
+    if(el) info.ltcRounds[r] = el.value;
+  }
+}
+function applyMachineInfoToForm(m){
+  const info = state.machineInfo[m] || emptyMachineInfo();
+  const nameEl = document.getElementById(`mname_${m}`);
+  if(nameEl) nameEl.value = info.name||'';
+  ['desc','sap','customer','mold','datecode','visual','result','approval','material','ratio','sess'].forEach(f=>{
+    const el = document.getElementById(`mi_${m}_${f}`); if(el) el.value = info[f]||'';
+  });
+  // LTC No. 라운드별 적용
+  ensureLtcRounds(info);
+  for(let r=0;r<state.roundCount;r++){
+    const el = document.getElementById(`ltc_${m}_${r}`);
+    if(el) el.value = info.ltcRounds[r]||'';
+  }
+}
+
+// loadDemoNames는 plan 모드에서 사용하지 않으나 하위호환 유지
+function loadDemoNames(){
+  for(let i=0;i<state.machineCount;i++){
+    if(!state.machineInfo[i]) state.machineInfo[i] = emptyMachineInfo();
+    state.machineInfo[i].name = 'A'+String(i+1).padStart(2,'0');
+  }
+  applySetup();
+}
+
+// ══ 설비 탭 렌더링 ════════════════════════════════
+function getMachinePct(m){
+  let done=0, total=ITEMS.length*state.roundCount;
+  ITEMS.forEach(item=>{
+    for(let r=0;r<state.roundCount;r++) if(state.values[`${item.key}|${m}|${r}`]) done++;
+  });
+  return {done, total, pct: total>0 ? Math.round(done/total*100):0};
+}
+
+function renderMachineTabBar(){
+  const bar = document.getElementById('machTabBar');
+  bar.innerHTML = '';
+  if(state.machineCount === 0){
+    bar.innerHTML = '<div style="padding:10px 14px;color:#9ca3af;font-size:13px">📂 생산계획 Excel을 업로드하고 설비를 선택하세요</div>';
+    document.getElementById('machContents').innerHTML =
+      `<div style="text-align:center;padding:30px 0;color:#9ca3af;font-size:14px">${tr('machTabEmpty')}</div>`;
+    return;
+  }
+  for(let m=0;m<state.machineCount;m++){
+    const info = state.machineInfo[m]||emptyMachineInfo();
+    const {pct} = getMachinePct(m);
+    const btn = document.createElement('button');
+    btn.className = 'mach-tab' + (m===state.currentMachine?' active':'') + (pct===100?' done':'');
+    btn.id = `mtab_${m}`;
+    btn.innerHTML = `${esc(info.name||('M'+(m+1)))}<span class="pct">${pct>0?pct+'%':''}</span>`;
+    btn.onclick = ()=>switchMachineTab(m);
+    bar.appendChild(btn);
+  }
+}
+
+function switchMachineTab(m){
+  collectCurrentMachineInfo();
+  save();
+  state.currentMachine = m;
+  document.querySelectorAll('.mach-tab').forEach((b,i)=>b.classList.toggle('active',i===m));
+  document.querySelectorAll('.mach-content').forEach((c,i)=>c.classList.toggle('active',i===m));
+  applyMachineInfoToForm(m);
+}
+function prevMachine(){ if(state.currentMachine>0) switchMachineTab(state.currentMachine-1); }
+function nextMachine(){ if(state.currentMachine<state.machineCount-1) switchMachineTab(state.currentMachine+1); }
+
+// ══ 설비 컨텐츠 렌더링 ═══════════════════════════
+function renderMachineContents(){
+  const container = document.getElementById('machContents');
+  container.innerHTML = '';
+  for(let m=0;m<state.machineCount;m++){
+    const div = document.createElement('div');
+    div.className = 'mach-content' + (m===state.currentMachine?' active':'');
+    div.id = `mcontent_${m}`;
+    div.innerHTML = buildMachineContent(m);
+    container.appendChild(div);
+  }
+}
+
+function buildMachineContent(m){
+  const info = state.machineInfo[m]||emptyMachineInfo();
+  const {done, total, pct} = getMachinePct(m);
+
+  const sel = (id, opts, cur)=> opts.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('');
+
+  return `
+  <!-- 설비명 -->
+  <div class="mach-name-row">
+    <span class="name-label">${tr('machNameLabel')}</span>
+    <input id="mname_${m}" value="${esc(info.name||'')}" placeholder="${tr('machNamePH')}"
+      oninput="onMachineNameInput(${m},this.value)"
+      style="max-width:200px;font-weight:700;font-size:17px">
+  </div>
+
+  <!-- 진행률 -->
+  <div class="mach-progress">
+    <div class="progress-label">
+      <span>${tr('progressLabel')}</span>
+      <span><b>${done}</b> / ${total} (${pct}%)</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="mprogbar_${m}" style="width:${pct}%"></div></div>
+  </div>
+
+  <!-- LTC No. 회차별 입력 -->
+  ${(()=>{
+    ensureLtcRounds(info);
+    const rounds = Array.from({length:state.roundCount},(_,r)=>r);
+    return `<div class="ltc-row-wrap">
+      <span class="ltc-row-label">${tr('ltcLabel')}</span>
+      <div class="ltc-rounds">
+        ${rounds.map(r=>`
+          <div class="ltc-round-cell">
+            <label class="ltc-round-label">${tr('ltcRound')} ${r+1}</label>
+            <input id="ltc_${m}_${r}" class="ltc-round-input"
+              value="${esc(info.ltcRounds[r]||'')}"
+              placeholder="LTC No."
+              oninput="setLtcRound(${m},${r},this.value)">
+          </div>`).join('')}
+      </div>
+    </div>`;
+  })()}
+
+  <!-- 설비 정보 -->
+  <div class="info-section-title">${tr('infoTitle')}</div>
+  <div class="info-grid">
+    <div><label>${tr('descLabel')}</label><input id="mi_${m}_desc" value="${esc(info.desc||'')}" oninput="saveDebounced()" placeholder="${tr('descPH')}"></div>
+    <div><label>${tr('sapLabel')}</label><input id="mi_${m}_sap" value="${esc(info.sap||'')}" oninput="onSapPnInput(this,${m})" placeholder="${tr('sapPH')}"></div>
+    <div><label>${tr('customerLabel')}</label><input id="mi_${m}_customer" value="${esc(info.customer||'')}" oninput="saveDebounced()"></div>
+    <div><label>${tr('moldLabel')}</label><input id="mi_${m}_mold" value="${esc(info.mold||'')}" oninput="saveDebounced()"></div>
+    <div><label>${tr('datecodeLabel')}</label><input id="mi_${m}_datecode" value="${esc(info.datecode||'')}" oninput="saveDebounced()"></div>
+    <div><label>${tr('visualLabel')}</label>
+      <select id="mi_${m}_visual" onchange="saveDebounced()">
+        ${sel('visual',['OK','NG','N/A','Waive'],info.visual||'OK')}
+      </select>
+    </div>
+    <div><label>${tr('materialLabel')}</label><input id="mi_${m}_material" value="${esc(info.material||'')}" oninput="saveDebounced()"></div>
+    <div><label>${tr('ratioLabel')}</label><input id="mi_${m}_ratio" value="${esc(info.ratio||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
+    <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
+    <div><label>${tr('resultLabel')}</label>
+      <select id="mi_${m}_result" onchange="saveDebounced()">
+        ${sel('result',['PASS','FAIL','HOLD','N/A','Waive'],info.result||'PASS')}
+      </select>
+    </div>
+    <div><label>${tr('approvalLabel')}</label><input id="mi_${m}_approval" value="${esc(info.approval||'')}" oninput="saveDebounced()"></div>
+  </div>
+
+  `;
+}
+
+// 항목 탭 + 전체 설비 측정 테이블 렌더링
+function renderMeasurementSection(){
+  const i = state.currentItem;
+  const it = ITEMS[i];
+  if(!it) return;
+
+  // ── 항목 탭 바 ──
+  const tabBar = document.getElementById('itemTabBar');
+  if(tabBar){
+    tabBar.innerHTML = '';
+    ITEMS.forEach((item, idx)=>{
+      // 이 항목의 전체 설비 완료 여부
+      let totalCells = state.machineCount * state.roundCount, doneCells = 0;
+      for(let m=0;m<state.machineCount;m++)
+        for(let r=0;r<state.roundCount;r++)
+          if(state.values[`${item.key}|${m}|${r}`]) doneCells++;
+      const isDone = totalCells>0 && doneCells===totalCells;
+      const btn = document.createElement('button');
+      btn.id = `itab_${idx}`;
+      btn.className = 'item-tab' + (idx===i?' active':'') + (isDone?' done-tab':'');
+      btn.textContent = item.code + '  ' + item.name + (isDone?'  ✓':'');
+      btn.onclick = ()=>switchItem(idx);
+      tabBar.appendChild(btn);
+    });
+    // 활성 탭 스크롤
+    setTimeout(()=>{ const a=document.getElementById(`itab_${i}`); if(a) a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); },50);
+  }
+
+  // ── 항목 제목 ──
+  const titleBar = document.getElementById('itemTitleBar');
+  if(titleBar) titleBar.textContent = `${it.code}  :  ${it.name}`;
+
+  // 완료 현황
+  let totalAll = state.machineCount*state.roundCount, doneAll = 0;
+  for(let m=0;m<state.machineCount;m++)
+    for(let r=0;r<state.roundCount;r++)
+      if(state.values[`${it.key}|${m}|${r}`]) doneAll++;
+  const subBar = document.getElementById('itemSubBar');
+  if(subBar) subBar.textContent = `${tr('doneOf')}: ${doneAll} / ${totalAll}`;
+
+  // ── 전체 설비 측정 테이블 ──
+  const table = document.getElementById('measureTable');
+  if(!table) return;
+  let html = `<thead><tr>
+    <th style="min-width:90px">${tr('mcHeader')}</th>`;
+  for(let r=0;r<state.roundCount;r++) html += `<th style="min-width:140px">Round ${r+1}</th>`;
+  html += '</tr></thead><tbody>';
+
+  // ── 측정값 행 ──
+  for(let m=0;m<state.machineCount;m++){
+    const mName = (state.machineInfo[m]||{}).name || ('M/C '+(m+1));
+    html += `<tr><td style="font-weight:800;font-size:14px">${esc(mName)}</td>`;
+    for(let r=0;r<state.roundCount;r++){
+      const k=`${it.key}|${m}|${r}`, val=state.values[k]||'';
+      html += `<td class="${val?'done-cell':''}"><input class="measure-input" inputmode="text" value="${esc(val)}" oninput="setVal(${i},${m},${r},this)"></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function openMeasureSummary(){
+  collectCommon();
+  collectCurrentMachineInfo();
+  const modal = document.getElementById('measureSummaryModal');
+  const meta = document.getElementById('measureSummaryMeta');
+  const table = document.getElementById('measureSummaryTable');
+  if(!modal || !meta || !table) return;
+
+  if(state.machineCount === 0){
+    meta.textContent = tr('measureSummaryEmpty');
+    table.innerHTML = '';
+    modal.classList.add('open');
+    return;
+  }
+
+  const total = ITEMS.length * state.machineCount * state.roundCount;
+  let done = 0;
+  Object.values(state.values).forEach(v=>{ if(v) done++; });
+  meta.textContent = `${tr('measureSummaryMeta')} · ${done} / ${total}`;
+
+  let html = '<thead><tr><th>항목</th>';
+  for(let m=0;m<state.machineCount;m++){
+    const mi = state.machineInfo[m] || {};
+    const mName = mi.name || ('M/C '+(m+1));
+    for(let r=0;r<state.roundCount;r++){
+      html += `<th>${esc(mName)}<br>R${r+1}</th>`;
+    }
+  }
+  html += '</tr></thead><tbody>';
+
+  ITEMS.forEach(item=>{
+    html += `<tr><td>${esc(item.code + '  ' + item.name)}</td>`;
+    for(let m=0;m<state.machineCount;m++){
+      for(let r=0;r<state.roundCount;r++){
+        const val = state.values[`${item.key}|${m}|${r}`] || '';
+        html += `<td class="${val?'has-value':'empty-value'}">${val ? esc(val) : '-'}</td>`;
+      }
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+  modal.classList.add('open');
+}
+
+function closeMeasureSummary(){
+  const modal = document.getElementById('measureSummaryModal');
+  if(modal) modal.classList.remove('open');
+}
+
+// LTC No. 라운드별 저장
+function setLtcRound(m, r, val){
+  if(!state.machineInfo[m]) state.machineInfo[m] = emptyMachineInfo();
+  ensureLtcRounds(state.machineInfo[m]);
+  state.machineInfo[m].ltcRounds[r] = val;
+  saveDebounced();
+}
+// 전체 설비 공통 LTC 일괄 입력
+function setLtcAllMachines(r, val){
+  for(let m=0;m<state.machineCount;m++){
+    if(!state.machineInfo[m]) state.machineInfo[m] = emptyMachineInfo();
+    ensureLtcRounds(state.machineInfo[m]);
+    state.machineInfo[m].ltcRounds[r] = val;
+    const el = document.getElementById(`ltc_${m}_${r}`);
+    if(el) el.value = val;
+  }
+  saveDebounced();
+}
+
+function switchItem(itemIdx){
+  state.currentItem = itemIdx;
+  save();
+  renderMeasurementSection();
+}
+function prevItem(){ if(state.currentItem>0) switchItem(state.currentItem-1); }
+function nextItem(){ if(state.currentItem<ITEMS.length-1) switchItem(state.currentItem+1); }
+
+function switchItemInMachine(itemIdx){
+  switchItem(itemIdx);
+}
+
+function setVal(i,m,r,el){
+  const item = ITEMS[i];
+  if(!item) return;
+  const v = el.value.trim();
+  state.values[`${item.key}|${m}|${r}`] = v;
+  el.closest('td').className = v ? 'done-cell' : '';
+  saveDebounced();
+  updateMachineProgress(m);
+  updateKpi();
+  // 항목 탭 뱃지 + 완료 현황 업데이트
+  const tab = document.getElementById(`itab_${i}`);
+  if(tab){
+    let total=state.machineCount*state.roundCount, done=0;
+    for(let m2=0;m2<state.machineCount;m2++)
+      for(let r2=0;r2<state.roundCount;r2++)
+        if(state.values[`${item.key}|${m2}|${r2}`]) done++;
+    const isDone = total>0 && done===total;
+    tab.textContent = item.code + '  ' + item.name + (isDone?'  ✓':'');
+    tab.classList.toggle('done-tab', isDone);
+  }
+  const sub = document.getElementById('itemSubBar');
+  if(sub){
+    let total=state.machineCount*state.roundCount, done=0;
+    for(let m2=0;m2<state.machineCount;m2++)
+      for(let r2=0;r2<state.roundCount;r2++)
+        if(state.values[`${item.key}|${m2}|${r2}`]) done++;
+    sub.textContent = `입력 완료: ${done} / ${total} 칸`;
+  }
+}
+
+function onMachineNameInput(m,v){
+  if(!state.machineInfo[m]) state.machineInfo[m] = emptyMachineInfo();
+  state.machineInfo[m].name = v;
+  const tab = document.getElementById(`mtab_${m}`);
+  if(tab){
+    const pctEl = tab.querySelector('.pct');
+    const pctTxt = pctEl ? pctEl.textContent : '';
+    tab.innerHTML = `${esc(v||('M'+(m+1)))}<span class="pct">${pctTxt}</span>`;
+  }
+  saveDebounced();
+}
+
+function updateMachineProgress(m){
+  const {done, total, pct} = getMachinePct(m);
+  const bar = document.getElementById(`mprogbar_${m}`);
+  if(bar) bar.style.width = pct+'%';
+  const tab = document.getElementById(`mtab_${m}`);
+  if(tab){
+    const pctEl = tab.querySelector('.pct');
+    if(pctEl) pctEl.textContent = pct>0 ? pct+'%' : '';
+    tab.classList.toggle('done', pct===100);
+  }
+}
+
+let saveTimer = null;
+function saveDebounced(){ clearTimeout(saveTimer); saveTimer=setTimeout(save,300); }
+
+function updateKpi(){
+  let total=ITEMS.length*state.machineCount*state.roundCount, done=0;
+  Object.values(state.values).forEach(v=>{if(v) done++;});
+  document.getElementById('kpiMachines').textContent = state.machineCount;
+  document.getElementById('kpiRounds').textContent   = state.roundCount;
+  document.getElementById('kpiTotal').textContent    = total;
+  document.getElementById('kpiDone').textContent     = done;
+}
+
+function renderAll(){
+  rebuildCountOptions();
+  renderMachineTabBar();
+  renderMachineContents();
+  switchMachineTab(state.currentMachine||0);
+  renderMeasurementSection();
+  updateKpi();
+}
+
+function resetAll(){
+  if(!confirm(tr('confirmReset'))) return;
+  localStorage.removeItem(LSKEY);
+  location.reload();
+}
+
+function ensureSheetWebAppUrl(){
+  if(GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL.trim()) return true;
+  alert(tr('sheetUrlMissing'));
+  return false;
+}
+
+function nowIso(){
+  return new Date().toISOString();
+}
+
+function newRecordId(){
+  return 'ipqc_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+}
+
+function buildServerPayload(existingId){
+  const machinesArr = state.machineInfo.map(mi=>mi.name||'');
+  return {
+    id: existingId || newRecordId(),
+    submittedAt: nowIso(),
+    date: state.common.date||new Date().toISOString().slice(0,10),
+    time: state.common.time||'',
+    shift: state.common.shift||'',
+    inspector: state.common.inspector.trim(),
+    common: {...state.common},
+    machines: machinesArr,
+    machineInfo: state.machineInfo.map(mi=>({...mi})),
+    machineCount: state.machineCount,
+    roundCount: state.roundCount,
+    values: {...state.values},
+    dataHeaders: HEADERS.slice(),
+    dataRows: buildSheetRows(),
+    deviceId: getDeviceId(),
+    lang: state.lang||'ko'
+  };
+}
+
+function buildSheetRows(){
+  const rows = [];
+  for(let m=0;m<state.machineCount;m++){
+    const mi = state.machineInfo[m]||emptyMachineInfo();
+    for(let r=0;r<state.roundCount;r++){
+      const row = buildDataRow(mi, m, r);
+      let has = false;
+      ITEMS.forEach(it=>{
+        const v = state.values[`${it.key}|${m}|${r}`]||'';
+        if(v){ row[it.col] = v; has = true; }
+      });
+      if(has) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function postToSheet(action, payload){
+  const form = new URLSearchParams();
+  form.set('action', action);
+  form.set('payload', JSON.stringify(payload || {}));
+  return fetch(GOOGLE_SHEET_WEB_APP_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: form
+  });
+}
+
+function sheetJsonp(params = {}, timeoutMs = 20000){
+  return new Promise((resolve, reject)=>{
+    const cb = 'ipqcSheetCb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const url = new URL(GOOGLE_SHEET_WEB_APP_URL);
+    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k, v));
+    url.searchParams.set('callback', cb);
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{
+      cleanup();
+      reject(new Error('Request timeout'));
+    }, timeoutMs);
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cb];
+      script.remove();
+    }
+    window[cb] = data => {
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Network error'));
+    };
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+}
+
+function normalizeServerRecord(record){
+  if(!record) return null;
+  ['common','machines','machineInfo','values','dataRows'].forEach(key=>{
+    if(typeof record[key] === 'string'){
+      try{ record[key] = JSON.parse(record[key]); }catch(e){}
+    }
+  });
+  record.docId = record.id || record.docId || null;
+  record.machineCount = Number(record.machineCount || (record.machineInfo||[]).length || 0);
+  record.roundCount = Number(record.roundCount || 0);
+  record.machines = Array.isArray(record.machines) ? record.machines : [];
+  record.machineInfo = Array.isArray(record.machineInfo) ? record.machineInfo : [];
+  record.values = record.values && typeof record.values === 'object' ? record.values : {};
+  record.common = record.common && typeof record.common === 'object' ? record.common : {};
+  record.date = record.date || record.common.date || '';
+  record.time = record.time || record.common.time || '';
+  record.shift = record.shift || record.common.shift || '';
+  record.inspector = record.inspector || record.common.inspector || '';
+  return record;
+}
+
+function applyServerRecordToState(record){
+  const r = normalizeServerRecord(record);
+  if(!r) return;
+  state.common = {...state.common, ...r.common, date:r.date||r.common.date||'', time:r.time||r.common.time||'', shift:r.shift||r.common.shift||'Day', inspector:r.inspector||r.common.inspector||''};
+  state.machineCount = r.machineCount;
+  state.roundCount = r.roundCount || state.roundCount || 3;
+  state.machineInfo = r.machineInfo;
+  state.values = r.values;
+  state.currentMachine = 0;
+  state.currentItem = 0;
+  localStorage.setItem(LSKEY, JSON.stringify(state));
+  applyCommonToForm();
+  renderAll();
+}
+
+// ══ 서버 저장 ═════════════════════════════════════
+async function submitToServer(){
+  collectCommon();
+  collectCurrentMachineInfo();
+  if(!state.common.inspector||!state.common.inspector.trim()){ alert(tr('noInspector')); return; }
+  let hasData=false;
+  for(const v of Object.values(state.values)){ if(v){ hasData=true; break; } }
+  if(!hasData){ alert(tr('noData')); return; }
+  if(!ensureSheetWebAppUrl()) return;
+
+  const statusEl = document.getElementById('cloudStatus');
+  statusEl.className='loading'; statusEl.textContent=tr('submitting');
+
+  try{
+    const payload = buildServerPayload();
+    await postToSheet('save', payload);
+    statusEl.className='success'; statusEl.textContent=tr('submitOk');
+    setTimeout(()=>{ statusEl.style.display='none'; },4000);
+    saveToHistory({...payload, docId:payload.id});
+    renderHistory();
+  }catch(err){
+    console.error(err);
+    statusEl.className='error'; statusEl.textContent=tr('submitFail')+' ('+err.message+')';
+  }
+}
+
+async function loadFromServer(){
+  if(!ensureSheetWebAppUrl()) return;
+  const statusEl = document.getElementById('cloudStatus');
+  statusEl.className='loading'; statusEl.textContent=tr('serverLoading');
+  try{
+    const result = await sheetJsonp({action:'list'});
+    if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
+    const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
+    if(!records.length){
+      statusEl.className='error'; statusEl.textContent=tr('serverNoData');
+      return;
+    }
+    records.sort((a,b)=>String(b.submittedAt||b.savedAt||'').localeCompare(String(a.submittedAt||a.savedAt||'')));
+    localStorage.setItem(HIST_KEY, JSON.stringify(records.slice(0,30).map(r=>({
+      docId: r.id || r.docId,
+      id: r.id || r.docId,
+      date: r.date,
+      time: r.time||'',
+      inspector: r.inspector,
+      shift: r.shift||'',
+      machineCount: r.machineCount||0,
+      roundCount: r.roundCount||0,
+      machines: r.machines||[],
+      machineInfo: r.machineInfo||[],
+      common: r.common||{},
+      values: r.values||{},
+      savedAt: r.submittedAt || r.savedAt || ''
+    }))));
+    applyServerRecordToState(records[0]);
+    renderHistory();
+    statusEl.className='success'; statusEl.textContent=tr('serverLoadOk');
+    setTimeout(()=>openHistModal(0), 150);
+    setTimeout(()=>{ statusEl.style.display='none'; },4000);
+  }catch(err){
+    console.error(err);
+    statusEl.className='error'; statusEl.textContent=tr('serverLoadFail')+' ('+err.message+')';
+  }
+}
+
+let searchResultRows = [];
+let searchRowsApiReady = true;
+let searchRowsCache = null;      // 연도별 시트(rows) 응답 캐시 - 응답이 커서 재요청 비용이 큼
+let searchRowsCacheAt = 0;
+let searchRowsError = '';        // '' | 'timeout' | 'error'
+const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
+const SEARCH_ROWS_TIMEOUT_MS = 300000;
+let ipqcTrendSourceRows = [];
+let ipqcTrendSelection = null;
+let ipqcSelectedMolds = new Set();
+let ipqcMoldSelectionKey = '';
+const IPQC_TREND_MEASURES = [12,13,14,15,17,18,19,22,23,24,25,26,27,28,29,30,31,33,34];
+const IPQC_TREND_COLORS = ['#2563eb','#f97316','#16a34a','#9333ea','#dc2626','#0891b2','#ca8a04','#db2777','#4f46e5','#0f766e'];
+const BAKE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1ytq5HYgmpsHxNLMhf4JNBoLHmyu1xHpEaoDwFd7nUGo/gviz/tq';
+let bakeSheetCache = null;
+let bakeMatchedRows = [];
+
+function initIpqcTrend(){
+  const options = `<option value="-1">${esc(tr('trendNone'))}</option>` + IPQC_TREND_MEASURES.map(i=>`<option value="${i}">${esc(HEADERS[i])}</option>`).join('');
+  const a=document.getElementById('ipqcMetricA'), b=document.getElementById('ipqcMetricB');
+  if(!a||!b) return;
+  const prevA=a.value||'15',prevB=b.value||'19';a.innerHTML=options;b.innerHTML=options;a.value=prevA;b.value=prevB;
+}
+
+function trendNumber(v){
+  if(typeof v==='number') return Number.isFinite(v)?v:null;
+  if(v===null||v===undefined||String(v).trim()==='') return null;
+  const n=Number(String(v).replace(/,/g,'')); return Number.isFinite(n)?n:null;
+}
+
+function selectIpqcTrend(resultIdx,col,event){
+  if(event){event.stopPropagation();event.preventDefault();}
+  const row=searchResultRows[resultIdx]?.row, value=String(row?.[col]??'').trim();
+  if(!value) return;
+  ipqcTrendSelection={col,value,type:col===6?'SAP PN':'Description'};
+  ipqcMoldSelectionKey='';
+  ipqcSelectedMolds.clear();
+  const from=document.getElementById('ipqcTrendFrom'),to=document.getElementById('ipqcTrendTo');
+  const exact=document.getElementById('searchDate')?.value||'',searchedFrom=document.getElementById('searchDateFrom')?.value||'',searchedTo=document.getElementById('searchDateTo')?.value||'';
+  if(from) from.value=exact||searchedFrom; if(to) to.value=exact||searchedTo;
+  drawIpqcTrend();
+  loadBakeTestResults(row);
+  document.querySelector('.bake-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function renderIpqcMoldFilters(molds){
+  const box=document.getElementById('ipqcMoldFilters');if(!box)return;
+  const key=ipqcTrendSelection?`${ipqcTrendSelection.col}|${ipqcTrendSelection.value}`:'';
+  if(key!==ipqcMoldSelectionKey){ipqcMoldSelectionKey=key;ipqcSelectedMolds=new Set(molds);}
+  ipqcSelectedMolds=new Set([...ipqcSelectedMolds].filter(m=>molds.includes(m)));
+  box.innerHTML=molds.length?molds.map(m=>`<label class="mold-check"><input type="checkbox" value="${esc(m)}" ${ipqcSelectedMolds.has(m)?'checked':''} onchange="toggleIpqcMold(this)"><span>${esc(tr('trendMoldPrefix'))} ${esc(m)}</span></label>`).join(''):`<span class="hint">${esc(tr('trendNoMold'))}</span>`;
+}
+
+function toggleIpqcMold(input){
+  input.checked?ipqcSelectedMolds.add(input.value):ipqcSelectedMolds.delete(input.value);
+  drawIpqcTrend(true);
+}
+
+function selectAllIpqcMolds(select){
+  document.querySelectorAll('#ipqcMoldFilters input[type="checkbox"]').forEach(el=>{el.checked=select;select?ipqcSelectedMolds.add(el.value):ipqcSelectedMolds.delete(el.value);});
+  drawIpqcTrend(true);
+}
+
+function trendBounds(values){
+  const min=Math.min(...values),max=Math.max(...values),spread=max-min||Math.abs(max)*.1||1;
+  return [min-spread*.12,max+spread*.12];
+}
+
+function renderIpqcTrendStats(rows,columns){
+  const box=document.getElementById('ipqcTrendStats');if(!box)return;
+  box.innerHTML=[...new Set(columns)].map(col=>{
+    const values=rows.map(r=>trendNumber(r[col])).filter(v=>v!==null);
+    if(!values.length)return '';
+    const max=Math.max(...values),min=Math.min(...values),avg=values.reduce((s,v)=>s+v,0)/values.length;
+    const f=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<div class="trend-stat-card"><div class="trend-stat-name">${esc(HEADERS[col])}</div><div class="trend-stat-values"><div class="trend-stat-value"><span>${esc(tr('trendMax'))}</span><b>${f(max)}</b></div><div class="trend-stat-value"><span>${esc(tr('trendMin'))}</span><b>${f(min)}</b></div><div class="trend-stat-value"><span>${esc(tr('trendAvg'))}</span><b>${f(avg)}</b></div></div></div>`;
+  }).join('');
+}
+
+function drawIpqcTrend(skipMoldRender=false){
+  const canvas=document.getElementById('ipqcTrendCanvas'),empty=document.getElementById('ipqcTrendEmpty'),legend=document.getElementById('ipqcTrendLegend'),target=document.getElementById('ipqcTrendTarget'),stats=document.getElementById('ipqcTrendStats');
+  if(!canvas||!empty) return;
+  if(stats)stats.innerHTML='';
+  const a=Number(document.getElementById('ipqcMetricA')?.value??-1),b=Number(document.getElementById('ipqcMetricB')?.value??-1),active=[a,b].filter(i=>i>=0);
+  const wrap=canvas.parentElement,dpr=window.devicePixelRatio||1,w=Math.max(300,wrap.clientWidth-16),h=Math.max(240,wrap.clientHeight-16);
+  canvas.width=w*dpr;canvas.height=h*dpr;const c=canvas.getContext('2d');c.scale(dpr,dpr);c.clearRect(0,0,w,h);
+  if(!active.length){empty.textContent=tr('trendNoMeasure');empty.style.display='grid';legend.innerHTML='';return;}
+  if(!ipqcTrendSelection){empty.textContent=tr('trendSelectProduct');empty.style.display='grid';legend.innerHTML='';return;}
+  let rows=ipqcTrendSourceRows.filter(r=>String(r[ipqcTrendSelection.col]??'').trim()===ipqcTrendSelection.value&&active.some(i=>trendNumber(r[i])!==null)).sort((x,y)=>`${x[0]} ${x[1]||''}`.localeCompare(`${y[0]} ${y[1]||''}`));
+  const fromEl=document.getElementById('ipqcTrendFrom'),toEl=document.getElementById('ipqcTrendTo');
+  if(rows.length){const last=String(rows.at(-1)[0]).slice(0,10);if(!toEl.value)toEl.value=last;if(!fromEl.value){const cut=new Date(last+'T00:00:00');cut.setDate(cut.getDate()-29);fromEl.value=cut.toISOString().slice(0,10);}rows=rows.filter(r=>{const d=String(r[0]).slice(0,10);return(!fromEl.value||d>=fromEl.value)&&(!toEl.value||d<=toEl.value);});}
+  target.textContent=rows.length?`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${fromEl.value||String(rows[0][0]).slice(0,10)} ~ ${toEl.value||String(rows.at(-1)[0]).slice(0,10)}`:`${ipqcTrendSelection.type}: ${ipqcTrendSelection.value} · ${tr('trendNoPeriod')}`;
+  if(!rows.length){empty.textContent=tr('trendNoPeriod');empty.style.display='grid';legend.innerHTML='';return;}
+  const allMolds=[...new Set(rows.map(r=>String(r[8]??'미지정')))];
+  if(!skipMoldRender) renderIpqcMoldFilters(allMolds);
+  const molds=allMolds.filter(m=>ipqcSelectedMolds.has(m));
+  rows=rows.filter(r=>ipqcSelectedMolds.has(String(r[8]??'미지정')));
+  if(!molds.length){empty.textContent=tr('trendSelectMold');empty.style.display='grid';legend.innerHTML='';return;}
+  empty.style.display='none';
+  renderIpqcTrendStats(rows,active);
+  const av=a>=0?rows.map(r=>trendNumber(r[a])).filter(v=>v!==null):[],bv=b>=0?rows.map(r=>trendNumber(r[b])).filter(v=>v!==null):[];
+  const [amin,amax]=trendBounds(av.length?av:[0,1]),[bmin,bmax]=trendBounds(bv.length?bv:[0,1]),pad={l:a>=0?66:28,r:b>=0?72:28,t:20,b:46},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const labels=[...new Set(rows.map(r=>`${String(r[0]).slice(0,10)} ${r[1]||''}`))],x=s=>pad.l+(labels.length===1?cw/2:cw*labels.indexOf(s)/(labels.length-1)),ya=v=>pad.t+(amax-v)/(amax-amin)*ch,yb=v=>pad.t+(bmax-v)/(bmax-bmin)*ch;
+  c.font='11px system-ui';
+  for(let j=0;j<=5;j++){const y=pad.t+ch*j/5;c.strokeStyle='#e2e8f0';c.beginPath();c.moveTo(pad.l,y);c.lineTo(w-pad.r,y);c.stroke();if(a>=0){c.fillStyle='#1d4ed8';c.textAlign='right';c.fillText(Number((amax-(amax-amin)*j/5).toPrecision(5)),pad.l-8,y+4);}if(b>=0){c.fillStyle='#c2410c';c.textAlign='left';c.fillText(Number((bmax-(bmax-bmin)*j/5).toPrecision(5)),w-pad.r+8,y+4);}}
+  if(a>=0){c.save();c.translate(13,pad.t+ch/2);c.rotate(-Math.PI/2);c.fillStyle='#1d4ed8';c.textAlign='center';c.fillText(HEADERS[a],0,0);c.restore();}
+  if(b>=0){c.save();c.translate(w-10,pad.t+ch/2);c.rotate(Math.PI/2);c.fillStyle='#c2410c';c.textAlign='center';c.fillText(HEADERS[b],0,0);c.restore();}
+  const series=[];if(a>=0)series.push([a,ya,false]);if(b>=0)series.push([b,yb,true]);
+  molds.forEach(m=>{const color=IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length],group=rows.filter(r=>String(r[8]??'미지정')===m);series.forEach(([col,yfn,dash])=>{const pts=group.map(r=>({r,v:trendNumber(r[col])})).filter(p=>p.v!==null);if(!pts.length)return;c.beginPath();pts.forEach((p,i)=>{const px=x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),py=yfn(p.v);i?c.lineTo(px,py):c.moveTo(px,py)});c.strokeStyle=color;c.lineWidth=dash?1.8:2.5;c.setLineDash(dash?[6,4]:[]);c.stroke();c.setLineDash([]);c.fillStyle=color;pts.forEach(p=>{c.beginPath();c.arc(x(`${String(p.r[0]).slice(0,10)} ${p.r[1]||''}`),yfn(p.v),2.2,0,Math.PI*2);c.fill();});});});
+  c.fillStyle='#64748b';c.textAlign='center';const ticks=Math.min(6,labels.length);for(let j=0;j<ticks;j++){const i=Math.round(j*(labels.length-1)/Math.max(1,ticks-1));c.fillText(labels[i].slice(0,10),x(labels[i]),h-16);}
+  legend.innerHTML=molds.map(m=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length]}"></i>${esc(tr('trendMoldPrefix'))} ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
+}
+
+async function loadBakeSheet(){
+  if(bakeSheetCache)return bakeSheetCache;
+  try{
+    const result=await sheetJsonp({action:'bakeRows'},60000);
+    if(result&&result.ok&&Array.isArray(result.headers)&&Array.isArray(result.rows)){
+      const headers=result.headers.map(h=>String(h||'').replace(/\s+/g,' ').trim());
+      const rows=result.rows.map((item,rowIndex)=>({rowIndex:item.rowNumber||rowIndex+2,cells:(item.row||[]).map(v=>({v:v??'',f:''}))}));
+      bakeSheetCache={headers,rows};
+      return bakeSheetCache;
+    }
+  }catch(err){console.warn('bakeRows API fallback:',err);}
+  return loadBakeSheetDirect_();
+}
+
+function loadBakeSheetDirect_(){
+  if(bakeSheetCache)return Promise.resolve(bakeSheetCache);
+  return new Promise((resolve,reject)=>{
+    const cb='ipqcBakeCb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),script=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('Bake test timeout'));},15000);
+    function cleanup(){clearTimeout(timer);delete window[cb];script.remove();}
+    window[cb]=response=>{cleanup();if(!response||response.status==='error'||!response.table){reject(new Error('Bake test load failed'));return;}const headers=(response.table.cols||[]).map(c=>String(c.label||c.id||'').replace(/\s+/g,' ').trim());const rows=(response.table.rows||[]).map((r,rowIndex)=>({rowIndex,cells:(r.c||[]).map(c=>({v:c?.v??'',f:c?.f??''}))}));bakeSheetCache={headers,rows};resolve(bakeSheetCache);};
+    script.onerror=()=>{cleanup();reject(new Error('Bake test network error'));};
+    const url=new URL(BAKE_SHEET_URL);url.searchParams.set('sheet','Bake test');url.searchParams.set('tqx',`responseHandler:${cb}`);script.src=url.toString();document.body.appendChild(script);
+  });
+}
+
+function bakeHeaderIndex(headers,...names){const normalized=headers.map(h=>h.toLowerCase().replace(/[^a-z0-9가-힣]+/g,''));for(const name of names){const key=name.toLowerCase().replace(/[^a-z0-9가-힣]+/g,''),idx=normalized.findIndex(h=>h===key||h.includes(key));if(idx>=0)return idx;}return-1;}
+function bakeDisplay(item,idx){if(idx<0)return'';const c=item.cells[idx]||{};return String(c.f||c.v||'').trim();}
+function bakeIsoDate(item,idx,fallbackYear){if(idx<0)return'';const c=item.cells[idx]||{},raw=String(c.v||''),formatted=String(c.f||'').trim();let m=raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);if(m)return`${m[1]}-${String(+m[2]+1).padStart(2,'0')}-${String(+m[3]).padStart(2,'0')}`;m=(formatted||raw).match(/^(?:(\d{4})[\/-])?(\d{1,2})[\/-](\d{1,2})$/);if(m)return`${m[1]||fallbackYear}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;return'';}
+function bakeNorm(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' ');}
+
+async function loadBakeTestResults(selectedRow=null){
+  const status=document.getElementById('bakeStatus'),wrap=document.getElementById('bakeResultWrap'),table=document.getElementById('bakeResultTable');if(!status)return;
+  status.textContent=tr('bakeLoading');wrap.style.display='none';table.innerHTML='';
+  if(!searchResultRows.length){status.textContent=tr('bakeNone');return;}
+  try{
+    const data=await loadBakeSheet(),h=data.headers,start=bakeHeaderIndex(h,'Star Date','Start Date'),end=bakeHeaderIndex(h,'End Date'),sap=bakeHeaderIndex(h,'SAP PN'),desc=bakeHeaderIndex(h,'Description');
+    if(!selectedRow){bakeMatchedRows=[];status.textContent=tr('bakeSelectItem');return;}
+    const matched=new Map();
+    const ipDate=String(selectedRow[0]||'').slice(0,10),year=ipDate.slice(0,4),ipSap=bakeNorm(selectedRow[6]),ipDesc=bakeNorm(selectedRow[5]);data.rows.forEach(item=>{const bSap=bakeNorm(bakeDisplay(item,sap)),bDesc=bakeNorm(bakeDisplay(item,desc));const sameProduct=ipSap?(bSap===ipSap):Boolean(ipDesc&&bDesc===ipDesc);if(sameProduct)matched.set(item.rowIndex,{item,startDate:bakeIsoDate(item,start,year)||bakeDisplay(item,start),endDate:bakeIsoDate(item,end,year)||bakeDisplay(item,end),headers:h});});
+    bakeMatchedRows=[...matched.values()].sort((a,b)=>`${a.startDate}|${a.endDate}`.localeCompare(`${b.startDate}|${b.endDate}`));renderBakeResults();
+  }catch(err){console.warn(err);bakeMatchedRows=[];status.textContent=tr('bakeAccess');wrap.style.display='none';}
+}
+
+function renderBakeResults(){
+  const status=document.getElementById('bakeStatus'),wrap=document.getElementById('bakeResultWrap'),table=document.getElementById('bakeResultTable');if(!status)return;
+  if(!bakeMatchedRows.length){status.textContent=tr('bakeNone');wrap.style.display='none';table.innerHTML='';return;}
+  const headers=bakeMatchedRows[0].headers,idx={sap:bakeHeaderIndex(headers,'SAP PN'),desc:bakeHeaderIndex(headers,'Description'),mold:bakeHeaderIndex(headers,'Mold No'),req:bakeHeaderIndex(headers,'Requirement'),specLive:bakeHeaderIndex(headers,'Spec Live'),specDead:bakeHeaderIndex(headers,'Spec Dead'),beforeLive:bakeHeaderIndex(headers,'Before Live'),beforeDead:bakeHeaderIndex(headers,'Before Dead'),liveMax:bakeHeaderIndex(headers,'Live Max'),deadMax:bakeHeaderIndex(headers,'Dead Max'),result:bakeHeaderIndex(headers,'Pass/Fail'),remark:bakeHeaderIndex(headers,'Remark')};
+  const fields=[[tr('bakeRequirement'),idx.req],['Spec Live',idx.specLive],['Spec Dead',idx.specDead],[tr('bakeBeforeLive'),idx.beforeLive],[tr('bakeBeforeDead'),idx.beforeDead],[tr('bakeLiveMax'),idx.liveMax],[tr('bakeDeadMax'),idx.deadMax],[tr('bakeResult'),idx.result],[tr('bakeRemark'),idx.remark],[tr('bakeMold'),idx.mold]];
+  let html=`<thead><tr><th>${esc(tr('bakeMeasure'))}</th>`+bakeMatchedRows.map(x=>`<th class="bake-item-head"><small>${esc(tr('bakeStartEnd'))}</small>${esc(x.startDate)} → ${esc(x.endDate)}<small>${esc(bakeDisplay(x.item,idx.sap))}<br>${esc(bakeDisplay(x.item,idx.desc))}</small></th>`).join('')+'</tr></thead><tbody>';
+  fields.forEach(([label,col])=>{html+=`<tr><td>${esc(label)}</td>`+bakeMatchedRows.map(x=>{const v=bakeDisplay(x.item,col),cls=label===tr('bakeResult')?(v.toLowerCase()==='pass'?'bake-pass':v.toLowerCase()==='fail'?'bake-fail':''):'';return`<td class="${cls}">${esc(v||'-')}</td>`;}).join('')+'</tr>';});
+  table.innerHTML=html+'</tbody>';wrap.style.display='block';status.textContent=tr('bakeFound').replace('{n}',bakeMatchedRows.length);
+}
+
+function getSearchFilters(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    date: val('searchDate'),
+    dateFrom: val('searchDateFrom'),
+    dateTo: val('searchDateTo'),
+    inspector: val('searchInspector').toLowerCase(),
+    desc: val('searchDesc').toLowerCase(),
+    sap: val('searchSap').toLowerCase(),
+    customer: val('searchCustomer').toLowerCase(),
+    mold: val('searchMold').toLowerCase(),
+    ltc: val('searchLtc').toLowerCase(),
+    machines: val('searchMachine').toLowerCase().split(/[,\s]+/).map(s=>s.trim()).filter(Boolean)
+  };
+}
+
+function serverRecordToRows(record){
+  const r = normalizeServerRecord({...record});
+  if(Array.isArray(r.dataRows) && r.dataRows.length){
+    return r.dataRows.map(row=>row.slice(0, HEADERS.length));
+  }
+  const rows = [];
+  const mCount = r.machineCount || (r.machineInfo||[]).length || 0;
+  const roundCount = r.roundCount || 1;
+  const values = r.values || {};
+  for(let m=0;m<mCount;m++){
+    const mi = (r.machineInfo||[])[m] || emptyMachineInfo();
+    for(let round=0;round<roundCount;round++){
+      const row = buildDataRowForRecord(r.common||{}, mi, m, round);
+      let has = false;
+      ITEMS.forEach(it=>{
+        const v = values[`${it.key}|${m}|${round}`] || '';
+        if(v){ row[it.col] = v; has = true; }
+      });
+      if(has) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function recordFromSheetRow(row, meta = {}){
+  const values = {};
+  RAW_ITEMS.forEach(item=>{
+    const v = row[item.col] || '';
+    if(v !== '') values[`${item.key}|0|0`] = v;
+  });
+  if(row[34]) values['remark|0|0'] = row[34];
+  const machineInfo = [{
+    name: row[2] || '',
+    desc: row[5] || '',
+    sap: row[6] || '',
+    customer: row[7] || '',
+    mold: row[8] || '',
+    datecode: row[9] || '',
+    ltcRounds: [row[10] || ''],
+    visual: row[11] || '',
+    result: row[20] || '',
+    approval: row[21] || '',
+    material: row[32] || '',
+    ratio: row[33] || '',
+    sess: ''
+  }];
+  const id = meta.recordId || `sheet_${meta.sheetName || 'data'}_${meta.rowNumber || Date.now()}`;
+  return {
+    id,
+    docId: id,
+    submittedAt: `${row[0] || ''} ${row[1] || ''}`.trim(),
+    date: row[0] || '',
+    time: row[1] || '',
+    shift: row[3] || '',
+    inspector: row[4] || '',
+    common: {date:row[0]||'', time:row[1]||'', shift:row[3]||'', inspector:row[4]||''},
+    machines: [row[2] || ''],
+    machineInfo,
+    machineCount: 1,
+    roundCount: 1,
+    values,
+    dataRows: [row.slice(0, HEADERS.length)],
+    savedAt: meta.sheetName ? `${meta.sheetName} row ${meta.rowNumber}` : ''
+  };
+}
+
+function rowMatchesSearch(row, filters){
+  const lower = idx => String(row[idx] || '').toLowerCase();
+  const rowDate = String(row[0] || '').slice(0, 10);
+  if(filters.date && rowDate !== filters.date) return false;
+  if(filters.dateFrom && rowDate < filters.dateFrom) return false;
+  if(filters.dateTo && rowDate > filters.dateTo) return false;
+  if(filters.inspector && !lower(4).includes(filters.inspector)) return false;
+  if(filters.desc && !lower(5).includes(filters.desc)) return false;
+  if(filters.sap && !lower(6).includes(filters.sap)) return false;
+  if(filters.customer && !lower(7).includes(filters.customer)) return false;
+  if(filters.mold && !lower(8).includes(filters.mold)) return false;
+  if(filters.ltc && !lower(10).includes(filters.ltc)) return false;
+  if(filters.machines.length && !filters.machines.some(token=>lower(2).includes(token))) return false;
+  return true;
+}
+
+async function searchServerRecords(){
+  if(!ensureSheetWebAppUrl()) return;
+  const status = document.getElementById('searchStatus');
+  const wrap = document.getElementById('searchResultWrap');
+  const table = document.getElementById('searchResultTable');
+  searchResultRows = [];
+  if(wrap) wrap.style.display='none';
+  if(table) table.innerHTML='';
+  status.textContent = tr('srchSearching');
+  try{
+    const result = await sheetJsonp({action:'list'});
+    if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
+    let rowsResult = {ok:false, rows:[]};
+    searchRowsError = '';
+    if(searchRowsCache && (Date.now() - searchRowsCacheAt) < SEARCH_ROWS_CACHE_MS){
+      rowsResult = searchRowsCache;
+    }else{
+      status.textContent = tr('srchLoadingRows');
+      try{
+        rowsResult = await sheetJsonp({action:'rows'}, SEARCH_ROWS_TIMEOUT_MS);
+        if(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows)){
+          searchRowsCache = rowsResult;
+          searchRowsCacheAt = Date.now();
+        }
+      }catch(e){
+        console.warn(e);
+        searchRowsError = (e && e.message === 'Request timeout') ? 'timeout' : 'error';
+      }
+    }
+    searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
+    const filters = getSearchFilters();
+    const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
+    ipqcTrendSourceRows = searchRowsApiReady ? (rowsResult.rows || []).map(item=>(item.row||[]).slice(0,HEADERS.length)) : [];
+    records.forEach(record=>serverRecordToRows(record).forEach(row=>ipqcTrendSourceRows.push(row.slice(0,HEADERS.length))));
+    const seen = new Set();
+    records.forEach(record=>{
+      serverRecordToRows(record).forEach(row=>{
+        if(rowMatchesSearch(row, filters)){
+          const key = `${record.id || record.docId || ''}|${row.join('|')}`;
+          seen.add(key);
+          searchResultRows.push({record, row});
+        }
+      });
+    });
+    if(searchRowsApiReady){
+      (rowsResult.rows || []).forEach(item=>{
+        const row = (item.row || []).slice(0, HEADERS.length);
+        if(!rowMatchesSearch(row, filters)) return;
+        const key = `${item.recordId || ''}|${row.join('|')}`;
+        if(seen.has(key)) return;
+        seen.add(key);
+        searchResultRows.push({record:recordFromSheetRow(row, item), row});
+      });
+    }
+    searchResultRows.sort((a,b)=>{
+      const ad = `${a.row[0]||''} ${a.row[1]||''}`;
+      const bd = `${b.row[0]||''} ${b.row[1]||''}`;
+      return bd.localeCompare(ad);
+    });
+    renderSearchResults();
+    loadBakeTestResults();
+  }catch(err){
+    console.error(err);
+    status.textContent = tr('srchFail') + err.message;
+  }
+}
+
+function renderSearchResults(){
+  const status = document.getElementById('searchStatus');
+  const wrap = document.getElementById('searchResultWrap');
+  const table = document.getElementById('searchResultTable');
+  const total = searchResultRows.length;
+  status.textContent = total ? tr('srchResultCount').replace('{n}', total) : tr('srchNoResult');
+  if(!searchRowsApiReady){
+    if(searchRowsError === 'timeout'){
+      status.textContent += tr('srchTimeoutNote');
+    }else if(searchRowsError){
+      status.textContent += tr('srchRowsFailNote');
+    }else{
+      status.textContent += tr('srchOldDeployNote');
+    }
+  }
+  if(!total){
+    if(wrap) wrap.style.display='none';
+    if(table) table.innerHTML='';
+    return;
+  }
+  const preview = searchResultRows;
+  const cols = HEADERS.map((_, idx)=>idx);
+  let html = '<thead><tr>';
+  cols.forEach(idx=>{ html += `<th>${esc(HEADERS[idx])}</th>`; });
+  html += '</tr></thead><tbody>';
+  preview.forEach((item, idx)=>{
+    html += `<tr onclick="openSearchResult(${idx})">`;
+    cols.forEach(col=>{
+      const clickable=(col===5||col===6)&&String(item.row[col]||'').trim();
+      html += clickable?`<td class="trend-cell" title="${esc(tr('trendView'))}" onclick="selectIpqcTrend(${idx},${col},event)">${esc(item.row[col] || '')}</td>`:`<td>${esc(item.row[col] || '')}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+  wrap.style.display = 'block';
+  status.textContent += tr('srchAllCols');
+}
+
+function openSearchResult(idx){
+  const item = searchResultRows[idx];
+  if(!item || !item.record) return;
+  const rec = normalizeServerRecord({...item.record});
+  const hist = getHistory().filter(h=>(h.id||h.docId) !== (rec.id||rec.docId));
+  hist.unshift({
+    ...rec,
+    id: rec.id || rec.docId,
+    docId: rec.id || rec.docId,
+    savedAt: rec.submittedAt || rec.savedAt || ''
+  });
+  localStorage.setItem(HIST_KEY, JSON.stringify(hist.slice(0,30)));
+  renderHistory();
+  openHistModal(0);
+}
+
+function exportSearchResults(){
+  if(!searchResultRows.length){ alert(tr('srchNoResult')); return; }
+  if(typeof XLSX === 'undefined'){
+    alert(tr('srchNoXlsx'));
+    return;
+  }
+  const rows = searchResultRows.map(item=>item.row);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
+  ws['!cols'] = HEADERS.map((h,i)=>({wch: i<=4 ? 14 : i<=11 ? 18 : 22}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Search Results');
+  const today = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `IPQC_search_results_${today}.xlsx`);
+}
+
+function clearSearchFilters(){
+  ['searchDate','searchDateFrom','searchDateTo','searchInspector','searchDesc','searchSap','searchCustomer','searchMold','searchLtc','searchMachine'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  searchResultRows = [];
+  document.getElementById('searchStatus').textContent = tr('srchInit');
+  document.getElementById('searchResultWrap').style.display = 'none';
+  document.getElementById('searchResultTable').innerHTML = '';
+  bakeMatchedRows=[];
+  const bakeStatus=document.getElementById('bakeStatus'),bakeWrap=document.getElementById('bakeResultWrap'),bakeTable=document.getElementById('bakeResultTable');
+  if(bakeStatus)bakeStatus.textContent=tr('bakeInit');if(bakeWrap)bakeWrap.style.display='none';if(bakeTable)bakeTable.innerHTML='';
+  ipqcTrendSelection = null;
+  drawIpqcTrend();
+}
+
+function getDeviceId(){
+  let id=localStorage.getItem('ipqc_device_id');
+  if(!id){ id='dev_'+Math.random().toString(36).substr(2,9); localStorage.setItem('ipqc_device_id',id); }
+  return id;
+}
+
+// ══ CSV 내보내기 ════════════════════════════════
+function exportWideCsv(){
+  collectCommon(); collectCurrentMachineInfo();
+
+  if(typeof XLSX === 'undefined'){
+    alert(tr('srchNoXlsx'));
+    return;
+  }
+
+  const headerRow = HEADERS.slice();
+  const dataRows  = buildSheetRows();
+
+  if(dataRows.length === 0){ alert(tr('noData')); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // ── 시트1: 검사 데이터 ──
+  const sheetData = [headerRow, ...dataRows];
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // 헤더 행 스타일 (굵게 + 배경색)
+  const headerRange = XLSX.utils.decode_range(ws['!ref']);
+  for(let c = headerRange.s.c; c <= headerRange.e.c; c++){
+    const cellAddr = XLSX.utils.encode_cell({r:0, c});
+    if(!ws[cellAddr]) continue;
+    ws[cellAddr].s = {
+      font: {bold:true, color:{rgb:'FFFFFF'}},
+      fill: {fgColor:{rgb:'1D4ED8'}},
+      alignment: {horizontal:'center', wrapText:true}
+    };
+  }
+
+  // 열 너비 자동 설정
+  ws['!cols'] = headerRow.map((h, i) => {
+    if(i <= 4)  return {wch:14};   // DATE~Inspector
+    if(i <= 11) return {wch:18};   // Description~VISUAL
+    if(i <= 31) return {wch:22};   // 측정값
+    return {wch:18};               // 비고~SESS
+  });
+
+  // 첫 행 고정 (freeze panes)
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+
+  XLSX.utils.book_append_sheet(wb, ws, 'IPQC 검사');
+
+  // ── 시트2: 설비별 요약 ──
+  const sumHeader = ['설비명','Description','SAP PN','Customer','MOLD','LTC No.','VISUAL','RESULT','Approval','Remark','Ratio(%)','SESS'];
+  const sumData = [sumHeader];
+  for(let m=0;m<state.machineCount;m++){
+    const mi = state.machineInfo[m]||emptyMachineInfo();
+    sumData.push([mi.name||('M/C '+(m+1)),mi.desc||'',mi.sap||'',mi.customer||'',mi.mold||'',mi.ltc||'',mi.visual||'',mi.result||'',mi.approval||'',mi.material||'',mi.ratio||'',mi.sess||'']);
+  }
+  const ws2 = XLSX.utils.aoa_to_sheet(sumData);
+  ws2['!cols'] = sumHeader.map(()=>({wch:18}));
+  XLSX.utils.book_append_sheet(wb, ws2, '설비 요약');
+
+  const fname = `IPQC_${state.common.date||'date'}_${state.common.inspector||'QC'}.xlsx`;
+  XLSX.writeFile(wb, fname);
+}
+
+function buildDataRow(mi, m, round){
+  return buildDataRowForRecord(state.common||{}, mi, m, round);
+}
+
+function buildDataRowForRecord(common, mi, m, round){
+  const c = common||{};
+  const row = Array(HEADERS.length).fill('');
+  row[0]=c.date||'';   row[1]=c.time||'';   row[2]=mi.name||('M/C '+(m+1));
+  row[3]=c.shift||'';  row[4]=c.inspector||'';
+  row[5]=mi.desc||'';  row[6]=mi.sap||'';   row[7]=mi.customer||'';
+  row[8]=mi.mold||'';  row[9]=mi.datecode||'';
+  // LTC No.: 라운드별 값 우선, 없으면 공통값 사용 (하위호환)
+  const ltcVal = (mi.ltcRounds && mi.ltcRounds[round]!==undefined) ? mi.ltcRounds[round] : (mi.ltc||'');
+  row[10] = ltcVal;
+  row[11]=mi.visual||''; row[20]=mi.result||''; row[21]=mi.approval||'';
+  row[32]=mi.material||''; row[33]=mi.ratio||'';
+  return row;
+}
+// 구형 호환 (혹시 다른 곳에서 참조 시)
+function buildCsvRow(mi,m,round){ return buildDataRow(mi,m,round); }
+function csvCell(v){ v=(v??'').toString(); return '"'+v.replace(/"/g,'""')+'"'; }
+function exportJson(){
+  collectCommon(); collectCurrentMachineInfo();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+  a.download=`IPQC_backup_${state.common.date||'date'}.json`; a.click();
+}
+function importJson(e){
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ state=JSON.parse(rd.result); save(); applyCommonToForm(); renderAll(); alert(tr('importOk')); }catch(err){ alert(tr('importFail')); } };
+  rd.readAsText(f);
+}
+
+// ══ 히스토리 ══════════════════════════════════════
+function saveToHistory(payload){
+  let hist=getHistory();
+  hist.unshift({
+    id: payload.id||payload.docId||null,
+    docId: payload.docId||null,
+    date: payload.date, time: payload.time||'',
+    inspector: payload.inspector, shift: payload.shift||'',
+    machineCount: payload.machineCount||0, roundCount: payload.roundCount||0,
+    machines: payload.machines||[],
+    machineInfo: payload.machineInfo||[],
+    common: payload.common||{},
+    values: payload.values||{},
+    savedAt: new Date().toLocaleString()
+  });
+  if(hist.length>30) hist=hist.slice(0,30);
+  localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+}
+function getHistory(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; } }
+
+function renderHistory(){
+  const hist=getHistory();
+  const card=document.getElementById('historyCard'), list=document.getElementById('historyList');
+  if(!hist.length){ card.style.display='none'; return; }
+  card.style.display='block';
+  list.innerHTML=hist.map((h,idx)=>{
+    const hasDocId=!!h.docId;
+    return `<div class="hist-item" onclick="openHistModal(${idx})">
+      <div class="hist-item-header">
+        <div class="hist-item-info">
+          <div class="hist-item-title">👷 ${esc(h.inspector||'-')} &nbsp;|&nbsp; ${esc(h.date)} ${esc(h.time)}</div>
+          <div class="hist-item-meta">SHIFT: ${esc(h.shift||'-')} · 설비 ${h.machineCount}대 · ${esc(h.savedAt||'')}</div>
+        </div>
+        <div class="hist-item-actions" onclick="event.stopPropagation()">
+          <span class="hist-badge ${hasDocId?'':'no-id'}">${hasDocId?'☁️ 저장완료':'⚠️ ID없음'}</span>
+          <button class="btn bad sm" onclick="deleteHistItemByIdx(${idx},event)">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteHistItemByIdx(idx,e){
+  if(e) e.stopPropagation();
+  const hist=getHistory(); const item=hist[idx];
+  if(!confirm(`[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?\n서버 데이터도 함께 삭제됩니다.`)) return;
+  const serverId = item.id || item.docId;
+  if(serverId && ensureSheetWebAppUrl()){
+    try{ await postToSheet('delete', {id:serverId}); }catch(e){ console.warn(e.message); }
+  }
+  hist.splice(idx,1); localStorage.setItem(HIST_KEY,JSON.stringify(hist)); renderHistory();
+}
+function clearAllHistory(){
+  if(!confirm(tr('hClearHistConfirm'))) return;
+  localStorage.removeItem(HIST_KEY); renderHistory();
+}
+
+// ══ 히스토리 모달 ═════════════════════════════════
+let currentHistIdx = null;
+
+function openHistModal(idx){
+  const hist=getHistory(); const item=hist[idx]; if(!item) return;
+  currentHistIdx=idx;
+  document.getElementById('hModalTitle').textContent=`📋 ${item.inspector||''} · ${item.date} ${item.time}`;
+
+  const c=item.common||{};
+  const mCount=item.machineCount||0, rCount=item.roundCount||0;
+  const machineInfo=item.machineInfo||[];
+  const vals=item.values||{};
+
+  // ── 보기 탭: 공통 정보
+  document.getElementById('viewCommon').innerHTML=`
+    <div class="section-div">📋 공통 정보</div>
+    <div class="view-grid">
+      ${[['날짜',c.date||item.date||''],['시간',c.time||item.time||''],['SHIFT',c.shift||item.shift||''],
+         ['검사원',item.inspector||''],['설비 수',mCount],['검사 횟수',rCount]]
+        .map(([l,v])=>`<div class="view-field"><div class="vl">${esc(l)}</div><div class="vv">${esc(String(v))}</div></div>`).join('')}
+    </div>`;
+
+  // ── 보기 탭: 설비별 정보 + 측정값
+  let vmHtml='';
+  for(let m=0;m<mCount;m++){
+    const mi=machineInfo[m]||{};
+    const machineName=mi.name||(item.machines||[])[m]||('M/C '+(m+1));
+    vmHtml+=`<div class="section-div">⚙️ ${esc(machineName)}</div>
+    <div class="view-grid">
+      ${[['Description',mi.desc||''],['SAP PN',mi.sap||''],['Customer',mi.customer||''],
+         ['MOLD',mi.mold||''],['Datecode',mi.datecode||''],
+         ['VISUAL',mi.visual||''],['RESULT',mi.result||''],['Approval',mi.approval||''],
+         ['Material',mi.material||''],['Ratio(%)',mi.ratio||''],['SESS',mi.sess||'']]
+        .map(([l,v])=>`<div class="view-field"><div class="vl">${esc(l)}</div><div class="vv">${esc(v||'-')}</div></div>`).join('')}
+      ${(mi.ltcRounds||[]).map((ltcV,r)=>`<div class="view-field"><div class="vl">LTC No. R${r+1}</div><div class="vv">${esc(ltcV||'-')}</div></div>`).join('')}
+    </div>`;
+    ITEMS.forEach(it=>{
+      let hasAny=false; let cells='';
+      for(let r=0;r<rCount;r++){
+        const v=vals[`${it.key}|${m}|${r}`]||'';
+        if(v) hasAny=true;
+        cells+=`<span style="display:inline-block;min-width:55px;margin:2px 3px;padding:2px 5px;background:${v?'#dcfce7':'#f1f5f9'};border-radius:4px;font-size:12px">${esc(v)||'-'}</span>`;
+      }
+      if(hasAny) vmHtml+=`<div style="margin:3px 0;font-size:12px"><b style="color:#1e40af">${it.code} ${it.name}:</b> ${cells}</div>`;
+    });
+  }
+  document.getElementById('viewMachines').innerHTML=vmHtml;
+
+  // ── 수정 탭: 공통 정보
+  ['date','time','shift'].forEach(f=>{ const el=document.getElementById('he_'+f); if(el) el.value=c[f]||item[f]||''; });
+  document.getElementById('he_inspector').value=item.inspector||'';
+
+  // ── 수정 탭: 설비별 정보
+  const mc=document.getElementById('he_machines_container'); mc.innerHTML='';
+  for(let m=0;m<mCount;m++){
+    const mi=machineInfo[m]||{};
+    const mn=mi.name||(item.machines||[])[m]||('M/C '+(m+1));
+    const selOpts=(opts,cur)=>opts.map(o=>`<option${o===(cur||opts[0])?' selected':''}>${o}</option>`).join('');
+    const div=document.createElement('div');
+    div.innerHTML=`
+      <div class="section-div">⚙️ 설비 ${m+1}:
+        <input type="text" id="hem_name_${m}" value="${esc(mn)}" style="display:inline;width:130px;height:28px;font-size:13px;padding:2px 8px;border-radius:6px;border:1px solid #93c5fd;vertical-align:middle;margin-left:6px">
+      </div>
+      <div class="edit-grid" style="margin-bottom:12px">
+        <div class="edit-field"><label>Description</label><input id="hem_desc_${m}" value="${esc(mi.desc||'')}"></div>
+        <div class="edit-field"><label>SAP PN</label><input id="hem_sap_${m}" value="${esc(mi.sap||'')}"></div>
+        <div class="edit-field"><label>Customer</label><input id="hem_customer_${m}" value="${esc(mi.customer||'')}"></div>
+        <div class="edit-field"><label>MOLD</label><input id="hem_mold_${m}" value="${esc(mi.mold||'')}"></div>
+        <div class="edit-field"><label>Datecode</label><input id="hem_datecode_${m}" value="${esc(mi.datecode||'')}"></div>
+        ${(mi.ltcRounds||Array(rCount).fill('')).map((ltcV,r)=>`<div class="edit-field"><label>LTC No. R${r+1}</label><input id="hem_ltc_${m}_${r}" value="${esc(ltcV||'')}"></div>`).join('')}
+        <div class="edit-field"><label>VISUAL</label><select id="hem_visual_${m}">${selOpts(['OK','NG','N/A','Waive'],mi.visual)}</select></div>
+        <div class="edit-field"><label>RESULT</label><select id="hem_result_${m}">${selOpts(['PASS','FAIL','HOLD','N/A','Waive'],mi.result)}</select></div>
+        <div class="edit-field"><label>Approval</label><input id="hem_approval_${m}" value="${esc(mi.approval||'')}"></div>
+        <div class="edit-field"><label>Material</label><input id="hem_material_${m}" value="${esc(mi.material||'')}"></div>
+        <div class="edit-field"><label>Ratio(%)</label><input id="hem_ratio_${m}" value="${esc(mi.ratio||'')}"></div>
+        <div class="edit-field"><label>SESS</label><input id="hem_sess_${m}" value="${esc(mi.sess||'')}"></div>
+      </div>`;
+    mc.appendChild(div);
+  }
+
+  // ── 수정 탭: 측정값
+  const vc=document.getElementById('he_values_container'); vc.innerHTML='';
+  const secDiv=document.createElement('div'); secDiv.className='section-div'; secDiv.textContent=tr('hMeasureSection');
+  vc.appendChild(secDiv);
+  for(let m=0;m<mCount;m++){
+    const mi=machineInfo[m]||{};
+    const mn=mi.name||(item.machines||[])[m]||('M/C '+(m+1));
+    const mh=document.createElement('div');
+    mh.style.cssText='font-size:12px;font-weight:700;color:#065f46;background:#ecfdf5;padding:5px 10px;border-radius:6px;margin:8px 0 4px';
+    mh.textContent=`⚙️ ${mn}`;
+    vc.appendChild(mh);
+    let thtml=`<table class="mval-table"><thead><tr><th style="text-align:left;min-width:150px">항목</th>`;
+    for(let r=0;r<rCount;r++) thtml+=`<th>R${r+1}</th>`;
+    thtml+='</tr></thead><tbody>';
+    ITEMS.forEach(it=>{
+      thtml+=`<tr><td style="text-align:left;padding:4px 6px;font-weight:700;background:#f8fafc">${it.code} ${it.name}</td>`;
+      for(let r=0;r<rCount;r++){
+        const v=vals[`${it.key}|${m}|${r}`]||'';
+        thtml+=`<td><input class="mval-input" type="text" inputmode="text" id="hev_${it.key}_${m}_${r}" value="${esc(v)}"></td>`;
+      }
+      thtml+='</tr>';
+    });
+    thtml+='</tbody></table>';
+    const wrap=document.createElement('div'); wrap.style.marginBottom='4px'; wrap.innerHTML=thtml;
+    vc.appendChild(wrap);
+  }
+
+  const hasFbId=!!item.docId;
+  document.getElementById('hSaveBtn').style.display=hasFbId?'inline-flex':'none';
+  const statusEl=document.getElementById('hSaveStatus');
+  if(!hasFbId){ statusEl.className='err'; statusEl.style.display='block'; statusEl.textContent=tr('hNoFbId'); }
+  else{ statusEl.style.display='none'; }
+
+  switchHTab('hpanel-view', document.querySelector('.htab'));
+  document.getElementById('histModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeHistModal(){
+  document.getElementById('histModal').classList.remove('open');
+  document.body.style.overflow='';
+  currentHistIdx=null;
+}
+
+function switchHTab(panelId, btn){
+  document.querySelectorAll('.hpanel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.htab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  if(btn) btn.classList.add('active');
+  const isEdit=panelId==='hpanel-edit';
+  const hist=getHistory(); const item=currentHistIdx!==null?hist[currentHistIdx]:null;
+  document.getElementById('hSaveBtn').style.display=(isEdit&&item&&item.docId)?'inline-flex':'none';
+}
+
+async function saveHistEdit(){
+  if(currentHistIdx===null) return;
+  if(!ensureSheetWebAppUrl()) return;
+  const hist=getHistory(); const item=hist[currentHistIdx];
+  const serverId = item && (item.id || item.docId);
+  if(!item||!serverId){ alert(tr('hNoFbIdAlert')); return; }
+  const status=document.getElementById('hSaveStatus');
+  status.className='loading'; status.textContent=tr('hSaving'); status.style.display='block';
+  try{
+    const mCount=item.machineCount||0, rCount=item.roundCount||0;
+    const newCommon={
+      date: document.getElementById('he_date').value,
+      time: document.getElementById('he_time').value,
+      shift: document.getElementById('he_shift').value,
+      inspector: document.getElementById('he_inspector').value.trim()
+    };
+    const newMachineInfo=[];
+    for(let m=0;m<mCount;m++){
+      newMachineInfo.push({
+        name:     document.getElementById(`hem_name_${m}`)?.value||'',
+        desc:     document.getElementById(`hem_desc_${m}`)?.value||'',
+        sap:      document.getElementById(`hem_sap_${m}`)?.value||'',
+        customer: document.getElementById(`hem_customer_${m}`)?.value||'',
+        mold:     document.getElementById(`hem_mold_${m}`)?.value||'',
+        datecode:  document.getElementById(`hem_datecode_${m}`)?.value||'',
+        ltcRounds: Array.from({length:rCount},(_,r)=>document.getElementById(`hem_ltc_${m}_${r}`)?.value||''),
+        visual:    document.getElementById(`hem_visual_${m}`)?.value||'OK',
+        result:   document.getElementById(`hem_result_${m}`)?.value||'PASS',
+        approval: document.getElementById(`hem_approval_${m}`)?.value||'',
+        material: document.getElementById(`hem_material_${m}`)?.value||'',
+        ratio:    document.getElementById(`hem_ratio_${m}`)?.value||'',
+        sess:     document.getElementById(`hem_sess_${m}`)?.value||''
+      });
+    }
+    const newValues={};
+    ITEMS.forEach(it=>{
+      for(let m=0;m<mCount;m++) for(let r=0;r<rCount;r++){
+        const el=document.getElementById(`hev_${it.key}_${m}_${r}`);
+        if(el&&el.value.trim()) newValues[`${it.key}|${m}|${r}`]=el.value.trim();
+      }
+    });
+    const dataRows = [];
+    for(let m=0;m<mCount;m++){
+      const mi = newMachineInfo[m] || emptyMachineInfo();
+      for(let r=0;r<rCount;r++){
+        const row = buildDataRowForRecord(newCommon, mi, m, r);
+        let has = false;
+        ITEMS.forEach(it=>{
+          const v = newValues[`${it.key}|${m}|${r}`] || '';
+          if(v){ row[it.col] = v; has = true; }
+        });
+        if(has) dataRows.push(row);
+      }
+    }
+    const updatedPayload = {
+      ...item,
+      id: serverId,
+      docId: serverId,
+      common: newCommon,
+      inspector: newCommon.inspector,
+      date: newCommon.date,
+      time: newCommon.time,
+      shift: newCommon.shift,
+      machines: newMachineInfo.map(mi=>mi.name),
+      machineInfo: newMachineInfo,
+      values: newValues,
+      dataHeaders: HEADERS.slice(),
+      dataRows,
+      updatedAt: nowIso(),
+      updatedBy: 'inspector'
+    };
+    await postToSheet('save', updatedPayload);
+    hist[currentHistIdx]=updatedPayload;
+    localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+    status.className='ok'; status.textContent=tr('hSaveOk');
+    renderHistory();
+    setTimeout(()=>closeHistModal(), 1500);
+  }catch(err){
+    console.error(err); status.className='err'; status.textContent=tr('hSaveFail')+err.message;
+  }
+}
+
+async function deleteHistItem(){
+  if(currentHistIdx===null) return;
+  const hist=getHistory(); const item=hist[currentHistIdx];
+  if(!confirm(`[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?`)) return;
+  const serverId = item && (item.id || item.docId);
+  if(serverId && ensureSheetWebAppUrl()){
+    try{ await postToSheet('delete', {id:serverId}); }catch(e){ console.warn(e.message); }
+  }
+  hist.splice(currentHistIdx,1); localStorage.setItem(HIST_KEY,JSON.stringify(hist));
+  closeHistModal(); renderHistory();
+}
+
+document.getElementById('histModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('histModal')) closeHistModal();
+});
+
+// ══ 유틸 ══════════════════════════════════════════
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ══ 초기화 ════════════════════════════════════════
+function init(){
+  load();
+
+  // ▶ 생산계획 방식: 앱 시작 시 설비 목록은 항상 초기화
+  //   (localStorage에 이전 세션의 A01 등 기본 설비가 남아있는 것 방지)
+  //   측정값(state.values)은 유지하여 실수로 새로고침해도 복구 가능
+  state.machineCount   = 0;
+  state.machineInfo    = [];
+  state.currentMachine = 0;
+
+  // 대만 기준시(UTC+8)
+  const tw = new Date(Date.now() + 8 * 3600000);
+  state.common.date = tw.getUTCFullYear()+'-'+String(tw.getUTCMonth()+1).padStart(2,'0')+'-'+String(tw.getUTCDate()).padStart(2,'0');
+  state.common.time = String(tw.getUTCHours()).padStart(2,'0')+':'+String(tw.getUTCMinutes()).padStart(2,'0');
+  rebuildCountOptions();
+  document.getElementById('roundCount').value=state.roundCount;
+  document.getElementById('lang').value=state.lang||'ko';
+  applyCommonToForm();
+  renderAll();
+  applyLanguage();
+  renderHistory();
+  renderPnSection();
+  initIpqcTrend();
+}
+
+document.addEventListener('input', e=>{
+  const id=e.target.id;
+  if(['date','time','shift','inspector'].includes(id)) saveDebounced();
+});
+
+window.addEventListener('resize',()=>{ if(ipqcTrendSelection) drawIpqcTrend(); });
+
+init();
+</script>
+</body>
+</html>
