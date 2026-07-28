@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPQC 품질 일일 보고 — 웹 리포트</title>
+<style>
+:root{
+  --navy:#1E2761; --navy2:#2E3A7A; --ice:#CADCFC; --white:#FFFFFF;
+  --green:#2E9E5B; --amber:#E0A526; --red:#D0413B; --grey:#5A6472;
+  --light:#F4F6FB; --card:#FFFFFF; --border:#E2E7F2;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--light);color:#22283A;font-family:Calibri,"Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;}
+h1,h2,h3{font-family:Cambria,Georgia,serif;color:var(--navy);margin:0;}
+.topbar{background:var(--navy);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+.topbar h1{color:#fff;font-size:26px;}
+.topbar .sub{color:var(--ice);font-size:13px;margin-top:4px;}
+.langbox select{padding:7px 10px;border-radius:6px;border:1px solid #4a5aa0;background:#fff;font-size:13px;font-weight:bold;color:var(--navy);cursor:pointer;}
+.controls{background:var(--navy2);border-top:1px solid #3d4a90;padding:14px 28px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;}
+.controls label{color:var(--ice);font-size:13px;margin-right:6px;}
+.controls select,.controls input[type=date]{padding:7px 10px;border-radius:6px;border:1px solid #4a5aa0;background:#fff;font-size:13px;}
+.controls button{padding:8px 18px;border-radius:6px;border:none;background:var(--amber);color:#2A2100;font-weight:bold;font-size:13px;cursor:pointer;}
+.controls button:hover{filter:brightness(1.08);}
+.controls button.secondary{background:transparent;border:1px solid var(--ice);color:var(--ice);font-weight:normal;}
+.quickbtns button{padding:6px 12px;font-size:12px;background:#3d4a90;color:#fff;border:1px solid #4a5aa0;border-radius:6px;cursor:pointer;}
+.filters{background:#232C6E;padding:12px 28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;border-top:1px solid #3d4a90;}
+.filters .fld label{display:block;color:var(--ice);font-size:11px;margin-bottom:3px;}
+.filters .fld input{width:100%;padding:6px 8px;border-radius:5px;border:1px solid #4a5aa0;font-size:12.5px;}
+.filters .fldbtn{display:flex;align-items:flex-end;}
+#status{padding:10px 28px;font-size:13px;color:var(--grey);min-height:18px;}
+#status.err{color:var(--red);font-weight:bold;}
+main{padding:24px 28px 60px;max-width:1400px;margin:0 auto;display:none;}
+.section{margin-bottom:34px;}
+.section h2{font-size:22px;margin-bottom:4px;}
+.section .meta{color:var(--grey);font-size:13px;margin-bottom:14px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.04);}
+.kpi-card .v{font-family:Cambria,serif;font-size:34px;font-weight:bold;color:var(--navy);}
+.kpi-card .l{font-size:13px;font-weight:bold;margin-top:4px;}
+.kpi-card .s{font-size:11px;color:var(--grey);margin-top:2px;}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start;}
+@media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,.04);}
+.card h3{font-size:15px;margin-bottom:12px;}
+.finding{display:flex;gap:10px;margin-bottom:12px;}
+.finding .num{flex:0 0 24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;}
+.finding .txt b{display:block;font-size:12.5px;}
+.finding .txt span{font-size:10.5px;color:var(--grey);}
+.donutwrap{display:flex;align-items:center;gap:20px;}
+.donut{width:150px;height:150px;border-radius:50%;position:relative;flex:0 0 150px;}
+.donut::after{content:'';position:absolute;inset:22%;background:var(--card);border-radius:50%;}
+.legend div{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:8px;}
+.legend .dot{width:11px;height:11px;border-radius:50%;}
+.legend .lbl{flex:1;}
+.legend .num{font-weight:bold;}
+table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;}
+th,td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top;}
+th{background:var(--navy);color:#fff;font-size:11.5px;text-align:center;}
+tr:nth-child(even) td{background:#F5F7FC;}
+.tag-P{color:var(--green);font-weight:bold;}
+.tag-F{color:var(--red);font-weight:bold;}
+.tag-W{color:var(--amber);font-weight:bold;}
+.barrow{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:7px;}
+.barrow .name{width:180px;flex-shrink:0;color:var(--grey);}
+.barrow .track{flex:1;background:#E9EDF5;border-radius:4px;height:16px;position:relative;overflow:hidden;}
+.barrow .fill{height:100%;background:var(--navy);border-radius:4px;}
+.barrow .val{width:40px;text-align:right;font-weight:bold;}
+.resultbar .fill.pass{background:var(--green);} .resultbar .fill.waive{background:var(--amber);} .resultbar .fill.reject{background:var(--red);} .resultbar .fill.blank{background:var(--grey);}
+.photobtn{margin-top:4px;padding:4px 10px;font-size:11px;border-radius:5px;border:1px solid var(--navy);background:#fff;color:var(--navy);cursor:pointer;}
+.photobtn:hover{background:var(--navy);color:#fff;}
+.photogrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+.photogrid img{width:150px;height:110px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px;cursor:zoom-in;}
+.photocap{font-size:10px;color:var(--grey);max-width:150px;text-align:center;}
+.photoitem{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.diagbox{background:var(--navy);color:#fff;border-radius:10px;padding:20px;border:1px solid var(--ice);}
+.diagbox h3{color:#FFD777;font-size:15px;margin-bottom:10px;}
+.diagbox .item{margin-bottom:8px;font-size:12.5px;}
+.diagbox .item b{color:#fff;}
+.diagbox .item span{color:var(--ice);}
+.none{color:var(--grey);font-style:italic;padding:16px;text-align:center;background:#fff;border:1px dashed var(--border);border-radius:8px;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:var(--navy);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+footer{padding:20px 28px;color:var(--grey);font-size:11px;border-top:1px solid var(--border);}
+.crosstag{display:inline-block;background:#FFF3D6 !important;color:#9A7414 !important;font-size:10px;font-weight:bold;padding:1px 6px;border-radius:4px;margin-left:4px;}
+.i18n-dyn{border-bottom:1px dotted #9AA3B5;cursor:help;}
+.i18n-dyn.translating{opacity:.55;}
+
+/* ---- Photo modal (zoom/pan viewer) ---- */
+.photo-modal{display:none;position:fixed;inset:0;background:rgba(8,11,26,.94);z-index:1000;flex-direction:column;}
+.photo-modal.open{display:flex;}
+.photo-modal-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;color:#fff;font-size:13px;flex-shrink:0;}
+.photo-modal-bar .cap{max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ice);}
+.photo-modal-controls{display:flex;gap:6px;}
+.photo-modal-controls button{padding:6px 14px;border-radius:6px;border:1px solid #566;background:#1E2761;color:#fff;cursor:pointer;font-size:15px;font-weight:bold;}
+.photo-modal-controls button:hover{background:#2E3A7A;}
+.photo-modal-controls button.close{background:var(--red);border-color:var(--red);}
+.photo-modal-viewport{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;}
+.photo-modal-viewport.dragging{cursor:grabbing;}
+.photo-modal-viewport img{max-width:88%;max-height:88%;user-select:none;-webkit-user-drag:none;transform-origin:center center;}
+.photo-modal-hint{text-align:center;color:#8994c0;font-size:11px;padding-bottom:14px;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1 data-i18n="title">IPQC 품질 일일 보고 — 웹 리포트</h1>
+    <div class="sub" data-i18n="subtitle">Tray Buy-off 이력 · IPQC 검사 이력 · Bake Test 종합 (실시간 Google Sheet 연동)</div>
+  </div>
+  <div class="langbox">
+    <select id="langSelect">
+      <option value="ko">한국어</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="vi">Tiếng Việt</option>
+      <option value="id">Bahasa Indonesia</option>
+    </select>
+  </div>
+</div>
+
+<div class="controls">
+  <div>
+    <label><input type="radio" name="mode" value="single" checked> <span data-i18n="mode_single">특정일</span></label>
+    <label><input type="radio" name="mode" value="range"> <span data-i18n="mode_range">기간</span></label>
+  </div>
+  <div id="singleWrap"><input type="date" id="dateSingle"></div>
+  <div id="rangeWrap" style="display:none">
+    <input type="date" id="dateFrom"> ~ <input type="date" id="dateTo">
+  </div>
+  <div class="quickbtns" style="display:flex;gap:6px;">
+    <button type="button" data-q="today" data-i18n="quick_today">오늘</button>
+    <button type="button" data-q="yesterday" data-i18n="quick_yesterday">어제</button>
+    <button type="button" data-q="last7" data-i18n="quick_last7">최근 7일</button>
+    <button type="button" data-q="thismonth" data-i18n="quick_thismonth">이번 달</button>
+  </div>
+  <button id="btnLoad" data-i18n="btn_generate">리포트 생성</button>
+  <button id="btnRefresh" class="secondary" data-i18n="btn_refresh" data-i18n-title="btn_refresh_title" title="캐시된 원본 데이터를 다시 받아옵니다">데이터 새로고침</button>
+</div>
+<div class="filters">
+  <div class="fld"><label data-i18n="filter_pn">파트넘버</label><input type="text" id="fPn" data-i18n-placeholder="ph_pn" placeholder="예: 17B05065001LE"></div>
+  <div class="fld"><label data-i18n="filter_desc">디스크립션</label><input type="text" id="fDesc" data-i18n-placeholder="ph_desc" placeholder="예: TQFP10X10"></div>
+  <div class="fld"><label data-i18n="filter_mc">설비번호(M/C)</label><input type="text" id="fMc" data-i18n-placeholder="ph_mc" placeholder="예: C27"></div>
+  <div class="fld"><label data-i18n="filter_mold">몰드번호</label><input type="text" id="fMold" data-i18n-placeholder="ph_mold" placeholder="예: FD0068-03"></div>
+  <div class="fld"><label data-i18n="filter_material">원료명</label><input type="text" id="fMaterial" data-i18n-placeholder="ph_material" placeholder="원료/재료 코드"></div>
+  <div class="fld"><label data-i18n="filter_customer">고객</label><input type="text" id="fCustomer" data-i18n-placeholder="ph_customer" placeholder="예: ASE KHH"></div>
+  <div class="fld"><label data-i18n="filter_defect">불량 유형</label><input type="text" id="fDefect" data-i18n-placeholder="ph_defect" placeholder="예: Unfilled Fence, 牙不滿"></div>
+  <div class="fld fldbtn"><button type="button" id="btnClearFilters" class="secondary" style="width:100%;" data-i18n="btn_clear_filters">필터 초기화</button></div>
+</div>
+<div id="status"></div>
+
+<main id="report">
+
+  <div class="section">
+    <h2 data-i18n="section_summary">종합 요약</h2>
+    <div class="meta" id="metaDate"></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="grid2">
+      <div class="card">
+        <h3 data-i18n="findings_title">핵심 이슈 (Key Findings)</h3>
+        <div id="findings"></div>
+      </div>
+      <div class="card">
+        <h3 id="donutTitle">IPQC 종합 판정 분포</h3>
+        <div class="donutwrap">
+          <div class="donut" id="donut"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 data-i18n="section_buyoff">① Tray Buy-off 검사 상세</h2>
+    <div class="meta" id="buyoffMeta"></div>
+    <div id="buyoffTableWrap"></div>
+  </div>
+
+  <div class="section">
+    <h2 data-i18n="section_ipqc">② IPQC 검사 이력 요약</h2>
+    <div class="meta" id="ipqcMeta"></div>
+    <div class="grid2">
+      <div class="card">
+        <h3 data-i18n="cust_chart_title">고객별 검사 건수 (상위 12)</h3>
+        <div id="custBars"></div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:14px;">
+          <h3 data-i18n="result_mix_title">판정 결과 구성</h3>
+          <div id="resultBars"></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="inspector_title">검사원 · 근무조 분포</h3>
+          <div id="inspBars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 data-i18n="section_reject">③ Reject 상세</h2>
+    <div class="meta" id="rejectMeta"></div>
+    <div id="rejectTableWrap"></div>
+  </div>
+
+  <div class="section">
+    <h2 data-i18n="section_waive">③ Waive 상세</h2>
+    <div class="meta" id="waiveMeta"></div>
+    <div id="waiveTableWrap"></div>
+  </div>
+
+  <div class="section">
+    <h2 data-i18n="section_bake">④ Bake Test 결과</h2>
+    <div class="meta" id="bakeMeta"></div>
+    <div id="bakeTableWrap"></div>
+  </div>
+
+  <div class="section">
+    <h2 data-i18n="section_diag">⑤ 종합 진단</h2>
+    <div id="diagWrap"></div>
+  </div>
+
+</main>
+
+<footer id="footerText">
+  데이터 출처: hyuncchul.github.io/ipqc-app (Buyoff.html / IPQC_History) · Google Sheet 라이브 연동. 전체 IPQC 이력(2만여 건)·Bake Test 이력은 최초 조회 시 한 번만 불러와 브라우저에 캐시되며, "데이터 새로고침"으로 최신화할 수 있습니다.
+</footer>
+
+<div id="photoModal" class="photo-modal">
+  <div class="photo-modal-bar">
+    <span class="cap" id="photoModalCaption"></span>
+    <div class="photo-modal-controls">
+      <button type="button" id="pmZoomOut">−</button>
+      <button type="button" id="pmZoomReset">100%</button>
+      <button type="button" id="pmZoomIn">+</button>
+      <button type="button" class="close" id="pmClose">✕</button>
+    </div>
+  </div>
+  <div class="photo-modal-viewport" id="photoModalViewport">
+    <img id="photoModalImg" src="" draggable="false">
+  </div>
+  <div class="photo-modal-hint" id="photoModalHint">마우스 휠로 확대/축소, 드래그로 이동, ESC로 닫기</div>
+</div>
+
+<script>
+const IPQC_URL = 'https://script.google.com/macros/s/AKfycbzfASScDbCaXhKN8qfYzzNm3U5CaD10EFjMnKFGaTNHuyd3VR6KES6cggMvkn08rpg/exec';
+const BUYOFF_URL = 'https://script.google.com/macros/s/AKfycbyciZ2y-GXRLoVgITV_HMOSpqJpPFzvyWWNamSyBKGjcL7pgH8xniE4ed7XxEDly6I/exec';
+const COL = {DATE:0,TIME:1,MC:2,SHIFT:3,INSP:4,DESC:5,PN:6,CUST:7,MOLD:8,VISUAL:11,WARP:15,CC:17,SR:18,WEIGHT:19,RESULT:20,REMARK:34};
+const PALETTE = {Pass:'#2E9E5B',Waive:'#E0A526',Reject:'#D0413B',Blank:'#5A6472'};
+const BLANK_KEY = '(Blank)';
+
+// ============ I18N ============
+let LANG = 'ko';
+const I18N = {
+  ko:{
+    title:'IPQC 품질 일일 보고 — 웹 리포트',
+    subtitle:'Tray Buy-off 이력 · IPQC 검사 이력 · Bake Test 종합 (실시간 Google Sheet 연동)',
+    mode_single:'특정일', mode_range:'기간',
+    quick_today:'오늘', quick_yesterday:'어제', quick_last7:'최근 7일', quick_thismonth:'이번 달',
+    btn_generate:'리포트 생성', btn_refresh:'데이터 새로고침', btn_refresh_title:'캐시된 원본 데이터를 다시 받아옵니다',
+    filter_pn:'파트넘버', filter_desc:'디스크립션', filter_mc:'설비번호(M/C)', filter_mold:'몰드번호', filter_material:'원료명', filter_customer:'고객', filter_defect:'불량 유형',
+    btn_clear_filters:'필터 초기화',
+    ph_pn:'예: 17B05065001LE', ph_desc:'예: TQFP10X10', ph_mc:'예: C27', ph_mold:'예: FD0068-03', ph_material:'원료/재료 코드', ph_customer:'예: ASE KHH', ph_defect:'예: Unfilled Fence, 牙不滿',
+    section_summary:'종합 요약', section_buyoff:'① Tray Buy-off 검사 상세', section_ipqc:'② IPQC 검사 이력 요약', section_reject:'③ Reject 상세', section_waive:'③ Waive 상세', section_bake:'④ Bake Test 결과', section_diag:'⑤ 종합 진단',
+    kpi_buyoff:'Buy-off 검사', kpi_ipqc:'IPQC 검사 이력', kpi_ipqc_sub:'측정/외관 전수 기록', kpi_reject:'Reject (불합격)', kpi_waive:'Waive (특채)', kpi_bake:'Bake Test 완료', kpi_bake_none:'해당 없음',
+    findings_title:'핵심 이슈 (Key Findings)', donut_title:'IPQC 종합 판정 분포',
+    cust_chart_title:'고객별 검사 건수 (상위 12)', result_mix_title:'판정 결과 구성', inspector_title:'검사원 · 근무조 분포', shift_line_prefix:'근무조: ',
+    th_pn:'파트넘버', th_desc:'디스크립션', th_mold:'몰드', th_customer:'고객', th_dim:'Dim', th_vis:'Vis', th_disposition:'처리', th_problem_action:'문제/조치', th_photo:'사진',
+    lbl_problem:'문제:', lbl_action:'조치:',
+    btn_photo_view:'사진 조회', photo_loading:'조회 중…', photo_none:'사진 없음',
+    th_count:'건수', th_visual:'외관(VISUAL)', th_remark:'불량 내용·이탈값(備註)', th_waive_type:'특채 유형/사유',
+    th_condition:'시험조건', th_spec_ld:'Spec L/D', th_before_ld:'Before L/D', th_live_max:'Live Max', th_dead_max:'Dead Max', th_result:'결과',
+    total:'총', asof_bake:'완료(End Date) 기준',
+    status_blank:'미기재',
+    err_need_date_or_filter:'날짜(또는 기간) 혹은 검색 조건을 하나 이상 입력해 주세요.',
+    all_period:'전체 기간', criteria_prefix:'조건: ',
+    loading_buyoff:'Buy-off 데이터 불러오는 중 (Google Sheet 라이브)…', loading_ipqc:'IPQC 전체 이력 불러오는 중 (2만여 건, 다소 시간이 걸릴 수 있습니다)…', loading_bake:'Bake Test 이력 불러오는 중…',
+    data_ready:'데이터 준비 완료', report_complete:'리포트 생성 완료 —',
+    load_fail_retry:'데이터 로드 실패(네트워크/일일 호출한도 가능성) — "데이터 새로고침"으로 재시도해 주세요. 나머지 데이터로 리포트는 표시됩니다.',
+    load_fail_partial:'데이터 로드 실패로 해당 항목은 비어 있을 수 있습니다 — "데이터 새로고침" 재시도 권장. (나머지:',
+    none_buyoff:'해당 구간 Buy-off 검사 이력이 없습니다.', none_buyoff_err:'⚠ Buy-off 데이터 로드에 실패했습니다(네트워크/호출한도). "데이터 새로고침" 버튼으로 다시 시도해 주세요 — 이 결과가 실제 0건이라는 뜻이 아닙니다.',
+    none_ipqc:'해당 구간 IPQC 이력이 없습니다.', none_ipqc_err:'⚠ IPQC 데이터 로드에 실패했습니다(네트워크/호출한도). "데이터 새로고침"으로 다시 시도해 주세요.',
+    none_reject:'해당 구간 Reject 이력이 없습니다.', none_waive:'해당 구간 Waive 이력이 없습니다.', none_ipqc_err_short:'⚠ IPQC 데이터 로드 실패 — "데이터 새로고침"으로 재시도해 주세요.',
+    none_bake:'해당 구간 완료된 Bake Test가 없습니다.', none_bake_err:'⚠ Bake Test 데이터 로드 실패 — "데이터 새로고침"으로 재시도해 주세요.',
+    none_diag:'교차 확인된 특이 품목이 없습니다.',
+    diag_cross_title:'⚠ Buy-off·IPQC 교차 불량 품목',
+    diag_overlap_title:'Reject·Waive 동시 발생 품목',
+    diag_overlap_detail:'— 동일 품목이 같은 구간 내 Reject와 Waive 판정을 모두 받음. 특채 기준 일관성 점검 필요.',
+    footer_text:'데이터 출처: hyuncchul.github.io/ipqc-app (Buyoff.html / IPQC_History) · Google Sheet 라이브 연동. 전체 IPQC 이력(2만여 건)·Bake Test 이력은 최초 조회 시 한 번만 불러와 브라우저에 캐시되며, "데이터 새로고침"으로 최신화할 수 있습니다. 점선 밑줄이 있는 텍스트(중국어 원문 備註 등)는 선택한 언어로 자동 번역된 것이며, 마우스를 올리면 원문을 볼 수 있습니다 — 기계번역이므로 정확한 판정 근거는 원문을 확인하세요.',
+    modal_hint:'마우스 휠로 확대/축소, 드래그로 이동, ESC로 닫기',
+    err_prefix:'오류: ',
+  },
+  en:{
+    title:'IPQC Quality Daily Report — Web Viewer',
+    subtitle:'Tray Buy-off History · IPQC Inspection History · Bake Test Summary (Live Google Sheet Sync)',
+    mode_single:'Specific date', mode_range:'Date range',
+    quick_today:'Today', quick_yesterday:'Yesterday', quick_last7:'Last 7 days', quick_thismonth:'This month',
+    btn_generate:'Generate Report', btn_refresh:'Refresh Data', btn_refresh_title:'Re-fetch the cached source data',
+    filter_pn:'Part Number', filter_desc:'Description', filter_mc:'Machine (M/C)', filter_mold:'Mold No.', filter_material:'Material', filter_customer:'Customer', filter_defect:'Defect Type',
+    btn_clear_filters:'Clear Filters',
+    ph_pn:'e.g. 17B05065001LE', ph_desc:'e.g. TQFP10X10', ph_mc:'e.g. C27', ph_mold:'e.g. FD0068-03', ph_material:'Material/raw code', ph_customer:'e.g. ASE KHH', ph_defect:'e.g. Unfilled Fence, 牙不滿',
+    section_summary:'Executive Summary', section_buyoff:'① Tray Buy-off Inspection Detail', section_ipqc:'② IPQC Inspection Summary', section_reject:'③ Reject Detail', section_waive:'③ Waive Detail', section_bake:'④ Bake Test Results', section_diag:'⑤ Overall Diagnosis',
+    kpi_buyoff:'Buy-off Inspections', kpi_ipqc:'IPQC Inspection Records', kpi_ipqc_sub:'Full measurement/visual records', kpi_reject:'Reject (Fail)', kpi_waive:'Waive (Concession)', kpi_bake:'Bake Test Completed', kpi_bake_none:'None',
+    findings_title:'Key Findings', donut_title:'IPQC Result Distribution',
+    cust_chart_title:'Inspections by Customer (Top 12)', result_mix_title:'Result Distribution', inspector_title:'Inspector · Shift Distribution', shift_line_prefix:'Shift: ',
+    th_pn:'Part Number', th_desc:'Description', th_mold:'Mold', th_customer:'Customer', th_dim:'Dim', th_vis:'Vis', th_disposition:'Disposition', th_problem_action:'Problem/Action', th_photo:'Photo',
+    lbl_problem:'Issue:', lbl_action:'Action:',
+    btn_photo_view:'View Photos', photo_loading:'Loading…', photo_none:'No photos',
+    th_count:'Count', th_visual:'Visual', th_remark:'Defect Detail / Deviation (Remark)', th_waive_type:'Waiver Type/Reason',
+    th_condition:'Test Condition', th_spec_ld:'Spec Live/Dead', th_before_ld:'Before Live/Dead', th_live_max:'Live Max', th_dead_max:'Dead Max', th_result:'Result',
+    total:'Total', asof_bake:'as of completion (End Date)',
+    status_blank:'Blank',
+    err_need_date_or_filter:'Please enter a date (or range), or at least one search filter.',
+    all_period:'All time', criteria_prefix:'Filters: ',
+    loading_buyoff:'Loading Buy-off data (live Google Sheet)…', loading_ipqc:'Loading full IPQC history (~24,000 records, may take a while)…', loading_bake:'Loading Bake Test history…',
+    data_ready:'Data ready', report_complete:'Report generated —',
+    load_fail_retry:'Data load failed (network/daily call limit possible) — please retry with "Refresh Data". The report is shown with the remaining data.',
+    load_fail_partial:'Data load failed, so this section may be empty — retry with "Refresh Data" recommended. (Remaining:',
+    none_buyoff:'No Buy-off inspection history for this range.', none_buyoff_err:'⚠ Failed to load Buy-off data (network/call limit). Please retry with "Refresh Data" — this does not mean there are actually 0 records.',
+    none_ipqc:'No IPQC history for this range.', none_ipqc_err:'⚠ Failed to load IPQC data (network/call limit). Please retry with "Refresh Data".',
+    none_reject:'No Reject history for this range.', none_waive:'No Waive history for this range.', none_ipqc_err_short:'⚠ IPQC data load failed — please retry with "Refresh Data".',
+    none_bake:'No Bake Test completed in this range.', none_bake_err:'⚠ Bake Test data load failed — please retry with "Refresh Data".',
+    none_diag:'No notable cross-referenced items found.',
+    diag_cross_title:'⚠ Buy-off × IPQC Cross-Defect Items',
+    diag_overlap_title:'Items with both Reject and Waive',
+    diag_overlap_detail:'— The same part number received both Reject and Waive judgments in this range. Review waiver-criteria consistency.',
+    footer_text:'Data source: hyuncchul.github.io/ipqc-app (Buyoff.html / IPQC_History) · live Google Sheet sync. Full IPQC history (~24k records) and Bake Test history are fetched once per session and cached in your browser; use "Refresh Data" to update. Text with a dotted underline (original Chinese remarks, etc.) has been auto-translated into the selected language — hover to see the original. This is machine translation, so please verify the original text for exact judgment criteria.',
+    modal_hint:'Scroll to zoom, drag to pan, ESC to close',
+    err_prefix:'Error: ',
+  },
+  zh:{
+    title:'IPQC 品质日报 — 网页报表',
+    subtitle:'Tray Buy-off 履历 · IPQC 检验履历 · Bake Test 汇总 (即时 Google Sheet 同步)',
+    mode_single:'指定日期', mode_range:'期间',
+    quick_today:'今天', quick_yesterday:'昨天', quick_last7:'最近7天', quick_thismonth:'本月',
+    btn_generate:'生成报表', btn_refresh:'刷新数据', btn_refresh_title:'重新获取已缓存的原始数据',
+    filter_pn:'料号', filter_desc:'品名描述', filter_mc:'设备编号(M/C)', filter_mold:'模具编号', filter_material:'原料名称', filter_customer:'客户', filter_defect:'不良类型',
+    btn_clear_filters:'清除筛选',
+    ph_pn:'例: 17B05065001LE', ph_desc:'例: TQFP10X10', ph_mc:'例: C27', ph_mold:'例: FD0068-03', ph_material:'原料/材料代码', ph_customer:'例: ASE KHH', ph_defect:'例: Unfilled Fence, 牙不滿',
+    section_summary:'综合摘要', section_buyoff:'① Tray Buy-off 检验详情', section_ipqc:'② IPQC 检验履历摘要', section_reject:'③ Reject 详情', section_waive:'③ Waive 详情', section_bake:'④ Bake Test 结果', section_diag:'⑤ 综合诊断',
+    kpi_buyoff:'Buy-off 检验', kpi_ipqc:'IPQC 检验履历', kpi_ipqc_sub:'测量/外观全数记录', kpi_reject:'Reject (不合格)', kpi_waive:'Waive (特采)', kpi_bake:'Bake Test 完成', kpi_bake_none:'无',
+    findings_title:'重点问题 (Key Findings)', donut_title:'IPQC 综合判定分布',
+    cust_chart_title:'各客户检验件数 (前12名)', result_mix_title:'判定结果构成', inspector_title:'检验员 · 班别分布', shift_line_prefix:'班别: ',
+    th_pn:'料号', th_desc:'品名描述', th_mold:'模具', th_customer:'客户', th_dim:'Dim', th_vis:'Vis', th_disposition:'处理', th_problem_action:'问题/对策', th_photo:'照片',
+    lbl_problem:'问题:', lbl_action:'对策:',
+    btn_photo_view:'查看照片', photo_loading:'查询中…', photo_none:'无照片',
+    th_count:'件数', th_visual:'外观(VISUAL)', th_remark:'不良内容·偏差值(備註)', th_waive_type:'特采类型/原因',
+    th_condition:'试验条件', th_spec_ld:'Spec L/D', th_before_ld:'Before L/D', th_live_max:'Live Max', th_dead_max:'Dead Max', th_result:'结果',
+    total:'共', asof_bake:'完成(End Date)基准',
+    status_blank:'未填写',
+    err_need_date_or_filter:'请输入日期(或期间)，或至少一个搜索条件。',
+    all_period:'全部期间', criteria_prefix:'条件: ',
+    loading_buyoff:'正在加载 Buy-off 数据 (Google Sheet 即时)…', loading_ipqc:'正在加载 IPQC 全部履历 (约2万4千件，可能需要一些时间)…', loading_bake:'正在加载 Bake Test 履历…',
+    data_ready:'数据准备完成', report_complete:'报表生成完成 —',
+    load_fail_retry:'数据加载失败(可能是网络/每日调用上限) — 请用"刷新数据"重试。其余数据仍会显示在报表中。',
+    load_fail_partial:'数据加载失败，该项目可能为空 — 建议用"刷新数据"重试。(其余:',
+    none_buyoff:'该期间无 Buy-off 检验履历。', none_buyoff_err:'⚠ Buy-off 数据加载失败(网络/调用上限)。请点击"刷新数据"重试 — 这不代表实际为0件。',
+    none_ipqc:'该期间无 IPQC 履历。', none_ipqc_err:'⚠ IPQC 数据加载失败(网络/调用上限)。请用"刷新数据"重试。',
+    none_reject:'该期间无 Reject 履历。', none_waive:'该期间无 Waive 履历。', none_ipqc_err_short:'⚠ IPQC 数据加载失败 — 请用"刷新数据"重试。',
+    none_bake:'该期间无已完成的 Bake Test。', none_bake_err:'⚠ Bake Test 数据加载失败 — 请用"刷新数据"重试。',
+    none_diag:'未发现交叉确认的特殊品项。',
+    diag_cross_title:'⚠ Buy-off·IPQC 交叉不良品项',
+    diag_overlap_title:'同时发生 Reject·Waive 的品项',
+    diag_overlap_detail:'— 同一品项在该期间内同时收到 Reject 与 Waive 判定，需检查特采标准的一致性。',
+    footer_text:'数据来源: hyuncchul.github.io/ipqc-app (Buyoff.html / IPQC_History) · Google Sheet 即时同步。全部 IPQC 履历(约2万余件)·Bake Test 履历仅在首次查询时加载一次并缓存于浏览器，可用"刷新数据"更新。带虚线下划线的文字(中文原文備註等)会自动翻译为所选语言，鼠标悬停可查看原文 — 这是机器翻译，准确判定请以原文为准。',
+    modal_hint:'鼠标滚轮缩放，拖动移动，ESC 关闭',
+    err_prefix:'错误: ',
+  },
+  vi:{
+    title:'Báo cáo Chất lượng IPQC hàng ngày — Xem trên Web',
+    subtitle:'Lịch sử Tray Buy-off · Lịch sử kiểm tra IPQC · Tổng hợp Bake Test (Đồng bộ trực tiếp Google Sheet)',
+    mode_single:'Ngày cụ thể', mode_range:'Khoảng thời gian',
+    quick_today:'Hôm nay', quick_yesterday:'Hôm qua', quick_last7:'7 ngày qua', quick_thismonth:'Tháng này',
+    btn_generate:'Tạo báo cáo', btn_refresh:'Làm mới dữ liệu', btn_refresh_title:'Tải lại dữ liệu gốc đã lưu đệm',
+    filter_pn:'Mã hàng', filter_desc:'Mô tả', filter_mc:'Số máy (M/C)', filter_mold:'Số khuôn', filter_material:'Tên nguyên liệu', filter_customer:'Khách hàng', filter_defect:'Loại lỗi',
+    btn_clear_filters:'Xóa bộ lọc',
+    ph_pn:'VD: 17B05065001LE', ph_desc:'VD: TQFP10X10', ph_mc:'VD: C27', ph_mold:'VD: FD0068-03', ph_material:'Mã nguyên liệu', ph_customer:'VD: ASE KHH', ph_defect:'VD: Unfilled Fence, 牙不滿',
+    section_summary:'Tóm tắt tổng quan', section_buyoff:'① Chi tiết kiểm tra Tray Buy-off', section_ipqc:'② Tóm tắt lịch sử kiểm tra IPQC', section_reject:'③ Chi tiết Reject', section_waive:'③ Chi tiết Waive', section_bake:'④ Kết quả Bake Test', section_diag:'⑤ Chẩn đoán tổng hợp',
+    kpi_buyoff:'Kiểm tra Buy-off', kpi_ipqc:'Lịch sử kiểm tra IPQC', kpi_ipqc_sub:'Ghi nhận đầy đủ đo lường/ngoại quan', kpi_reject:'Reject (Không đạt)', kpi_waive:'Waive (Đặc cách)', kpi_bake:'Bake Test hoàn thành', kpi_bake_none:'Không có',
+    findings_title:'Vấn đề chính (Key Findings)', donut_title:'Phân bố kết quả IPQC',
+    cust_chart_title:'Số lượng kiểm tra theo khách hàng (Top 12)', result_mix_title:'Cơ cấu kết quả', inspector_title:'Phân bố kiểm tra viên · ca làm việc', shift_line_prefix:'Ca làm việc: ',
+    th_pn:'Mã hàng', th_desc:'Mô tả', th_mold:'Khuôn', th_customer:'Khách hàng', th_dim:'Dim', th_vis:'Vis', th_disposition:'Xử lý', th_problem_action:'Vấn đề/Xử lý', th_photo:'Hình ảnh',
+    lbl_problem:'Vấn đề:', lbl_action:'Hành động:',
+    btn_photo_view:'Xem ảnh', photo_loading:'Đang tải…', photo_none:'Không có ảnh',
+    th_count:'Số lượng', th_visual:'Ngoại quan (VISUAL)', th_remark:'Nội dung lỗi · giá trị lệch (Remark)', th_waive_type:'Loại đặc cách/Lý do',
+    th_condition:'Điều kiện thử', th_spec_ld:'Spec L/D', th_before_ld:'Before L/D', th_live_max:'Live Max', th_dead_max:'Dead Max', th_result:'Kết quả',
+    total:'Tổng', asof_bake:'tính theo hoàn thành (End Date)',
+    status_blank:'Không ghi',
+    err_need_date_or_filter:'Vui lòng nhập ngày (hoặc khoảng thời gian) hoặc ít nhất một điều kiện tìm kiếm.',
+    all_period:'Toàn bộ thời gian', criteria_prefix:'Điều kiện: ',
+    loading_buyoff:'Đang tải dữ liệu Buy-off (Google Sheet trực tiếp)…', loading_ipqc:'Đang tải toàn bộ lịch sử IPQC (khoảng 24.000 bản ghi, có thể mất chút thời gian)…', loading_bake:'Đang tải lịch sử Bake Test…',
+    data_ready:'Dữ liệu đã sẵn sàng', report_complete:'Đã tạo báo cáo —',
+    load_fail_retry:'Tải dữ liệu thất bại (có thể do mạng/giới hạn gọi hàng ngày) — vui lòng thử lại bằng "Làm mới dữ liệu". Báo cáo vẫn hiển thị với dữ liệu còn lại.',
+    load_fail_partial:'Tải dữ liệu thất bại nên mục này có thể trống — nên thử lại bằng "Làm mới dữ liệu". (Còn lại:',
+    none_buyoff:'Không có lịch sử kiểm tra Buy-off trong khoảng này.', none_buyoff_err:'⚠ Tải dữ liệu Buy-off thất bại (mạng/giới hạn gọi). Vui lòng thử lại bằng "Làm mới dữ liệu" — điều này không có nghĩa là thực sự có 0 bản ghi.',
+    none_ipqc:'Không có lịch sử IPQC trong khoảng này.', none_ipqc_err:'⚠ Tải dữ liệu IPQC thất bại (mạng/giới hạn gọi). Vui lòng thử lại bằng "Làm mới dữ liệu".',
+    none_reject:'Không có lịch sử Reject trong khoảng này.', none_waive:'Không có lịch sử Waive trong khoảng này.', none_ipqc_err_short:'⚠ Tải dữ liệu IPQC thất bại — vui lòng thử lại bằng "Làm mới dữ liệu".',
+    none_bake:'Không có Bake Test hoàn thành trong khoảng này.', none_bake_err:'⚠ Tải dữ liệu Bake Test thất bại — vui lòng thử lại bằng "Làm mới dữ liệu".',
+    none_diag:'Không tìm thấy mã hàng đặc biệt trùng nhau.',
+    diag_cross_title:'⚠ Mã hàng lỗi trùng Buy-off·IPQC',
+    diag_overlap_title:'Mã hàng có cả Reject và Waive',
+    diag_overlap_detail:'— Cùng một mã hàng nhận cả phán quyết Reject và Waive trong khoảng này. Cần rà soát tính nhất quán của tiêu chí đặc cách.',
+    footer_text:'Nguồn dữ liệu: hyuncchul.github.io/ipqc-app (Buyoff.html / IPQC_History) · đồng bộ trực tiếp Google Sheet. Toàn bộ lịch sử IPQC (~24 nghìn bản ghi)·lịch sử Bake Test chỉ được tải một lần mỗi phiên và lưu đệm trên trình duyệt; dùng "Làm mới dữ liệu" để cập nhật. Văn bản có gạch chân chấm (nguyên văn tiếng Trung, v.v.) đã được tự động dịch sang ngôn ngữ đã chọn — di chuột để xem nguyên văn. Đây là dịch máy, vui lòng kiểm tra nguyên văn để có căn cứ phán định chính xác.',
+    modal_hint:'Cuộn để phóng to/thu nhỏ, kéo để di chuyển, ESC để đóng',
+    err_prefix:'Lỗi: ',
+  },
+  id:{
+    title:'Laporan Kualitas Harian IPQC — Tampilan Web',
+    subtitle:'Riwayat Tray Buy-off · Riwayat Inspeksi IPQC · Ringkasan Bake Test (Sinkronisasi Google Sheet Langsung)',
+    mode_single:'Tanggal tertentu', mode_range:'Rentang tanggal',
+    quick_today:'Hari ini', quick_yesterday:'Kemarin', quick_last7:'7 hari terakhir', quick_thismonth:'Bulan ini',
+    btn_generate:'Buat Laporan', btn_refresh:'Segarkan Data', btn_refresh_title:'Mengambil ulang data sumber yang di-cache',
+    filter_pn:'Nomor Part', filter_desc:'Deskripsi', filter_mc:'Nomor Mesin (M/C)', filter_mold:'Nomor Cetakan', filter_material:'Nama Material', filter_customer:'Pelanggan', filter_defect:'Jenis Cacat',
+    btn_clear_filters:'Hapus Filter',
+    ph_pn:'Cth: 17B05065001LE', ph_desc:'Cth: TQFP10X10', ph_mc:'Cth: C27', ph_mold:'Cth: FD0068-03', ph_material:'Kode material', ph_customer:'Cth: ASE KHH', ph_defect:'Cth: Unfilled Fence, 牙不滿',
+    section_summary:'Ringkasan Eksekutif', section_buyoff:'① Detail Inspeksi Tray Buy-off', section_ipqc:'② Ringkasan Riwayat Inspeksi IPQC', section_reject:'③ Detail Reject', section_waive:'③ Detail Waive', section_bake:'④ Hasil Bake Test', section_diag:'⑤ Diagnosis Keseluruhan',
+    kpi_buyoff:'Inspeksi Buy-off', kpi_ipqc:'Riwayat Inspeksi IPQC', kpi_ipqc_sub:'Catatan lengkap pengukuran/visual', kpi_reject:'Reject (Gagal)', kpi_waive:'Waive (Konsesi)', kpi_bake:'Bake Test Selesai', kpi_bake_none:'Tidak ada',
+    findings_title:'Temuan Utama (Key Findings)', donut_title:'Distribusi Hasil IPQC',
+    cust_chart_title:'Inspeksi per Pelanggan (Top 12)', result_mix_title:'Komposisi Hasil', inspector_title:'Distribusi Inspektur · Shift', shift_line_prefix:'Shift: ',
+    th_pn:'Nomor Part', th_desc:'Deskripsi', th_mold:'Cetakan', th_customer:'Pelanggan', th_dim:'Dim', th_vis:'Vis', th_disposition:'Penanganan', th_problem_action:'Masalah/Tindakan', th_photo:'Foto',
+    lbl_problem:'Masalah:', lbl_action:'Tindakan:',
+    btn_photo_view:'Lihat Foto', photo_loading:'Memuat…', photo_none:'Tidak ada foto',
+    th_count:'Jumlah', th_visual:'Visual', th_remark:'Detail Cacat / Penyimpangan (Remark)', th_waive_type:'Jenis/Alasan Konsesi',
+    th_condition:'Kondisi Uji', th_spec_ld:'Spec L/D', th_before_ld:'Before L/D', th_live_max:'Live Max', th_dead_max:'Dead Max', th_result:'Hasil',
+    total:'Total', asof_bake:'berdasarkan selesai (End Date)',
+    status_blank:'Tidak diisi',
+    err_need_date_or_filter:'Silakan masukkan tanggal (atau rentang), atau minimal satu kriteria pencarian.',
+    all_period:'Sepanjang waktu', criteria_prefix:'Kriteria: ',
+    loading_buyoff:'Memuat data Buy-off (Google Sheet langsung)…', loading_ipqc:'Memuat seluruh riwayat IPQC (~24.000 data, mungkin perlu waktu)…', loading_bake:'Memuat riwayat Bake Test…',
+    data_ready:'Data siap', report_complete:'Laporan selesai dibuat —',
+    load_fail_retry:'Pemuatan data gagal (kemungkinan jaringan/batas panggilan harian) — coba lagi dengan "Segarkan Data". Laporan tetap ditampilkan dengan data yang tersedia.',
+    load_fail_partial:'Pemuatan data gagal sehingga bagian ini mungkin kosong — disarankan coba lagi dengan "Segarkan Data". (Sisanya:',
+    none_buyoff:'Tidak ada riwayat inspeksi Buy-off pada rentang ini.', none_buyoff_err:'⚠ Gagal memuat data Buy-off (jaringan/batas panggilan). Silakan coba lagi dengan tombol "Segarkan Data" — ini tidak berarti benar-benar 0 data.',
+    none_ipqc:'Tidak ada riwayat IPQC pada rentang ini.', none_ipqc_err:'⚠ Gagal memuat data IPQC (jaringan/batas panggilan). Silakan coba lagi dengan "Segarkan Data".',
+    none_reject:'Tidak ada riwayat Reject pada rentang ini.', none_waive:'Tidak ada riwayat Waive pada rentang ini.', none_ipqc_err_short:'⚠ Pemuatan data IPQC gagal — silakan coba lagi dengan "Segarkan Data".',
+    none_bake:'Tidak ada Bake Test yang selesai pada rentang ini.', none_bake_err:'⚠ Pemuatan data Bake Test gagal — silakan coba lagi dengan "Segarkan Data".',
+    none_diag:'Tidak ditemukan item khusus yang cocok silang.',
+    diag_cross_title:'⚠ Item Cacat Silang Buy-off·IPQC',
+    diag_overlap_title:'Item dengan Reject dan Waive sekaligus',
+    diag_overlap_detail:'— Nomor part yang sama menerima putusan Reject dan Waive dalam rentang ini. Perlu tinjau konsistensi kriteria konsesi.',
+    footer_text:'Sumber data: hyuncchul.github.io/ipqc-app (Buyoff.html / IPQC_History) · sinkronisasi Google Sheet langsung. Seluruh riwayat IPQC (~24 ribu data)·riwayat Bake Test hanya diambil sekali per sesi dan di-cache di browser; gunakan "Segarkan Data" untuk memperbarui. Teks bergaris bawah putus-putus (teks asli bahasa Mandarin, dll.) telah diterjemahkan otomatis ke bahasa yang dipilih — arahkan kursor untuk melihat teks asli. Ini adalah terjemahan mesin, mohon periksa teks asli untuk dasar keputusan yang akurat.',
+    modal_hint:'Scroll untuk zoom, seret untuk geser, ESC untuk menutup',
+    err_prefix:'Kesalahan: ',
+  },
+};
+function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.ko[key] || key; }
+function pick(map){ return map[LANG] || map.ko; }
+function unitCase(n){ return pick({ko:n+'건', en:n+' cases', zh:n+' 件', vi:n+' trường hợp', id:n+' kasus'}); }
+function unitItem(n){ return pick({ko:n+'개 품목', en:n+' items', zh:n+' 个品项', vi:n+' mã hàng', id:n+' item'}); }
+function unitPhoto(n){ return pick({ko:'사진 '+n+'건', en:n+' photos', zh:n+' 张照片', vi:n+' ảnh', id:n+' foto'}); }
+
+function applyStaticI18n(){
+  document.documentElement.lang = LANG;
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.getAttribute('data-i18n-title')); });
+  $('footerText').textContent = t('footer_text');
+  $('photoModalHint').textContent = t('modal_hint');
+  $('donutTitle').textContent = t('donut_title') + (LAST ? ' (n='+LAST.ipqcAll.length+')' : '');
+}
+
+let CACHE = { buyoff:null, ipqc:null, bake:null, bakeHeaders:null, buyoffError:false, ipqcError:false, bakeError:false };
+let LAST = null; // { range, buyoffAll, ipqcAll, bakeAll } from the most recent successful report generation
+
+async function jsonpRetry(baseUrl, params, timeoutMs, retries){
+  let lastErr;
+  for(let i=0;i<=retries;i++){
+    try{ return await jsonp(baseUrl, params, timeoutMs); }
+    catch(e){ lastErr = e; if(i<retries) await new Promise(res=>setTimeout(res, 1500)); }
+  }
+  throw lastErr;
+}
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayISO(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function addDays(iso,n){
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate()+n);
+  return dt.toISOString().slice(0,10);
+}
+
+function jsonp(baseUrl, params, timeoutMs){
+  return new Promise((resolve,reject)=>{
+    const cb = 'jp_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    const url = new URL(baseUrl);
+    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+    url.searchParams.set('callback',cb);
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{cleanup();reject(new Error('timeout'));}, timeoutMs||30000);
+    function cleanup(){ clearTimeout(timer); delete window[cb]; script.remove(); }
+    window[cb] = data=>{ cleanup(); resolve(data); };
+    script.onerror = ()=>{ cleanup(); reject(new Error('network error')); };
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+}
+
+function setStatus(msg, isErr){
+  const el = $('status');
+  el.innerHTML = msg;
+  el.className = isErr ? 'err' : '';
+}
+
+async function ensureData(forceRefresh){
+  if(forceRefresh){ CACHE = { buyoff:null, ipqc:null, bake:null, bakeHeaders:null, buyoffError:false, ipqcError:false, bakeError:false }; }
+  if(!CACHE.buyoff){
+    setStatus('<span class="spinner"></span>'+t('loading_buyoff'));
+    try{
+      const r = await jsonpRetry(BUYOFF_URL, {action:'buyoffRows'}, 30000, 2);
+      CACHE.buyoff = (r && r.ok && Array.isArray(r.records)) ? r.records : [];
+      CACHE.buyoffError = false;
+    }catch(e){ CACHE.buyoff = []; CACHE.buyoffError = true; console.warn('buyoff load failed', e); }
+  }
+  if(!CACHE.ipqc){
+    setStatus('<span class="spinner"></span>'+t('loading_ipqc'));
+    try{
+      const r = await jsonpRetry(IPQC_URL, {action:'rows'}, 60000, 1);
+      CACHE.ipqc = (r && r.ok && Array.isArray(r.rows)) ? r.rows.map(x=>x.row) : [];
+      CACHE.ipqcError = false;
+    }catch(e){ CACHE.ipqc = []; CACHE.ipqcError = true; console.warn('ipqc load failed', e); }
+  }
+  if(!CACHE.bake){
+    setStatus('<span class="spinner"></span>'+t('loading_bake'));
+    try{
+      const r = await jsonpRetry(IPQC_URL, {action:'bakeRows'}, 30000, 2);
+      if(r && r.ok && Array.isArray(r.headers) && Array.isArray(r.rows)){
+        CACHE.bakeHeaders = r.headers;
+        CACHE.bake = r.rows.map(x=>x.row);
+      } else { CACHE.bake = []; CACHE.bakeHeaders = []; }
+      CACHE.bakeError = false;
+    }catch(e){ CACHE.bake = []; CACHE.bakeHeaders = []; CACHE.bakeError = true; console.warn('bake load failed', e); }
+  }
+  const errs = [];
+  if(CACHE.buyoffError) errs.push('Buy-off');
+  if(CACHE.ipqcError) errs.push('IPQC');
+  if(CACHE.bakeError) errs.push('Bake Test');
+  if(errs.length){
+    setStatus(errs.join('·')+' '+t('load_fail_retry'), true);
+  }else{
+    setStatus(t('data_ready')+' — Buy-off '+CACHE.buyoff.length+' · IPQC '+CACHE.ipqc.length+' · Bake '+CACHE.bake.length);
+  }
+}
+
+function getRange(){
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  if(mode==='single'){
+    const d = $('dateSingle').value;
+    return d ? {start:d, end:d, label:d} : null;
+  }else{
+    const f = $('dateFrom').value, tt = $('dateTo').value;
+    if(!f || !tt) return null;
+    return {start:f, end:tt, label:(f===tt? f : f+' ~ '+tt)};
+  }
+}
+
+function inRange(dateStr, range){
+  if(!range) return true;
+  if(!dateStr) return false;
+  const d = dateStr.slice(0,10);
+  return d >= range.start && d <= range.end;
+}
+
+function getFilters(){
+  const v = id => $(id).value.trim().toLowerCase();
+  const f = { pn:v('fPn'), desc:v('fDesc'), mc:v('fMc'), mold:v('fMold'), material:v('fMaterial'), customer:v('fCustomer'), defect:v('fDefect') };
+  f.any = Object.values(f).some(x=>x);
+  return f;
+}
+function has(hay, needle){ return needle && String(hay||'').toLowerCase().includes(needle); }
+
+function filterBuyoffRow(r, f){
+  if(f.pn && !has(r.partNumber, f.pn)) return false;
+  if(f.desc && !has(r.description, f.desc)) return false;
+  if(f.mc && !has(r.machine, f.mc)) return false;
+  if(f.mold && !has(r.mold, f.mold)) return false;
+  if(f.customer && !has(r.customer, f.customer)) return false;
+  if(f.defect){
+    const txt = [r.problemVisual,r.problemPocket,r.problemOther].filter(Boolean).join(' ');
+    if(!has(txt, f.defect)) return false;
+  }
+  return true;
+}
+function filterIpqcRow(row, f){
+  if(f.pn && !has(row[COL.PN], f.pn)) return false;
+  if(f.desc && !has(row[COL.DESC], f.desc)) return false;
+  if(f.mc && !has(row[COL.MC], f.mc)) return false;
+  if(f.mold && !has(row[COL.MOLD], f.mold)) return false;
+  if(f.customer && !has(row[COL.CUST], f.customer)) return false;
+  if(f.material && !has(row[32], f.material)) return false;
+  if(f.defect){
+    const txt = (row[COL.VISUAL]||'')+' '+(row[COL.REMARK]||'');
+    if(!has(txt, f.defect)) return false;
+  }
+  return true;
+}
+function filterBakeRow(b, f){
+  if(f.pn && !has(b.sap, f.pn)) return false;
+  if(f.desc && !has(b.desc, f.desc)) return false;
+  if(f.mc && !has(b.machine, f.mc)) return false;
+  if(f.mold && !has(b.mold, f.mold)) return false;
+  if(f.customer && !has(b.customer, f.customer)) return false;
+  if(f.defect && !has(b.remark, f.defect)) return false;
+  return true;
+}
+function filterSummary(f){
+  const labels = {pn:t('filter_pn'),desc:t('filter_desc'),mc:t('filter_mc'),mold:t('filter_mold'),material:t('filter_material'),customer:t('filter_customer'),defect:t('filter_defect')};
+  return Object.entries(labels).filter(([k])=>f[k]).map(([k,l])=>l+'="'+f[k]+'"').join(', ');
+}
+
+function numOrNull(v){ const n=parseFloat(v); return isNaN(n)?null:n; }
+function minmax(arr){
+  const nums = arr.map(numOrNull).filter(v=>v!==null);
+  if(!nums.length) return '';
+  const mn=Math.min(...nums), mx=Math.max(...nums);
+  return mn===mx? String(mn) : mn+'~'+mx;
+}
+
+// ============ MAIN RENDER ============
+async function generateReport(){
+  const range = getRange();
+  const filters = getFilters();
+  if(!range && !filters.any){ setStatus(t('err_need_date_or_filter'), true); return; }
+  $('btnLoad').disabled = true;
+  try{
+    await ensureData(false);
+    const buyoffAll = CACHE.buyoff.filter(r=>inRange(r.date, range) && filterBuyoffRow(r, filters));
+    const ipqcAll = CACHE.ipqc.filter(r=>inRange(r[COL.DATE], range) && filterIpqcRow(r, filters));
+    const bakeAll = filterBake(range).filter(b=>filterBakeRow(b, filters));
+    const label = (range? range.label : t('all_period')) + (filters.any? (' · '+t('criteria_prefix')+filterSummary(filters)) : '');
+    const finalRange = {start:range?range.start:null, end:range?range.end:null, label};
+    LAST = { range: finalRange, buyoffAll, ipqcAll, bakeAll };
+    render(finalRange, buyoffAll, ipqcAll, bakeAll);
+    translateDynamicText();
+    const errs = [];
+    if(CACHE.buyoffError) errs.push('Buy-off');
+    if(CACHE.ipqcError) errs.push('IPQC');
+    if(CACHE.bakeError) errs.push('Bake Test');
+    if(errs.length){ setStatus(errs.join('·')+' '+t('load_fail_partial')+' '+label+')', true); }
+    else{ setStatus(t('report_complete')+' '+label); }
+    $('report').style.display = 'block';
+    $('report').scrollIntoView({behavior:'smooth'});
+  }catch(e){
+    setStatus(t('err_prefix')+e.message, true);
+    console.error(e);
+  }finally{
+    $('btnLoad').disabled = false;
+  }
+}
+
+function filterBake(range){
+  if(!CACHE.bake || !CACHE.bake.length) return [];
+  const h = CACHE.bakeHeaders;
+  const idx = {}; h.forEach((n,i)=>idx[n]=i);
+  return CACHE.bake.filter(row=>{
+    if(!range) return true;
+    const end = String(row[idx['End Date']]||'').slice(0,10);
+    return end && end>=range.start && end<=range.end;
+  }).map(row=>({
+    start:row[idx['Star Date']], end:row[idx['End Date']], sap:row[idx['SAP PN']], customer:row[idx['Customer']],
+    desc:row[idx['Description']], machine:row[idx['Machine']], mold:row[idx['Mold No']], req:row[idx['Requirement']],
+    specLive:row[idx['Spec Live']], specDead:row[idx['Spec Dead']], beforeLive:row[idx['Before Live']], beforeDead:row[idx['Before Dead']],
+    liveMax:row[idx['Live Max']], deadMax:row[idx['Dead Max']], result:row[idx['Pass/Fail']], remark:row[idx['Remark']]
+  }));
+}
+
+function render(range, buyoff, ipqc, bake){
+  $('metaDate').textContent = range.label + (LANG==='ko' ? ' 기준' : (LANG==='zh' ? ' 截至' : (LANG==='en' ? ' (as of)' : (LANG==='vi' ? ' (tính đến)' : ' (per)'))));
+
+  // ---- KPI ----
+  const dimF = buyoff.filter(r=>r.dimension==='F').length;
+  const visF = buyoff.filter(r=>r.visual==='F').length;
+  const srF = buyoff.filter(r=>r.srResult==='F').length;
+  const resultCounts = {Pass:0,Waive:0,Reject:0,Blank:0};
+  ipqc.forEach(r=>{ const v=(r[COL.RESULT]||'').trim(); resultCounts[v && resultCounts[v]!==undefined ? v : 'Blank']++; });
+  const bakePass = bake.filter(b=>b.result==='Pass').length;
+
+  const kpis = [
+    {v:buyoff.length, l:t('kpi_buyoff'), s:'Dim F '+dimF+' · Visual F '+visF+(srF?(' · SR F '+srF):''), c:'var(--navy)'},
+    {v:ipqc.length, l:t('kpi_ipqc'), s:t('kpi_ipqc_sub'), c:'var(--navy)'},
+    {v:resultCounts.Reject, l:t('kpi_reject'), s:ipqc.length? (Math.round(resultCounts.Reject/ipqc.length*1000)/10)+'%':'', c:'var(--red)'},
+    {v:resultCounts.Waive, l:t('kpi_waive'), s:ipqc.length? (Math.round(resultCounts.Waive/ipqc.length*1000)/10)+'%':'', c:'var(--amber)'},
+    {v:bake.length, l:t('kpi_bake'), s:bake.length? (bakePass+'/'+bake.length+' Pass'):t('kpi_bake_none'), c:'var(--green)'},
+  ];
+  $('kpiGrid').innerHTML = kpis.map(k=>
+    '<div class="kpi-card"><div class="v" style="color:'+k.c+'">'+k.v+'</div><div class="l">'+esc(k.l)+'</div><div class="s">'+esc(k.s)+'</div></div>'
+  ).join('');
+
+  // ---- Reject/Waive groups (needed for findings + cross-match) ----
+  const rejectGroups = groupByPN(ipqc, 'Reject');
+  const waiveGroups = groupByPN(ipqc, 'Waive');
+
+  // ---- Cross-match Buy-off F vs IPQC Reject/Waive ----
+  const buyoffF = buyoff.filter(r=>r.dimension==='F' || r.visual==='F' || r.srResult==='F');
+  const ipqcPNResult = {};
+  ipqc.forEach(r=>{
+    const pn=r[COL.PN], res=(r[COL.RESULT]||'').trim();
+    if(pn && (res==='Reject'||res==='Waive')){ if(!ipqcPNResult[pn]) ipqcPNResult[pn]=new Set(); ipqcPNResult[pn].add(res); }
+  });
+  const crossMatches = buyoffF.filter(r=>ipqcPNResult[r.partNumber]).map(r=>({
+    pn:r.partNumber, customer:r.customer, desc:r.description,
+    buyoffIssue: [r.problemVisual,r.problemPocket,r.problemOther].filter(Boolean).join(' / ') || (r.dimension==='F'?'Dimension F':'Visual F'),
+    ipqcResults: [...ipqcPNResult[r.partNumber]].join('/')
+  }));
+
+  // ---- Findings ----
+  const findings = [];
+  if(crossMatches.length){
+    findings.push([
+      pick({ko:'Buy-off·IPQC 교차 불량 품목 '+unitCase(crossMatches.length), en:'Buy-off × IPQC cross-defect items: '+crossMatches.length, zh:'Buy-off·IPQC 交叉不良品项 '+unitCase(crossMatches.length), vi:'Mã hàng lỗi trùng Buy-off·IPQC: '+unitCase(crossMatches.length), id:'Item cacat silang Buy-off·IPQC: '+unitCase(crossMatches.length)}),
+      crossMatches.slice(0,4).map(c=>c.pn).join(' · ')+(buyoffF.length? pick({ko:' — Buy-off F '+buyoffF.length+'건 중 '+crossMatches.length+'건('+Math.round(crossMatches.length/buyoffF.length*100)+'%) 재현', en:' — reproduced in '+crossMatches.length+' of '+buyoffF.length+' Buy-off Fail items ('+Math.round(crossMatches.length/buyoffF.length*100)+'%)', zh:' — Buy-off F '+buyoffF.length+'件中'+crossMatches.length+'件('+Math.round(crossMatches.length/buyoffF.length*100)+'%)再现', vi:' — tái hiện ở '+crossMatches.length+'/'+buyoffF.length+' mục Buy-off Fail ('+Math.round(crossMatches.length/buyoffF.length*100)+'%)', id:' — muncul kembali pada '+crossMatches.length+' dari '+buyoffF.length+' item Buy-off Fail ('+Math.round(crossMatches.length/buyoffF.length*100)+'%)'}):'')
+    ]);
+  }
+  const topReject = [...rejectGroups].sort((a,b)=>b.count-a.count)[0];
+  if(topReject) findings.push([
+    pick({ko:'Reject '+unitCase(resultCounts.Reject)+' — '+unitItem(rejectGroups.length), en:'Reject: '+unitCase(resultCounts.Reject)+' — '+unitItem(rejectGroups.length), zh:'Reject '+unitCase(resultCounts.Reject)+' — '+unitItem(rejectGroups.length), vi:'Reject '+unitCase(resultCounts.Reject)+' — '+unitItem(rejectGroups.length), id:'Reject '+unitCase(resultCounts.Reject)+' — '+unitItem(rejectGroups.length)}),
+    topReject.customer+' '+topReject.pn+' '+pick({ko:topReject.count+'건이 최다', en:'is the largest with '+topReject.count, zh:topReject.count+'件为最多', vi:'nhiều nhất với '+topReject.count, id:'terbanyak dengan '+topReject.count})+' ('+(topReject.visual.join(',')||'-')+')'
+  ]);
+  const topWaive = [...waiveGroups].sort((a,b)=>b.count-a.count)[0];
+  if(topWaive) findings.push([
+    pick({ko:'Waive '+unitCase(resultCounts.Waive)+' — '+unitItem(waiveGroups.length), en:'Waive: '+unitCase(resultCounts.Waive)+' — '+unitItem(waiveGroups.length), zh:'Waive '+unitCase(resultCounts.Waive)+' — '+unitItem(waiveGroups.length), vi:'Waive '+unitCase(resultCounts.Waive)+' — '+unitItem(waiveGroups.length), id:'Waive '+unitCase(resultCounts.Waive)+' — '+unitItem(waiveGroups.length)}),
+    topWaive.customer+' '+topWaive.pn+' '+pick({ko:topWaive.count+'건이 최다', en:'is the largest with '+topWaive.count, zh:topWaive.count+'件为最多', vi:'nhiều nhất với '+topWaive.count, id:'terbanyak dengan '+topWaive.count})
+  ]);
+  const overlapPN = rejectGroups.map(g=>g.pn).filter(pn=>waiveGroups.some(w=>w.pn===pn));
+  if(overlapPN.length) findings.push([
+    pick({ko:'Reject·Waive 동시 발생 품목 '+unitCase(overlapPN.length), en:'Items with both Reject and Waive: '+overlapPN.length, zh:'同时发生 Reject·Waive 品项 '+unitCase(overlapPN.length), vi:'Mã hàng có cả Reject và Waive: '+unitCase(overlapPN.length), id:'Item dengan Reject dan Waive: '+overlapPN.length}),
+    overlapPN.join(', ')+' '+t('diag_overlap_detail')
+  ]);
+  if(bake.length){ const bakeFail=bake.length-bakePass; if(bakeFail>0) findings.push([pick({ko:'Bake Test Fail '+unitCase(bakeFail), en:'Bake Test Fail: '+bakeFail, zh:'Bake Test Fail '+unitCase(bakeFail), vi:'Bake Test Fail '+unitCase(bakeFail), id:'Bake Test Fail '+bakeFail}), bake.filter(b=>b.result!=='Pass').map(b=>b.sap).join(', ')]); }
+  if(!findings.length) findings.push([pick({ko:'특이사항 없음', en:'No notable issues', zh:'无特殊事项', vi:'Không có vấn đề đặc biệt', id:'Tidak ada masalah khusus'}), pick({ko:'해당 구간에 두드러진 품질 이슈가 발견되지 않았습니다.', en:'No significant quality issues were found in this range.', zh:'该期间内未发现明显的品质问题。', vi:'Không phát hiện vấn đề chất lượng đáng chú ý trong khoảng này.', id:'Tidak ditemukan masalah kualitas signifikan pada rentang ini.'})]);
+  $('findings').innerHTML = findings.map((f,i)=>
+    '<div class="finding"><div class="num">'+(i+1)+'</div><div class="txt"><b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span></div></div>'
+  ).join('');
+
+  // ---- Donut ----
+  const total = ipqc.length || 1;
+  let acc = 0; const segs = [];
+  ['Pass','Waive','Reject','Blank'].forEach(k=>{
+    const pct = resultCounts[k]/total*100; segs.push(PALETTE[k]+' '+acc+'% '+(acc+pct)+'%'); acc+=pct;
+  });
+  $('donut').style.background = ipqc.length ? ('conic-gradient('+segs.join(',')+')') : '#E9EDF5';
+  $('donutTitle').textContent = t('donut_title')+' (n='+ipqc.length+')';
+  $('legend').innerHTML = ['Pass','Waive','Reject','Blank'].map(k=>
+    '<div><span class="dot" style="background:'+PALETTE[k]+'"></span><span class="lbl">'+(k==='Blank'?t('status_blank'):k)+'</span><span class="num" style="color:'+PALETTE[k]+'">'+unitCase(resultCounts[k])+'</span></div>'
+  ).join('');
+
+  renderBuyoff(range, buyoff);
+  renderIpqcOverview(range, ipqc);
+  renderReject(range, rejectGroups, resultCounts.Reject);
+  renderWaive(range, waiveGroups, resultCounts.Waive);
+  renderBake(range, bake);
+  renderDiag(crossMatches, rejectGroups, waiveGroups, overlapPN);
+}
+
+function groupByPN(ipqc, resultFilter){
+  const g = {};
+  ipqc.filter(r=>(r[COL.RESULT]||'').trim()===resultFilter).forEach(r=>{
+    const key = r[COL.PN]+'|'+r[COL.CUST];
+    if(!g[key]) g[key] = {pn:r[COL.PN], customer:r[COL.CUST], desc:r[COL.DESC], count:0, visual:new Set(), remark:new Set(), warp:[], cc:[], sr:[]};
+    const o = g[key]; o.count++;
+    if(r[COL.VISUAL]) o.visual.add(r[COL.VISUAL]);
+    if(r[COL.REMARK]) o.remark.add(r[COL.REMARK]);
+    if(r[COL.WARP]) o.warp.push(r[COL.WARP]);
+    if(r[COL.CC]) o.cc.push(r[COL.CC]);
+    if(r[COL.SR]) o.sr.push(r[COL.SR]);
+  });
+  return Object.values(g).map(o=>({...o, visual:[...o.visual], remark:[...o.remark]}));
+}
+
+function renderBuyoff(range, buyoff){
+  $('buyoffMeta').textContent = range.label+' · '+t('total')+' '+unitCase(buyoff.length)+(buyoff.length? (' (Dim F '+buyoff.filter(r=>r.dimension==='F').length+' · Visual F '+buyoff.filter(r=>r.visual==='F').length+' · S/R F '+buyoff.filter(r=>r.srResult==='F').length+')') : '');
+  if(!buyoff.length){
+    $('buyoffTableWrap').innerHTML = CACHE.buyoffError
+      ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_buyoff_err'))+'</div>'
+      : '<div class="none">'+esc(t('none_buyoff'))+'</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_desc')+'</th><th>'+t('th_mold')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_dim')+'</th><th>'+t('th_vis')+'</th><th>'+t('th_disposition')+'</th><th>'+t('th_problem_action')+'</th><th>'+t('th_photo')+'</th></tr></thead><tbody>';
+  buyoff.forEach((r,i)=>{
+    const isF = r.dimension==='F'||r.visual==='F'||r.srResult==='F';
+    const problem = [r.problemVisual,r.problemPocket,r.problemOther].filter(Boolean).join(' / ');
+    const action = r.correctiveAction||'';
+    html += '<tr>'
+      +'<td><b>'+esc(r.partNumber)+'</b></td>'
+      +'<td>'+esc(r.description)+'</td>'
+      +'<td>'+esc(r.mold)+'</td>'
+      +'<td>'+esc(r.customer)+'</td>'
+      +'<td class="tag-'+r.dimension+'">'+esc(r.dimension)+'</td>'
+      +'<td class="tag-'+r.visual+'">'+esc(r.visual)+'</td>'
+      +'<td class="tag-'+(r.disposition==='W'?'W':'P')+'">'+esc(r.disposition||'P')+'</td>'
+      +'<td style="font-size:10.5px;">'+(problem?('<b>'+t('lbl_problem')+'</b> <span class="i18n-dyn" data-zh="'+esc(problem)+'">'+esc(problem)+'</span>'):'')+(action?('<br><b>'+t('lbl_action')+'</b> <span class="i18n-dyn" data-zh="'+esc(action)+'">'+esc(action)+'</span>'):'')+'</td>'
+      +'<td>'+(isF? ('<button class="photobtn" onclick="loadPhotos(this,'+i+')">'+t('btn_photo_view')+'</button><div class="photogrid" id="photo-'+i+'"></div>') : '')+'</td>'
+      +'</tr>';
+  });
+  html += '</tbody></table>';
+  $('buyoffTableWrap').innerHTML = html;
+  window.__buyoffRows = buyoff;
+}
+
+async function loadPhotos(btn, i){
+  const rec = window.__buyoffRows[i];
+  const target = $('photo-'+i);
+  btn.disabled = true; btn.textContent = t('photo_loading');
+  const issues = [rec.problemVisual, rec.problemPocket, rec.problemOther].filter(Boolean);
+  if(!issues.length) issues.push(rec.dimension==='F'?'Dimension':'Visual');
+  let found = 0;
+  for(const issue of issues){
+    try{
+      const q = JSON.stringify([{id:'q_'+Math.random(), partNumber:rec.partNumber, date:rec.date, machine:rec.machine, mold:rec.mold, issue}]);
+      const r = await jsonp(BUYOFF_URL, {action:'buyoffPhotos', queries:q, partNumber:rec.partNumber, issue, dates:rec.date}, 20000);
+      if(r && r.ok && Array.isArray(r.photos)){
+        r.photos.forEach(p=>{
+          found++;
+          const cap = rec.partNumber+' · '+issue;
+          target.innerHTML += '<div class="photoitem"><img src="'+esc(p.imageUrl)+'" data-caption="'+esc(cap)+'" data-caption-zh="'+esc(issue)+'" loading="lazy" onclick="openPhotoModal(this.src,this.dataset.caption)"><div class="photocap i18n-dyn" data-zh="'+esc(issue.slice(0,40))+'">'+esc(issue.slice(0,40))+'</div></div>';
+        });
+      }
+    }catch(e){ /* skip failed query */ }
+    await new Promise(res=>setTimeout(res,300));
+  }
+  btn.textContent = found? unitPhoto(found) : t('photo_none');
+  if(!found) btn.disabled = false;
+  translateDynamicText();
+}
+
+function renderIpqcOverview(range, ipqc){
+  $('ipqcMeta').textContent = range.label+' · '+t('total')+' '+unitCase(ipqc.length);
+  if(!ipqc.length){
+    const msg = CACHE.ipqcError ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_ipqc_err'))+'</div>' : '<div class="none">'+esc(t('none_ipqc'))+'</div>';
+    $('custBars').innerHTML=$('resultBars').innerHTML=$('inspBars').innerHTML=msg; return;
+  }
+  const custCount={}, resultCount={Pass:0,Waive:0,Reject:0,Blank:0}, inspCount={}, shiftCount={};
+  ipqc.forEach(r=>{
+    const cu=r[COL.CUST]||BLANK_KEY; custCount[cu]=(custCount[cu]||0)+1;
+    const res=(r[COL.RESULT]||'').trim(); resultCount[res && resultCount[res]!==undefined?res:'Blank']++;
+    const insp=r[COL.INSP]||BLANK_KEY; inspCount[insp]=(inspCount[insp]||0)+1;
+    const sh=r[COL.SHIFT]||BLANK_KEY; shiftCount[sh]=(shiftCount[sh]||0)+1;
+  });
+  const dispName = n => n===BLANK_KEY ? ('('+t('status_blank')+')') : n;
+  const custTop = Object.entries(custCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const custMax = custTop.length? custTop[0][1] : 1;
+  $('custBars').innerHTML = custTop.map(([name,cnt])=>
+    '<div class="barrow"><div class="name">'+esc(dispName(name))+'</div><div class="track"><div class="fill" style="width:'+(cnt/custMax*100)+'%"></div></div><div class="val">'+cnt+'</div></div>'
+  ).join('');
+
+  const rTotal = ipqc.length;
+  $('resultBars').innerHTML = ['Pass','Waive','Reject','Blank'].map(k=>{
+    const cnt = resultCount[k]; const pct = Math.round(cnt/rTotal*1000)/10;
+    return '<div class="barrow resultbar"><div class="name">'+(k==='Blank'?t('status_blank'):k)+'</div><div class="track"><div class="fill '+k.toLowerCase()+'" style="width:'+pct+'%"></div></div><div class="val">'+cnt+'</div></div>';
+  }).join('');
+
+  const inspTop = Object.entries(inspCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const shiftLine = Object.entries(shiftCount).map(([s,c])=>dispName(s)+' '+unitCase(c)).join(' · ');
+  $('inspBars').innerHTML = inspTop.map(([name,cnt])=>
+    '<div class="barrow"><div class="name">QC '+esc(dispName(name))+'</div><div class="track"><div class="fill" style="width:'+(cnt/inspTop[0][1]*100)+'%;background:var(--navy2)"></div></div><div class="val">'+cnt+'</div></div>'
+  ).join('') + '<div style="margin-top:10px;font-size:12px;color:var(--grey)">'+esc(t('shift_line_prefix'))+esc(shiftLine)+'</div>';
+}
+
+function renderReject(range, groups, total){
+  $('rejectMeta').textContent = range.label+' · '+t('total')+' '+unitCase(total)+' · '+unitItem(groups.length);
+  if(!groups.length){
+    $('rejectTableWrap').innerHTML = CACHE.ipqcError ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_ipqc_err_short'))+'</div>' : '<div class="none">'+esc(t('none_reject'))+'</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_count')+'</th><th>'+t('th_visual')+'</th><th>'+t('th_remark')+'</th></tr></thead><tbody>';
+  groups.sort((a,b)=>b.count-a.count).forEach(g=>{
+    const remarkText = g.remark.join(' | ')||'-';
+    html += '<tr><td><b>'+esc(g.pn)+'</b></td><td>'+esc(g.customer)+'</td><td style="text-align:center;color:var(--red);font-weight:bold;">'+g.count+'</td><td>'+esc(g.visual.join(' / ')||'-')+'</td><td style="font-size:10.5px;"><span class="i18n-dyn" data-zh="'+esc(remarkText)+'">'+esc(remarkText)+'</span></td></tr>';
+  });
+  html += '</tbody></table>';
+  $('rejectTableWrap').innerHTML = html;
+}
+
+function renderWaive(range, groups, total){
+  $('waiveMeta').textContent = range.label+' · '+t('total')+' '+unitCase(total)+' · '+unitItem(groups.length);
+  if(!groups.length){
+    $('waiveTableWrap').innerHTML = CACHE.ipqcError ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_ipqc_err_short'))+'</div>' : '<div class="none">'+esc(t('none_waive'))+'</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_count')+'</th><th>'+t('th_waive_type')+'</th><th>Warp(mil)</th><th>C/C</th><th>SR</th></tr></thead><tbody>';
+  groups.sort((a,b)=>b.count-a.count).forEach(g=>{
+    const waiveRemark = g.remark.join(' | ');
+    html += '<tr><td><b>'+esc(g.pn)+'</b></td><td>'+esc(g.customer)+'</td><td style="text-align:center;color:var(--amber);font-weight:bold;">'+g.count+'</td><td style="font-size:10.5px;">'+esc(g.visual.join(' / ')||'-')+(waiveRemark?('<br><span class="i18n-dyn" data-zh="'+esc(waiveRemark)+'">'+esc(waiveRemark)+'</span>'):'')+'</td><td>'+minmax(g.warp)+'</td><td>'+minmax(g.cc)+'</td><td>'+minmax(g.sr)+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  $('waiveTableWrap').innerHTML = html;
+}
+
+function renderBake(range, bake){
+  $('bakeMeta').textContent = range.label+' '+t('asof_bake')+' · '+t('total')+' '+unitCase(bake.length)+(bake.length?(' · Pass '+bake.filter(b=>b.result==='Pass').length):'');
+  if(!bake.length){
+    $('bakeTableWrap').innerHTML = CACHE.bakeError ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_bake_err'))+'</div>' : '<div class="none">'+esc(t('none_bake'))+'</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_desc')+'</th><th>'+t('th_mold')+'</th><th>M/C</th><th>'+t('th_condition')+'</th><th>'+t('th_spec_ld')+'</th><th>'+t('th_before_ld')+'</th><th>'+t('th_live_max')+'</th><th>'+t('th_dead_max')+'</th><th>'+t('th_result')+'</th></tr></thead><tbody>';
+  bake.forEach(b=>{
+    html += '<tr><td><b>'+esc(b.sap)+'</b></td><td>'+esc(b.customer)+'</td><td>'+esc(b.desc)+'</td><td>'+esc(b.mold)+'</td><td>'+esc(b.machine)+'</td><td style="font-size:10.5px;">'+esc(b.req)+'</td><td>'+esc(b.specLive)+' / '+esc(b.specDead)+'</td><td>'+esc(b.beforeLive)+' / '+esc(b.beforeDead)+'</td><td>'+esc(b.liveMax)+'</td><td>'+esc(b.deadMax)+'</td><td class="tag-'+(b.result==='Pass'?'P':'F')+'">'+esc(b.result)+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  $('bakeTableWrap').innerHTML = html;
+}
+
+function renderDiag(crossMatches, rejectGroups, waiveGroups, overlapPN){
+  let html = '';
+  if(crossMatches.length){
+    html += '<div class="diagbox" style="margin-bottom:16px;"><h3>'+esc(t('diag_cross_title'))+' ('+unitCase(crossMatches.length)+')</h3>';
+    crossMatches.forEach(c=>{
+      html += '<div class="item"><b>'+esc(c.pn)+'</b> <span>('+esc(c.customer)+' '+esc(c.desc)+')</span> — Buy-off: <span class="i18n-dyn" data-zh="'+esc(c.buyoffIssue)+'">'+esc(c.buyoffIssue)+'</span> <span class="crosstag">IPQC '+esc(c.ipqcResults)+'</span></div>';
+    });
+    html += '</div>';
+  }
+  if(overlapPN.length){
+    html += '<div class="card" style="margin-bottom:16px;"><h3>'+esc(t('diag_overlap_title'))+'</h3><div style="font-size:12.5px;">'+overlapPN.map(esc).join(', ')+' '+esc(t('diag_overlap_detail'))+'</div></div>';
+  }
+  if(!crossMatches.length && !overlapPN.length){
+    html += '<div class="none">'+esc(t('none_diag'))+'</div>';
+  }
+  $('diagWrap').innerHTML = html;
+}
+
+// ============ AUTO-TRANSLATE (source Chinese remarks -> selected UI language) ============
+// Best-effort client-side machine translation via Google's public translate endpoint.
+// Original text is always preserved in data-zh and shown as a tooltip (title) for verification,
+// since exact wording matters for QC decisions and machine translation is not guaranteed accurate.
+const GT_LANG = {ko:'ko', en:'en', zh:'zh-CN', vi:'vi', id:'id'};
+let translationCache = {}; // translationCache[lang][originalText] = translatedText
+
+async function translateOne(text, targetLang){
+  if(!text || !text.trim() || targetLang==='zh') return text;
+  translationCache[targetLang] = translationCache[targetLang] || {};
+  if(translationCache[targetLang][text] !== undefined) return translationCache[targetLang][text];
+  try{
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl='+GT_LANG[targetLang]+'&dt=t&q='+encodeURIComponent(text);
+    const res = await fetch(url);
+    const data = await res.json();
+    const translated = (data && data[0] || []).map(seg=>seg[0]).join('');
+    translationCache[targetLang][text] = translated || text;
+  }catch(e){
+    translationCache[targetLang][text] = text; // translation unavailable: fall back to original, cache to avoid retry storms
+  }
+  return translationCache[targetLang][text];
+}
+
+async function translateQueue(items, targetLang, concurrency){
+  let idx = 0;
+  async function worker(){ while(idx < items.length){ const my = idx++; await translateOne(items[my], targetLang); } }
+  await Promise.all(Array.from({length:Math.min(concurrency, items.length)}, worker));
+}
+
+let translateRunId = 0;
+async function translateDynamicText(){
+  const myRun = ++translateRunId;
+  const els = [...document.querySelectorAll('[data-zh]')];
+  if(!els.length) return;
+  if(LANG==='zh'){
+    els.forEach(el=>{ const orig = el.getAttribute('data-zh'); if(orig) el.textContent = orig; el.title=''; });
+    return;
+  }
+  const unique = [...new Set(els.map(el=>el.getAttribute('data-zh')).filter(Boolean))];
+  const pending = unique.filter(u => !(translationCache[LANG] && translationCache[LANG][u] !== undefined));
+  els.forEach(el=>el.classList.add('translating'));
+  if(pending.length){ await translateQueue(pending, LANG, 4); }
+  if(myRun !== translateRunId) return; // a newer translate/render pass superseded this one
+  els.forEach(el=>{
+    const orig = el.getAttribute('data-zh');
+    if(!orig) return;
+    el.textContent = (translationCache[LANG] && translationCache[LANG][orig]) || orig;
+    el.title = orig;
+    el.classList.remove('translating');
+  });
+}
+
+// ============ PHOTO MODAL (zoom / pan) ============
+let photoZoom = {scale:1, tx:0, ty:0};
+let photoDrag = null;
+async function openPhotoModal(url, caption){
+  $('photoModalImg').src = url;
+  $('photoModalCaption').textContent = caption||'';
+  photoZoom = {scale:1, tx:0, ty:0};
+  applyPhotoZoom();
+  $('photoModal').classList.add('open');
+  if(LANG!=='zh' && caption){
+    const parts = caption.split(' · ');
+    const zhPart = parts.length>1 ? parts.slice(1).join(' · ') : caption;
+    const translated = await translateOne(zhPart, LANG);
+    if($('photoModalImg').src===url){ // still showing the same photo
+      $('photoModalCaption').textContent = (parts.length>1? parts[0]+' · ':'') + translated;
+      $('photoModalCaption').title = caption;
+    }
+  }
+}
+function closePhotoModal(){ $('photoModal').classList.remove('open'); }
+function applyPhotoZoom(){
+  $('photoModalImg').style.transform = 'translate('+photoZoom.tx+'px,'+photoZoom.ty+'px) scale('+photoZoom.scale+')';
+}
+function zoomPhoto(delta){
+  photoZoom.scale = Math.min(8, Math.max(0.4, +(photoZoom.scale+delta).toFixed(2)));
+  applyPhotoZoom();
+}
+function resetPhotoZoom(){ photoZoom={scale:1,tx:0,ty:0}; applyPhotoZoom(); }
+
+$('pmZoomIn').addEventListener('click', ()=>zoomPhoto(0.25));
+$('pmZoomOut').addEventListener('click', ()=>zoomPhoto(-0.25));
+$('pmZoomReset').addEventListener('click', resetPhotoZoom);
+$('pmClose').addEventListener('click', closePhotoModal);
+$('photoModal').addEventListener('click', e=>{ if(e.target.id==='photoModal') closePhotoModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('photoModal').classList.contains('open')) closePhotoModal(); });
+const pmViewport = $('photoModalViewport');
+pmViewport.addEventListener('wheel', e=>{
+  e.preventDefault();
+  zoomPhoto(e.deltaY<0? 0.18 : -0.18);
+}, {passive:false});
+pmViewport.addEventListener('mousedown', e=>{
+  photoDrag = {sx:e.clientX, sy:e.clientY, ox:photoZoom.tx, oy:photoZoom.ty};
+  pmViewport.classList.add('dragging');
+});
+window.addEventListener('mousemove', e=>{
+  if(!photoDrag) return;
+  photoZoom.tx = photoDrag.ox + (e.clientX-photoDrag.sx);
+  photoZoom.ty = photoDrag.oy + (e.clientY-photoDrag.sy);
+  applyPhotoZoom();
+});
+window.addEventListener('mouseup', ()=>{ photoDrag=null; pmViewport.classList.remove('dragging'); });
+// touch support (pinch not implemented; single-finger drag to pan)
+pmViewport.addEventListener('touchstart', e=>{
+  if(e.touches.length===1){ const tch=e.touches[0]; photoDrag = {sx:tch.clientX, sy:tch.clientY, ox:photoZoom.tx, oy:photoZoom.ty}; }
+}, {passive:true});
+pmViewport.addEventListener('touchmove', e=>{
+  if(!photoDrag || e.touches.length!==1) return;
+  const tch=e.touches[0];
+  photoZoom.tx = photoDrag.ox + (tch.clientX-photoDrag.sx);
+  photoZoom.ty = photoDrag.oy + (tch.clientY-photoDrag.sy);
+  applyPhotoZoom();
+}, {passive:true});
+pmViewport.addEventListener('touchend', ()=>{ photoDrag=null; });
+
+// ============ INIT ============
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change', ()=>{
+  const isSingle = document.querySelector('input[name=mode]:checked').value==='single';
+  $('singleWrap').style.display = isSingle ? '' : 'none';
+  $('rangeWrap').style.display = isSingle ? 'none' : '';
+}));
+document.querySelectorAll('.quickbtns button').forEach(b=>b.addEventListener('click', ()=>{
+  const q = b.dataset.q; const tISO = todayISO();
+  if(q==='today'){ document.querySelector('input[name=mode][value=single]').checked=true; $('singleWrap').style.display=''; $('rangeWrap').style.display='none'; $('dateSingle').value=tISO; }
+  if(q==='yesterday'){ document.querySelector('input[name=mode][value=single]').checked=true; $('singleWrap').style.display=''; $('rangeWrap').style.display='none'; $('dateSingle').value=addDays(tISO,-1); }
+  if(q==='last7'){ document.querySelector('input[name=mode][value=range]').checked=true; $('singleWrap').style.display='none'; $('rangeWrap').style.display=''; $('dateFrom').value=addDays(tISO,-6); $('dateTo').value=tISO; }
+  if(q==='thismonth'){ document.querySelector('input[name=mode][value=range]').checked=true; $('singleWrap').style.display='none'; $('rangeWrap').style.display=''; $('dateFrom').value=tISO.slice(0,8)+'01'; $('dateTo').value=tISO; }
+}));
+$('btnLoad').addEventListener('click', generateReport);
+$('btnRefresh').addEventListener('click', async ()=>{ await ensureData(true); });
+$('btnClearFilters').addEventListener('click', ()=>{
+  ['fPn','fDesc','fMc','fMold','fMaterial','fCustomer','fDefect'].forEach(id=>$(id).value='');
+});
+$('langSelect').addEventListener('change', e=>{
+  LANG = e.target.value;
+  applyStaticI18n();
+  if(LAST){ render(LAST.range, LAST.buyoffAll, LAST.ipqcAll, LAST.bakeAll); translateDynamicText(); }
+});
+$('dateSingle').value = addDays(todayISO(),-1);
+applyStaticI18n();
+</script>
+</body>
+</html>
