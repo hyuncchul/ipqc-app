@@ -265,7 +265,7 @@ const I18N = {
     kpi_buyoff:'Buy-off 검사', kpi_ipqc:'IPQC 검사 이력', kpi_ipqc_sub:'측정/외관 전수 기록', kpi_reject:'Reject (불합격)', kpi_waive:'Waive (특채)', kpi_bake:'Bake Test 완료', kpi_bake_none:'해당 없음',
     findings_title:'핵심 이슈 (Key Findings)', donut_title:'IPQC 종합 판정 분포',
     cust_chart_title:'고객별 검사 건수 (상위 12)', result_mix_title:'판정 결과 구성', inspector_title:'검사원 · 근무조 분포', shift_line_prefix:'근무조: ',
-    th_pn:'파트넘버', th_desc:'디스크립션', th_mold:'몰드', th_customer:'고객', th_dim:'Dim', th_vis:'Vis', th_disposition:'처리', th_problem_action:'문제/조치', th_photo:'사진',
+    th_pn:'파트넘버', th_desc:'디스크립션', th_mold:'몰드', th_machine:'설비번호', th_customer:'고객', th_dim:'Dim', th_vis:'Vis', th_disposition:'처리', th_problem_action:'문제/조치', th_photo:'사진',
     lbl_problem:'문제:', lbl_action:'조치:',
     btn_photo_view:'사진 조회', photo_loading:'조회 중…', photo_none:'사진 없음',
     th_count:'건수', th_visual:'외관(VISUAL)', th_remark:'불량 내용·이탈값(備註)', th_waive_type:'특채 유형/사유',
@@ -303,7 +303,7 @@ const I18N = {
     kpi_buyoff:'Buy-off Inspections', kpi_ipqc:'IPQC Inspection Records', kpi_ipqc_sub:'Full measurement/visual records', kpi_reject:'Reject (Fail)', kpi_waive:'Waive (Concession)', kpi_bake:'Bake Test Completed', kpi_bake_none:'None',
     findings_title:'Key Findings', donut_title:'IPQC Result Distribution',
     cust_chart_title:'Inspections by Customer (Top 12)', result_mix_title:'Result Distribution', inspector_title:'Inspector · Shift Distribution', shift_line_prefix:'Shift: ',
-    th_pn:'Part Number', th_desc:'Description', th_mold:'Mold', th_customer:'Customer', th_dim:'Dim', th_vis:'Vis', th_disposition:'Disposition', th_problem_action:'Problem/Action', th_photo:'Photo',
+    th_pn:'Part Number', th_desc:'Description', th_mold:'Mold', th_machine:'Machine', th_customer:'Customer', th_dim:'Dim', th_vis:'Vis', th_disposition:'Disposition', th_problem_action:'Problem/Action', th_photo:'Photo',
     lbl_problem:'Issue:', lbl_action:'Action:',
     btn_photo_view:'View Photos', photo_loading:'Loading…', photo_none:'No photos',
     th_count:'Count', th_visual:'Visual', th_remark:'Defect Detail / Deviation (Remark)', th_waive_type:'Waiver Type/Reason',
@@ -341,7 +341,7 @@ const I18N = {
     kpi_buyoff:'Buy-off 检验', kpi_ipqc:'IPQC 检验履历', kpi_ipqc_sub:'测量/外观全数记录', kpi_reject:'Reject (不合格)', kpi_waive:'Waive (特采)', kpi_bake:'Bake Test 完成', kpi_bake_none:'无',
     findings_title:'重点问题 (Key Findings)', donut_title:'IPQC 综合判定分布',
     cust_chart_title:'各客户检验件数 (前12名)', result_mix_title:'判定结果构成', inspector_title:'检验员 · 班别分布', shift_line_prefix:'班别: ',
-    th_pn:'料号', th_desc:'品名描述', th_mold:'模具', th_customer:'客户', th_dim:'Dim', th_vis:'Vis', th_disposition:'处理', th_problem_action:'问题/对策', th_photo:'照片',
+    th_pn:'料号', th_desc:'品名描述', th_mold:'模具', th_machine:'设备编号', th_customer:'客户', th_dim:'Dim', th_vis:'Vis', th_disposition:'处理', th_problem_action:'问题/对策', th_photo:'照片',
     lbl_problem:'问题:', lbl_action:'对策:',
     btn_photo_view:'查看照片', photo_loading:'查询中…', photo_none:'无照片',
     th_count:'件数', th_visual:'外观(VISUAL)', th_remark:'不良内容·偏差值(備註)', th_waive_type:'特采类型/原因',
@@ -379,7 +379,7 @@ const I18N = {
     kpi_buyoff:'Kiểm tra Buy-off', kpi_ipqc:'Lịch sử kiểm tra IPQC', kpi_ipqc_sub:'Ghi nhận đầy đủ đo lường/ngoại quan', kpi_reject:'Reject (Không đạt)', kpi_waive:'Waive (Đặc cách)', kpi_bake:'Bake Test hoàn thành', kpi_bake_none:'Không có',
     findings_title:'Vấn đề chính (Key Findings)', donut_title:'Phân bố kết quả IPQC',
     cust_chart_title:'Số lượng kiểm tra theo khách hàng (Top 12)', result_mix_title:'Cơ cấu kết quả', inspector_title:'Phân bố kiểm tra viên · ca làm việc', shift_line_prefix:'Ca làm việc: ',
-    th_pn:'Mã hàng', th_desc:'Mô tả', th_mold:'Khuôn', th_customer:'Khách hàng', th_dim:'Dim', th_vis:'Vis', th_disposition:'Xử lý', th_problem_action:'Vấn đề/Xử lý', th_photo:'Hình ảnh',
+    th_pn:'Mã hàng', th_desc:'Mô tả', th_mold:'Khuôn', th_machine:'Số máy', th_customer:'Khách hàng', th_dim:'Dim', th_vis:'Vis', th_disposition:'Xử lý', th_problem_action:'Vấn đề/Xử lý', th_photo:'Hình ảnh',
     lbl_problem:'Vấn đề:', lbl_action:'Hành động:',
     btn_photo_view:'Xem ảnh', photo_loading:'Đang tải…', photo_none:'Không có ảnh',
     th_count:'Số lượng', th_visual:'Ngoại quan (VISUAL)', th_remark:'Nội dung lỗi · giá trị lệch (Remark)', th_waive_type:'Loại đặc cách/Lý do',
@@ -417,7 +417,7 @@ const I18N = {
     kpi_buyoff:'Inspeksi Buy-off', kpi_ipqc:'Riwayat Inspeksi IPQC', kpi_ipqc_sub:'Catatan lengkap pengukuran/visual', kpi_reject:'Reject (Gagal)', kpi_waive:'Waive (Konsesi)', kpi_bake:'Bake Test Selesai', kpi_bake_none:'Tidak ada',
     findings_title:'Temuan Utama (Key Findings)', donut_title:'Distribusi Hasil IPQC',
     cust_chart_title:'Inspeksi per Pelanggan (Top 12)', result_mix_title:'Komposisi Hasil', inspector_title:'Distribusi Inspektur · Shift', shift_line_prefix:'Shift: ',
-    th_pn:'Nomor Part', th_desc:'Deskripsi', th_mold:'Cetakan', th_customer:'Pelanggan', th_dim:'Dim', th_vis:'Vis', th_disposition:'Penanganan', th_problem_action:'Masalah/Tindakan', th_photo:'Foto',
+    th_pn:'Nomor Part', th_desc:'Deskripsi', th_mold:'Cetakan', th_machine:'Nomor Mesin', th_customer:'Pelanggan', th_dim:'Dim', th_vis:'Vis', th_disposition:'Penanganan', th_problem_action:'Masalah/Tindakan', th_photo:'Foto',
     lbl_problem:'Masalah:', lbl_action:'Tindakan:',
     btn_photo_view:'Lihat Foto', photo_loading:'Memuat…', photo_none:'Tidak ada foto',
     th_count:'Jumlah', th_visual:'Visual', th_remark:'Detail Cacat / Penyimpangan (Remark)', th_waive_type:'Jenis/Alasan Konsesi',
@@ -761,15 +761,16 @@ function groupByPN(ipqc, resultFilter){
   const g = {};
   ipqc.filter(r=>(r[COL.RESULT]||'').trim()===resultFilter).forEach(r=>{
     const key = r[COL.PN]+'|'+r[COL.CUST];
-    if(!g[key]) g[key] = {pn:r[COL.PN], customer:r[COL.CUST], desc:r[COL.DESC], count:0, visual:new Set(), remark:new Set(), warp:[], cc:[], sr:[]};
+    if(!g[key]) g[key] = {pn:r[COL.PN], customer:r[COL.CUST], desc:r[COL.DESC], count:0, machine:new Set(), visual:new Set(), remark:new Set(), warp:[], cc:[], sr:[]};
     const o = g[key]; o.count++;
+    if(r[COL.MC]) o.machine.add(r[COL.MC]);
     if(r[COL.VISUAL]) o.visual.add(r[COL.VISUAL]);
     if(r[COL.REMARK]) o.remark.add(r[COL.REMARK]);
     if(r[COL.WARP]) o.warp.push(r[COL.WARP]);
     if(r[COL.CC]) o.cc.push(r[COL.CC]);
     if(r[COL.SR]) o.sr.push(r[COL.SR]);
   });
-  return Object.values(g).map(o=>({...o, visual:[...o.visual], remark:[...o.remark]}));
+  return Object.values(g).map(o=>({...o, machine:[...o.machine], visual:[...o.visual], remark:[...o.remark]}));
 }
 
 function renderBuyoff(range, buyoff){
@@ -867,10 +868,10 @@ function renderReject(range, groups, total){
     $('rejectTableWrap').innerHTML = CACHE.ipqcError ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_ipqc_err_short'))+'</div>' : '<div class="none">'+esc(t('none_reject'))+'</div>';
     return;
   }
-  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_count')+'</th><th>'+t('th_visual')+'</th><th>'+t('th_remark')+'</th></tr></thead><tbody>';
+  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_desc')+'</th><th>'+t('th_machine')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_count')+'</th><th>'+t('th_visual')+'</th><th>'+t('th_remark')+'</th></tr></thead><tbody>';
   groups.sort((a,b)=>b.count-a.count).forEach(g=>{
     const remarkText = g.remark.join(' | ')||'-';
-    html += '<tr><td><b>'+esc(g.pn)+'</b></td><td>'+esc(g.customer)+'</td><td style="text-align:center;color:var(--red);font-weight:bold;">'+g.count+'</td><td>'+esc(g.visual.join(' / ')||'-')+'</td><td style="font-size:10.5px;"><span class="i18n-dyn" data-zh="'+esc(remarkText)+'">'+esc(remarkText)+'</span></td></tr>';
+    html += '<tr><td><b>'+esc(g.pn)+'</b></td><td>'+esc(g.desc)+'</td><td>'+esc(g.machine.join('/')||'-')+'</td><td>'+esc(g.customer)+'</td><td style="text-align:center;color:var(--red);font-weight:bold;">'+g.count+'</td><td>'+esc(g.visual.join(' / ')||'-')+'</td><td style="font-size:10.5px;"><span class="i18n-dyn" data-zh="'+esc(remarkText)+'">'+esc(remarkText)+'</span></td></tr>';
   });
   html += '</tbody></table>';
   $('rejectTableWrap').innerHTML = html;
@@ -882,10 +883,10 @@ function renderWaive(range, groups, total){
     $('waiveTableWrap').innerHTML = CACHE.ipqcError ? '<div class="none" style="color:var(--red);border-color:var(--red);">'+esc(t('none_ipqc_err_short'))+'</div>' : '<div class="none">'+esc(t('none_waive'))+'</div>';
     return;
   }
-  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_count')+'</th><th>'+t('th_waive_type')+'</th><th>Warp(mil)</th><th>C/C</th><th>SR</th></tr></thead><tbody>';
+  let html = '<table><thead><tr><th>'+t('th_pn')+'</th><th>'+t('th_desc')+'</th><th>'+t('th_machine')+'</th><th>'+t('th_customer')+'</th><th>'+t('th_count')+'</th><th>'+t('th_waive_type')+'</th><th>Warp(mil)</th><th>C/C</th><th>SR</th></tr></thead><tbody>';
   groups.sort((a,b)=>b.count-a.count).forEach(g=>{
     const waiveRemark = g.remark.join(' | ');
-    html += '<tr><td><b>'+esc(g.pn)+'</b></td><td>'+esc(g.customer)+'</td><td style="text-align:center;color:var(--amber);font-weight:bold;">'+g.count+'</td><td style="font-size:10.5px;">'+esc(g.visual.join(' / ')||'-')+(waiveRemark?('<br><span class="i18n-dyn" data-zh="'+esc(waiveRemark)+'">'+esc(waiveRemark)+'</span>'):'')+'</td><td>'+minmax(g.warp)+'</td><td>'+minmax(g.cc)+'</td><td>'+minmax(g.sr)+'</td></tr>';
+    html += '<tr><td><b>'+esc(g.pn)+'</b></td><td>'+esc(g.desc)+'</td><td>'+esc(g.machine.join('/')||'-')+'</td><td>'+esc(g.customer)+'</td><td style="text-align:center;color:var(--amber);font-weight:bold;">'+g.count+'</td><td style="font-size:10.5px;">'+esc(g.visual.join(' / ')||'-')+(waiveRemark?('<br><span class="i18n-dyn" data-zh="'+esc(waiveRemark)+'">'+esc(waiveRemark)+'</span>'):'')+'</td><td>'+minmax(g.warp)+'</td><td>'+minmax(g.cc)+'</td><td>'+minmax(g.sr)+'</td></tr>';
   });
   html += '</tbody></table>';
   $('waiveTableWrap').innerHTML = html;
