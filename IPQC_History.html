@@ -865,6 +865,12 @@ const I18N = {
     srchOldDeployNote:' 단, Apps Script 최신 배포가 아니어서 2026 같은 연도별 시트는 아직 검색하지 못했습니다.',
     srchAllCols:' 엑셀 전체 컬럼 데이터를 모두 표시합니다.',
     srchFail:'검색 실패: ',
+    srchServerFast:'서버에서 조건 검색 중... (해당 조건의 행만 내려받습니다)',
+    srchAutoRange:' ※ 날짜 조건이 없어 최근 30일로 자동 제한했습니다. 더 넓은 기간이 필요하면 날짜를 지정하세요.',
+    srchTruncated:' ⚠️ 결과가 상한({n}건)에 도달해 일부만 표시했습니다. 날짜 범위를 좁혀 주세요.',
+    srchLegacyFallback:'서버 검색 모듈이 없어 기존 방식(전체 다운로드)으로 진행합니다...',
+    srchListSkipped:' (최근 미반영 데이터 조회는 건너뛰었습니다)',
+    srchTrendLoading:'트렌드 데이터를 불러오는 중...',
     srchNoXlsx:'XLSX 라이브러리가 로드되지 않았습니다. 네트워크 연결을 확인하세요.',
     trendTitle:'📈 IPQC 검색 트렌드', trendSub:'Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택',
     trendTargetInit:'검색 후 결과 표에서 SAP PN 또는 Description을 클릭하세요.', trendMetricA:'왼쪽 축 측정 항목', trendMetricB:'오른쪽 축 측정 항목',
@@ -957,6 +963,12 @@ const I18N = {
     srchOldDeployNote:' Note: the Apps Script deployment is outdated, so yearly sheets like 2026 could not be searched yet.',
     srchAllCols:' Showing all Excel columns.',
     srchFail:'Search failed: ',
+    srchServerFast:'Searching on the server... (only matching rows are downloaded)',
+    srchAutoRange:' * No date filter given, so the range was limited to the last 30 days. Specify dates for a wider range.',
+    srchTruncated:' ⚠️ Result limit ({n}) reached; only part of the data is shown. Narrow the date range.',
+    srchLegacyFallback:'Server search module not found. Falling back to full download...',
+    srchListSkipped:' (skipped the recent-unsynced records lookup)',
+    srchTrendLoading:'Loading trend data...',
     srchNoXlsx:'XLSX library not loaded. Check your network connection.',
     trendTitle:'📈 IPQC Search Trend', trendSub:'Google Sheets ipqc_data · Click SAP PN or Description · Select period and mold',
     trendTargetInit:'Search first, then click an SAP PN or Description in the results.', trendMetricA:'Left-axis measurement', trendMetricB:'Right-axis measurement',
@@ -2008,6 +2020,12 @@ let searchRowsCacheAt = 0;
 let searchRowsError = '';        // '' | 'timeout' | 'error'
 const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
 const SEARCH_ROWS_TIMEOUT_MS = 300000;
+// ── 서버측 필터링 검색(IPQC_Search.gs) 설정 ──
+const SEARCH_API_TIMEOUT_MS = 90000;   // action=search 대기 시간
+const LIST_TIMEOUT_MS       = 25000;   // action=list 는 실패해도 검색을 막지 않음
+const SEARCH_ROW_LIMIT      = 5000;    // 검색 결과 상한
+const TREND_ROW_LIMIT       = 20000;   // 트렌드용 조회 상한
+let searchServerMode = 'auto';         // 'auto' | 'search'(서버필터 지원) | 'legacy'(구버전)
 let ipqcTrendSourceRows = [];
 let ipqcTrendSelection = null;
 let ipqcSelectedMolds = new Set();
@@ -2041,7 +2059,9 @@ function selectIpqcTrend(resultIdx,col,event){
   const from=document.getElementById('ipqcTrendFrom'),to=document.getElementById('ipqcTrendTo');
   const exact=document.getElementById('searchDate')?.value||'',searchedFrom=document.getElementById('searchDateFrom')?.value||'',searchedTo=document.getElementById('searchDateTo')?.value||'';
   if(from) from.value=exact||searchedFrom; if(to) to.value=exact||searchedTo;
-  drawIpqcTrend();
+  const tgt=document.getElementById('ipqcTrendTarget');
+  if(tgt && searchServerMode==='search') tgt.textContent=tr('srchTrendLoading');
+  Promise.resolve(refreshTrendRows()).then(()=>drawIpqcTrend());
   loadBakeTestResults(row);
   document.querySelector('.bake-panel')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -2080,7 +2100,11 @@ function renderIpqcTrendStats(rows,columns){
   }).join('');
 }
 
-function drawIpqcTrend(skipMoldRender=false){
+function drawIpqcTrend(skipMoldRender=false, reload=false){
+  if(reload && searchServerMode==='search' && ipqcTrendSelection){
+    Promise.resolve(refreshTrendRows()).then(()=>drawIpqcTrend(skipMoldRender,false));
+    return;
+  }
   const canvas=document.getElementById('ipqcTrendCanvas'),empty=document.getElementById('ipqcTrendEmpty'),legend=document.getElementById('ipqcTrendLegend'),target=document.getElementById('ipqcTrendTarget'),stats=document.getElementById('ipqcTrendStats');
   if(!canvas||!empty) return;
   if(stats)stats.innerHTML='';
@@ -2266,66 +2290,182 @@ function rowMatchesSearch(row, filters){
   return true;
 }
 
+/* ══════════════════════════════════════════════════════════════
+ * 서버측 필터링 검색
+ *  - Apps Script 에 IPQC_Search.gs 가 설치되어 있으면 action=search 사용
+ *    → 조건에 맞는 행만 내려받으므로 타임아웃이 발생하지 않음
+ *  - 설치 전이면 기존 action=rows 방식으로 자동 폴백
+ * ══════════════════════════════════════════════════════════════ */
+function buildSearchParams(filters, extra){
+  const p = Object.assign({action:'search'}, extra||{});
+  if(filters.date)      p.date = filters.date;
+  if(filters.dateFrom)  p.from = filters.dateFrom;
+  if(filters.dateTo)    p.to   = filters.dateTo;
+  if(filters.inspector) p.inspector = filters.inspector;
+  if(filters.desc)      p.desc = filters.desc;
+  if(filters.sap)       p.sap  = filters.sap;
+  if(filters.customer)  p.customer = filters.customer;
+  if(filters.mold)      p.mold = filters.mold;
+  if(filters.ltc)       p.ltc  = filters.ltc;
+  if(filters.machines && filters.machines.length) p.mc = filters.machines.join(',');
+  if(!p.limit) p.limit = SEARCH_ROW_LIMIT;
+  return p;
+}
+
+async function fetchServerSearch(filters, extra){
+  const res = await sheetJsonp(buildSearchParams(filters, extra), SEARCH_API_TIMEOUT_MS);
+  if(!res) return null;
+  if(res.ok && Array.isArray(res.rows)) return res;
+  return null;   // 미설치(구버전 doGet) 또는 서버 오류 → 폴백
+}
+
+// 트렌드용: 선택한 품목의 행만 서버에서 다시 가져온다
+async function refreshTrendRows(){
+  if(searchServerMode !== 'search' || !ipqcTrendSelection) return;
+  const f = {machines:[]};
+  if(ipqcTrendSelection.col === 6) f.sap = ipqcTrendSelection.value;
+  else                             f.desc = ipqcTrendSelection.value;
+  f.dateFrom = document.getElementById('ipqcTrendFrom')?.value || '';
+  f.dateTo   = document.getElementById('ipqcTrendTo')?.value   || '';
+  try{
+    const res = await fetchServerSearch(f, {exact:'1', limit:TREND_ROW_LIMIT});
+    if(res) ipqcTrendSourceRows = res.rows.map(it=>(it.row||[]).slice(0,HEADERS.length));
+  }catch(err){ console.warn('trend reload failed', err); }
+}
+
 async function searchServerRecords(){
   if(!ensureSheetWebAppUrl()) return;
   const status = document.getElementById('searchStatus');
   const wrap = document.getElementById('searchResultWrap');
   const table = document.getElementById('searchResultTable');
   searchResultRows = [];
+  ipqcTrendSourceRows = [];
   if(wrap) wrap.style.display='none';
   if(table) table.innerHTML='';
-  status.textContent = tr('srchSearching');
+
+  const filters = getSearchFilters();
+
+  // 날짜 조건이 전혀 없으면 최근 30일로 자동 제한 (전체 스캔 방지)
+  let autoRange = false;
+  if(!filters.date && !filters.dateFrom && !filters.dateTo){
+    const tw = new Date(Date.now() + 8*3600000);          // 대만 기준시
+    const toStr = tw.toISOString().slice(0,10);
+    const fromStr = new Date(tw.getTime() - 29*86400000).toISOString().slice(0,10);
+    filters.dateFrom = fromStr;
+    filters.dateTo   = toStr;
+    autoRange = true;
+  }
+
+  let noteAuto = autoRange ? tr('srchAutoRange') : '';
+  let noteExtra = '';
+  searchRowsError = '';
+
+  status.textContent = tr('srchServerFast');
+
   try{
-    const result = await sheetJsonp({action:'list'});
-    if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
-    let rowsResult = {ok:false, rows:[]};
-    searchRowsError = '';
-    if(searchRowsCache && (Date.now() - searchRowsCacheAt) < SEARCH_ROWS_CACHE_MS){
-      rowsResult = searchRowsCache;
-    }else{
-      status.textContent = tr('srchLoadingRows');
+    // ── 1) 서버측 필터링 시도 ──────────────────────────────
+    let serverRes = null;
+    if(searchServerMode !== 'legacy'){
       try{
-        rowsResult = await sheetJsonp({action:'rows'}, SEARCH_ROWS_TIMEOUT_MS);
-        if(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows)){
-          searchRowsCache = rowsResult;
-          searchRowsCacheAt = Date.now();
-        }
-      }catch(e){
-        console.warn(e);
-        searchRowsError = (e && e.message === 'Request timeout') ? 'timeout' : 'error';
+        serverRes = await fetchServerSearch(filters);
+      }catch(err){
+        console.warn('server search failed', err);
       }
+      if(serverRes) searchServerMode = 'search';
+      else if(searchServerMode === 'auto') searchServerMode = 'legacy';
     }
-    searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
-    const filters = getSearchFilters();
-    const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
-    ipqcTrendSourceRows = searchRowsApiReady ? (rowsResult.rows || []).map(item=>(item.row||[]).slice(0,HEADERS.length)) : [];
-    records.forEach(record=>serverRecordToRows(record).forEach(row=>ipqcTrendSourceRows.push(row.slice(0,HEADERS.length))));
-    const seen = new Set();
-    records.forEach(record=>{
-      serverRecordToRows(record).forEach(row=>{
-        if(rowMatchesSearch(row, filters)){
-          const key = `${record.id || record.docId || ''}|${row.join('|')}`;
-          seen.add(key);
-          searchResultRows.push({record, row});
-        }
-      });
-    });
-    if(searchRowsApiReady){
-      (rowsResult.rows || []).forEach(item=>{
+
+    if(serverRes){
+      searchRowsApiReady = true;
+      const seen = new Set();
+      serverRes.rows.forEach(item=>{
         const row = (item.row || []).slice(0, HEADERS.length);
-        if(!rowMatchesSearch(row, filters)) return;
-        const key = `${item.recordId || ''}|${row.join('|')}`;
+        const key = `${item.sheetName||''}#${item.rowNumber||''}|${row.join('|')}`;
         if(seen.has(key)) return;
         seen.add(key);
+        ipqcTrendSourceRows.push(row);
         searchResultRows.push({record:recordFromSheetRow(row, item), row});
       });
+
+      // 시트에 아직 반영되지 않은 최근 제출분 보강 (실패해도 검색은 유지)
+      try{
+        const listRes = await sheetJsonp({action:'list'}, LIST_TIMEOUT_MS);
+        if(listRes && listRes.ok){
+          (listRes.records||[]).map(normalizeServerRecord).filter(Boolean).forEach(record=>{
+            serverRecordToRows(record).forEach(row=>{
+              const r = row.slice(0, HEADERS.length);
+              if(!rowMatchesSearch(r, filters)) return;
+              const key = `rec|${record.id||record.docId||''}|${r.join('|')}`;
+              if(seen.has(key)) return;
+              seen.add(key);
+              ipqcTrendSourceRows.push(r);
+              searchResultRows.push({record, row:r});
+            });
+          });
+        }else{
+          noteExtra += tr('srchListSkipped');
+        }
+      }catch(err){
+        console.warn('list skipped', err);
+        noteExtra += tr('srchListSkipped');
+      }
+
+      if(serverRes.truncated){
+        noteExtra += tr('srchTruncated').replace('{n}', SEARCH_ROW_LIMIT);
+      }
+    }else{
+      // ── 2) 폴백: 기존 방식 (전체 다운로드) ────────────────
+      status.textContent = tr('srchLegacyFallback');
+      const result = await sheetJsonp({action:'list'}, LIST_TIMEOUT_MS).catch(()=>null);
+      let rowsResult = {ok:false, rows:[]};
+      if(searchRowsCache && (Date.now() - searchRowsCacheAt) < SEARCH_ROWS_CACHE_MS){
+        rowsResult = searchRowsCache;
+      }else{
+        status.textContent = tr('srchLoadingRows');
+        try{
+          rowsResult = await sheetJsonp({action:'rows'}, SEARCH_ROWS_TIMEOUT_MS);
+          if(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows)){
+            searchRowsCache = rowsResult;
+            searchRowsCacheAt = Date.now();
+          }
+        }catch(e){
+          console.warn(e);
+          searchRowsError = (e && e.message === 'Request timeout') ? 'timeout' : 'error';
+        }
+      }
+      searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
+      const records = ((result && result.records) || []).map(normalizeServerRecord).filter(Boolean);
+      ipqcTrendSourceRows = searchRowsApiReady ? (rowsResult.rows || []).map(item=>(item.row||[]).slice(0,HEADERS.length)) : [];
+      records.forEach(record=>serverRecordToRows(record).forEach(row=>ipqcTrendSourceRows.push(row.slice(0,HEADERS.length))));
+      const seen = new Set();
+      records.forEach(record=>{
+        serverRecordToRows(record).forEach(row=>{
+          if(rowMatchesSearch(row, filters)){
+            const key = `${record.id || record.docId || ''}|${row.join('|')}`;
+            seen.add(key);
+            searchResultRows.push({record, row});
+          }
+        });
+      });
+      if(searchRowsApiReady){
+        (rowsResult.rows || []).forEach(item=>{
+          const row = (item.row || []).slice(0, HEADERS.length);
+          if(!rowMatchesSearch(row, filters)) return;
+          const key = `${item.recordId || ''}|${row.join('|')}`;
+          if(seen.has(key)) return;
+          seen.add(key);
+          searchResultRows.push({record:recordFromSheetRow(row, item), row});
+        });
+      }
     }
+
     searchResultRows.sort((a,b)=>{
       const ad = `${a.row[0]||''} ${a.row[1]||''}`;
       const bd = `${b.row[0]||''} ${b.row[1]||''}`;
       return bd.localeCompare(ad);
     });
     renderSearchResults();
+    status.textContent += noteAuto + noteExtra;
     loadBakeTestResults();
   }catch(err){
     console.error(err);
@@ -2416,6 +2556,9 @@ function clearSearchFilters(){
   const bakeStatus=document.getElementById('bakeStatus'),bakeWrap=document.getElementById('bakeResultWrap'),bakeTable=document.getElementById('bakeResultTable');
   if(bakeStatus)bakeStatus.textContent=tr('bakeInit');if(bakeWrap)bakeWrap.style.display='none';if(bakeTable)bakeTable.innerHTML='';
   ipqcTrendSelection = null;
+  ipqcTrendSourceRows = [];
+  searchRowsCache = null;
+  searchRowsCacheAt = 0;
   drawIpqcTrend();
 }
 
