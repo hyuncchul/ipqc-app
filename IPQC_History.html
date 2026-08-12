@@ -461,6 +461,11 @@
     <div class="table-wrap" id="searchResultWrap" style="display:none;max-height:420px">
       <table id="searchResultTable" class="search-table"></table>
     </div>
+    <div id="searchMoreBox" style="display:none;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn primary sm" id="searchMoreBtn" onclick="showMoreSearchRows()">더 보기</button>
+      <button class="btn sm" id="searchAllBtn" onclick="showAllSearchRows()" data-i18n="srchShowAllBtn">전체 표시</button>
+      <span class="hint" id="searchMoreInfo"></span>
+    </div>
     <div class="trend-panel">
       <div class="trend-head">
         <div><div class="trend-title" data-i18n="trendTitle">📈 IPQC 검색 트렌드</div><div class="trend-sub" data-i18n="trendSub">Google Sheets의 ipqc_data 데이터 · SAP PN 또는 Description 클릭 · 기간 및 몰드 선택</div></div>
@@ -867,7 +872,12 @@ const I18N = {
     srchFail:'검색 실패: ',
     srchServerFast:'서버에서 조건 검색 중... (해당 조건의 행만 내려받습니다)',
     srchAutoRange:' ※ 날짜 조건이 없어 최근 30일로 자동 제한했습니다. 더 넓은 기간이 필요하면 날짜를 지정하세요.',
-    srchTruncated:' ⚠️ 결과가 상한({n}건)에 도달해 일부만 표시했습니다. 날짜 범위를 좁혀 주세요.',
+    srchTruncated:' ⚠️ 결과가 안전 상한에 도달했습니다. 날짜 범위를 좁혀 주세요.',
+    srchPaging:'서버에서 조건 검색 중... {n}건 불러왔습니다',
+    srchShown:'{m} / {n}건 표시 중 · Excel 저장·트렌드는 전체 {n}건을 사용합니다',
+    srchMoreBtn:'▼ {k}건 더 보기',
+    srchShowAllBtn:'전체 표시',
+    srchShowAllConfirm:'{n}건을 한 번에 표시하면 브라우저가 잠시 멈출 수 있습니다.\n계속할까요?',
     srchLegacyFallback:'서버 검색 모듈이 없어 기존 방식(전체 다운로드)으로 진행합니다...',
     srchListSkipped:' (최근 미반영 데이터 조회는 건너뛰었습니다)',
     srchTrendLoading:'트렌드 데이터를 불러오는 중...',
@@ -965,7 +975,12 @@ const I18N = {
     srchFail:'Search failed: ',
     srchServerFast:'Searching on the server... (only matching rows are downloaded)',
     srchAutoRange:' * No date filter given, so the range was limited to the last 30 days. Specify dates for a wider range.',
-    srchTruncated:' ⚠️ Result limit ({n}) reached; only part of the data is shown. Narrow the date range.',
+    srchTruncated:' ⚠️ Safety limit reached. Please narrow the date range.',
+    srchPaging:'Searching on the server... {n} rows loaded',
+    srchShown:'Showing {m} of {n} · Excel export and trends use all {n} rows',
+    srchMoreBtn:'▼ Show {k} more',
+    srchShowAllBtn:'Show all',
+    srchShowAllConfirm:'Rendering {n} rows at once may freeze the browser briefly.\nContinue?',
     srchLegacyFallback:'Server search module not found. Falling back to full download...',
     srchListSkipped:' (skipped the recent-unsynced records lookup)',
     srchTrendLoading:'Loading trend data...',
@@ -2021,10 +2036,12 @@ let searchRowsError = '';        // '' | 'timeout' | 'error'
 const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
 const SEARCH_ROWS_TIMEOUT_MS = 300000;
 // ── 서버측 필터링 검색(IPQC_Search.gs) 설정 ──
-const SEARCH_API_TIMEOUT_MS = 90000;   // action=search 대기 시간
+const SEARCH_API_TIMEOUT_MS = 90000;   // action=search 1페이지 대기 시간
 const LIST_TIMEOUT_MS       = 25000;   // action=list 는 실패해도 검색을 막지 않음
-const SEARCH_ROW_LIMIT      = 5000;    // 검색 결과 상한
-const TREND_ROW_LIMIT       = 20000;   // 트렌드용 조회 상한
+const SEARCH_PAGE_SIZE      = 5000;    // 1회 요청당 행 수 (결과 상한 아님 - 자동으로 이어받음)
+const SEARCH_MAX_PAGES      = 200;     // 안전장치: 최대 100만 행
+const SEARCH_RENDER_CHUNK   = 3000;    // 화면 표에 한 번에 그리는 행 수 ([더 보기] 로 계속 추가)
+let searchRenderCount = 0;             // 현재 화면에 그려진 행 수
 let searchServerMode = 'auto';         // 'auto' | 'search'(서버필터 지원) | 'legacy'(구버전)
 let ipqcTrendSourceRows = [];
 let ipqcTrendSelection = null;
@@ -2308,15 +2325,28 @@ function buildSearchParams(filters, extra){
   if(filters.mold)      p.mold = filters.mold;
   if(filters.ltc)       p.ltc  = filters.ltc;
   if(filters.machines && filters.machines.length) p.mc = filters.machines.join(',');
-  if(!p.limit) p.limit = SEARCH_ROW_LIMIT;
+  if(!p.limit) p.limit = SEARCH_PAGE_SIZE;
   return p;
 }
 
-async function fetchServerSearch(filters, extra){
-  const res = await sheetJsonp(buildSearchParams(filters, extra), SEARCH_API_TIMEOUT_MS);
-  if(!res) return null;
-  if(res.ok && Array.isArray(res.rows)) return res;
-  return null;   // 미설치(구버전 doGet) 또는 서버 오류 → 폴백
+// nextCursor 가 없어질 때까지 자동으로 이어받는다 → 결과 건수 제한 없음
+async function fetchServerSearch(filters, extra, onProgress){
+  let cursor = '', pages = 0, all = [], truncated = false;
+  while(pages < SEARCH_MAX_PAGES){
+    const ex = Object.assign({limit:SEARCH_PAGE_SIZE}, extra||{});
+    if(cursor) ex.cursor = cursor;
+    const res = await sheetJsonp(buildSearchParams(filters, ex), SEARCH_API_TIMEOUT_MS);
+    if(!res || !res.ok || !Array.isArray(res.rows)){
+      if(pages === 0) return null;              // 미설치(구버전 doGet) → 폴백
+      truncated = true; break;                  // 도중 실패 → 받은 만큼 사용
+    }
+    all = all.concat(res.rows);
+    pages++;
+    if(typeof onProgress === 'function') onProgress(all.length);
+    if(!res.nextCursor) return {ok:true, rows:all, truncated:false, pages};
+    cursor = res.nextCursor;
+  }
+  return {ok:true, rows:all, truncated:true, pages};
 }
 
 // 트렌드용: 선택한 품목의 행만 서버에서 다시 가져온다
@@ -2328,7 +2358,7 @@ async function refreshTrendRows(){
   f.dateFrom = document.getElementById('ipqcTrendFrom')?.value || '';
   f.dateTo   = document.getElementById('ipqcTrendTo')?.value   || '';
   try{
-    const res = await fetchServerSearch(f, {exact:'1', limit:TREND_ROW_LIMIT});
+    const res = await fetchServerSearch(f, {exact:'1'});
     if(res) ipqcTrendSourceRows = res.rows.map(it=>(it.row||[]).slice(0,HEADERS.length));
   }catch(err){ console.warn('trend reload failed', err); }
 }
@@ -2367,7 +2397,9 @@ async function searchServerRecords(){
     let serverRes = null;
     if(searchServerMode !== 'legacy'){
       try{
-        serverRes = await fetchServerSearch(filters);
+        serverRes = await fetchServerSearch(filters, null, n=>{
+          status.textContent = tr('srchPaging').replace('{n}', n.toLocaleString());
+        });
       }catch(err){
         console.warn('server search failed', err);
       }
@@ -2411,7 +2443,7 @@ async function searchServerRecords(){
       }
 
       if(serverRes.truncated){
-        noteExtra += tr('srchTruncated').replace('{n}', SEARCH_ROW_LIMIT);
+        noteExtra += tr('srchTruncated');
       }
     }else{
       // ── 2) 폴백: 기존 방식 (전체 다운로드) ────────────────
@@ -2491,25 +2523,70 @@ function renderSearchResults(){
   if(!total){
     if(wrap) wrap.style.display='none';
     if(table) table.innerHTML='';
+    searchRenderCount = 0;
+    updateSearchMoreBox();
     return;
   }
-  const preview = searchResultRows;
-  const cols = HEADERS.map((_, idx)=>idx);
-  let html = '<thead><tr>';
-  cols.forEach(idx=>{ html += `<th>${esc(HEADERS[idx])}</th>`; });
-  html += '</tr></thead><tbody>';
-  preview.forEach((item, idx)=>{
-    html += `<tr onclick="openSearchResult(${idx})">`;
-    cols.forEach(col=>{
-      const clickable=(col===5||col===6)&&String(item.row[col]||'').trim();
-      html += clickable?`<td class="trend-cell" title="${esc(tr('trendView'))}" onclick="selectIpqcTrend(${idx},${col},event)">${esc(item.row[col] || '')}</td>`:`<td>${esc(item.row[col] || '')}</td>`;
-    });
-    html += '</tr>';
-  });
-  html += '</tbody>';
-  table.innerHTML = html;
+  // 헤더만 먼저 만들고, 본문은 청크 단위로 덧붙인다 (대량 결과에서 브라우저 멈춤 방지)
+  let head = '<thead><tr>';
+  HEADERS.forEach((h)=>{ head += `<th>${esc(h)}</th>`; });
+  head += '</tr></thead><tbody></tbody>';
+  table.innerHTML = head;
+  searchRenderCount = 0;
+  appendSearchRows();
   wrap.style.display = 'block';
   status.textContent += tr('srchAllCols');
+}
+
+// 다음 청크를 표 아래에 덧붙인다 (이미 그려진 행은 다시 그리지 않음)
+function appendSearchRows(chunk){
+  const table = document.getElementById('searchResultTable');
+  const tbody = table && table.querySelector('tbody');
+  if(!tbody) return;
+  const total = searchResultRows.length;
+  const end = Math.min(total, searchRenderCount + (chunk || SEARCH_RENDER_CHUNK));
+  const cols = HEADERS.map((_, i)=>i);
+  const title = esc(tr('trendView'));
+  let html = '';
+  for(let idx = searchRenderCount; idx < end; idx++){
+    const item = searchResultRows[idx];
+    html += `<tr onclick="openSearchResult(${idx})">`;
+    cols.forEach(col=>{
+      const v = item.row[col] || '';
+      const clickable = (col===5||col===6) && String(v).trim();
+      html += clickable
+        ? `<td class="trend-cell" title="${title}" onclick="selectIpqcTrend(${idx},${col},event)">${esc(v)}</td>`
+        : `<td>${esc(v)}</td>`;
+    });
+    html += '</tr>';
+  }
+  if(html) tbody.insertAdjacentHTML('beforeend', html);
+  searchRenderCount = end;
+  updateSearchMoreBox();
+}
+
+function updateSearchMoreBox(){
+  const box = document.getElementById('searchMoreBox');
+  if(!box) return;
+  const total = searchResultRows.length;
+  if(!total || searchRenderCount >= total){ box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  const rest = total - searchRenderCount;
+  const btn = document.getElementById('searchMoreBtn');
+  const info = document.getElementById('searchMoreInfo');
+  if(btn)  btn.textContent  = tr('srchMoreBtn').replace('{k}', Math.min(SEARCH_RENDER_CHUNK, rest).toLocaleString());
+  if(info) info.textContent = tr('srchShown')
+      .replace('{m}', searchRenderCount.toLocaleString())
+      .replace(/\{n\}/g, total.toLocaleString());
+}
+
+function showMoreSearchRows(){ appendSearchRows(); }
+
+function showAllSearchRows(){
+  const rest = searchResultRows.length - searchRenderCount;
+  if(rest <= 0) return;
+  if(rest > 10000 && !confirm(tr('srchShowAllConfirm').replace('{n}', searchResultRows.length.toLocaleString()))) return;
+  appendSearchRows(rest);
 }
 
 function openSearchResult(idx){
@@ -2552,6 +2629,8 @@ function clearSearchFilters(){
   document.getElementById('searchStatus').textContent = tr('srchInit');
   document.getElementById('searchResultWrap').style.display = 'none';
   document.getElementById('searchResultTable').innerHTML = '';
+  searchRenderCount = 0;
+  updateSearchMoreBox();
   bakeMatchedRows=[];
   const bakeStatus=document.getElementById('bakeStatus'),bakeWrap=document.getElementById('bakeResultWrap'),bakeTable=document.getElementById('bakeResultTable');
   if(bakeStatus)bakeStatus.textContent=tr('bakeInit');if(bakeWrap)bakeWrap.style.display='none';if(bakeTable)bakeTable.innerHTML='';
