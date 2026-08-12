@@ -875,6 +875,8 @@ const I18N = {
     srchTruncated:' ⚠️ 결과가 안전 상한에 도달했습니다. 날짜 범위를 좁혀 주세요.',
     srchPaging:'서버에서 조건 검색 중... {n}건 불러왔습니다',
     srchShown:'{m} / {n}건 표시 중 · Excel 저장·트렌드는 전체 {n}건을 사용합니다',
+    srchShownAll:'{n}건 전체 표시됨 · Excel 저장·트렌드도 전체 {n}건을 사용합니다',
+    srchOldModule:' ⚠️ Apps Script 의 IPQC_Search 가 구버전(v1)입니다. 결과가 {n}건에서 잘렸습니다 — v2 로 교체 후 재배포하세요.',
     srchMoreBtn:'▼ {k}건 더 보기',
     srchShowAllBtn:'전체 표시',
     srchShowAllConfirm:'{n}건을 한 번에 표시하면 브라우저가 잠시 멈출 수 있습니다.\n계속할까요?',
@@ -978,6 +980,8 @@ const I18N = {
     srchTruncated:' ⚠️ Safety limit reached. Please narrow the date range.',
     srchPaging:'Searching on the server... {n} rows loaded',
     srchShown:'Showing {m} of {n} · Excel export and trends use all {n} rows',
+    srchShownAll:'All {n} rows shown · Excel export and trends also use all {n}',
+    srchOldModule:' ⚠️ IPQC_Search on Apps Script is v1. Results were cut at {n} — replace with v2 and redeploy.',
     srchMoreBtn:'▼ Show {k} more',
     srchShowAllBtn:'Show all',
     srchShowAllConfirm:'Rendering {n} rows at once may freeze the browser briefly.\nContinue?',
@@ -2043,6 +2047,7 @@ const SEARCH_MAX_PAGES      = 200;     // 안전장치: 최대 100만 행
 const SEARCH_RENDER_CHUNK   = 3000;    // 화면 표에 한 번에 그리는 행 수 ([더 보기] 로 계속 추가)
 let searchRenderCount = 0;             // 현재 화면에 그려진 행 수
 let searchServerMode = 'auto';         // 'auto' | 'search'(서버필터 지원) | 'legacy'(구버전)
+let searchServerOldModule = false;     // IPQC_Search v1(페이지네이션 미지원) 감지
 let ipqcTrendSourceRows = [];
 let ipqcTrendSelection = null;
 let ipqcSelectedMolds = new Set();
@@ -2343,7 +2348,11 @@ async function fetchServerSearch(filters, extra, onProgress){
     all = all.concat(res.rows);
     pages++;
     if(typeof onProgress === 'function') onProgress(all.length);
-    if(!res.nextCursor) return {ok:true, rows:all, truncated:false, pages};
+    if(!res.nextCursor){
+      // v2 는 done 필드를 항상 보낸다. 없는데 페이지가 꽉 찼다면 v1(상한 잘림)이다.
+      if(res.done === undefined && res.rows.length >= (res.pageSize || SEARCH_PAGE_SIZE)) searchServerOldModule = true;
+      return {ok:true, rows:all, truncated:false, pages};
+    }
     cursor = res.nextCursor;
   }
   return {ok:true, rows:all, truncated:true, pages};
@@ -2396,6 +2405,7 @@ async function searchServerRecords(){
     // ── 1) 서버측 필터링 시도 ──────────────────────────────
     let serverRes = null;
     if(searchServerMode !== 'legacy'){
+      searchServerOldModule = false;
       try{
         serverRes = await fetchServerSearch(filters, null, n=>{
           status.textContent = tr('srchPaging').replace('{n}', n.toLocaleString());
@@ -2444,6 +2454,9 @@ async function searchServerRecords(){
 
       if(serverRes.truncated){
         noteExtra += tr('srchTruncated');
+      }
+      if(searchServerOldModule){
+        noteExtra += tr('srchOldModule').replace('{n}', searchResultRows.length.toLocaleString());
       }
     }else{
       // ── 2) 폴백: 기존 방식 (전체 다운로드) ────────────────
@@ -2566,15 +2579,25 @@ function appendSearchRows(chunk){
 }
 
 function updateSearchMoreBox(){
-  const box = document.getElementById('searchMoreBox');
+  const box  = document.getElementById('searchMoreBox');
+  const btn  = document.getElementById('searchMoreBtn');
+  const all  = document.getElementById('searchAllBtn');
+  const info = document.getElementById('searchMoreInfo');
   if(!box) return;
   const total = searchResultRows.length;
-  if(!total || searchRenderCount >= total){ box.style.display = 'none'; return; }
-  box.style.display = 'flex';
+  if(!total){ box.style.display = 'none'; return; }
+
+  box.style.display = 'flex';           // 결과가 있으면 현황은 항상 표시
   const rest = total - searchRenderCount;
-  const btn = document.getElementById('searchMoreBtn');
-  const info = document.getElementById('searchMoreInfo');
-  if(btn)  btn.textContent  = tr('srchMoreBtn').replace('{k}', Math.min(SEARCH_RENDER_CHUNK, rest).toLocaleString());
+
+  if(rest <= 0){                        // 전부 그려짐 → 버튼만 감춤
+    if(btn) btn.style.display = 'none';
+    if(all) all.style.display = 'none';
+    if(info) info.textContent = tr('srchShownAll').replace(/\{n\}/g, total.toLocaleString());
+    return;
+  }
+  if(btn){ btn.style.display = ''; btn.textContent = tr('srchMoreBtn').replace('{k}', Math.min(SEARCH_RENDER_CHUNK, rest).toLocaleString()); }
+  if(all){ all.style.display = ''; }
   if(info) info.textContent = tr('srchShown')
       .replace('{m}', searchRenderCount.toLocaleString())
       .replace(/\{n\}/g, total.toLocaleString());
