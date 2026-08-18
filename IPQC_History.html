@@ -863,7 +863,7 @@ const I18N = {
     srchInit:'검색 조건을 입력한 뒤 검색 버튼을 누르세요.',
     srchSearching:'서버에서 검색 중...',
     srchLoadingRows:'서버에서 검색 중... (연도별 시트 데이터 로딩 중 - 데이터가 많아 3~5분 걸릴 수 있습니다. 창을 닫지 말고 기다려 주세요)',
-    srchResultCount:'검색 결과 {n}건 - 행을 클릭하면 상세 내용을 볼 수 있습니다.',
+    srchResultCount:'검색 결과 {n}건을 불러왔습니다. 행을 클릭하면 상세 내용을 볼 수 있습니다.',
     srchNoResult:'검색 결과가 없습니다.',
     srchTimeoutNote:' 단, 연도별 시트(2026) 데이터 로딩이 시간 초과되어 이번 검색에 포함되지 않았습니다. 잠시 후 [검색]을 다시 눌러 주세요.',
     srchRowsFailNote:' 단, 연도별 시트(2026) 데이터 로딩에 실패해 이번 검색에 포함되지 않았습니다. 잠시 후 다시 시도해 주세요.',
@@ -874,8 +874,8 @@ const I18N = {
     srchAutoRange:' ※ 날짜 조건이 없어 최근 30일로 자동 제한했습니다. 더 넓은 기간이 필요하면 날짜를 지정하세요.',
     srchTruncated:' ⚠️ 결과가 안전 상한에 도달했습니다. 날짜 범위를 좁혀 주세요.',
     srchPaging:'서버에서 조건 검색 중... {n}건 불러왔습니다',
-    srchShown:'{m} / {n}건 표시 중 · Excel 저장·트렌드는 전체 {n}건을 사용합니다',
-    srchShownAll:'{n}건 전체 표시됨 · Excel 저장·트렌드도 전체 {n}건을 사용합니다',
+    srchShown:'서버에서 {n}건 로드 · 화면에 {m}건 표시',
+    srchShownAll:'검색 결과 {n}건 전체 표시됨',
     srchOldModule:' ⚠️ Apps Script 의 IPQC_Search 가 구버전(v1)입니다. 결과가 {n}건에서 잘렸습니다 — v2 로 교체 후 재배포하세요.',
     srchMoreBtn:'▼ {k}건 더 보기',
     srchShowAllBtn:'전체 표시',
@@ -968,7 +968,7 @@ const I18N = {
     srchInit:'Enter search conditions and press Search.',
     srchSearching:'Searching server...',
     srchLoadingRows:'Searching server... (Loading yearly sheet data - may take 3-5 minutes due to large data. Please keep this window open)',
-    srchResultCount:'{n} results - click a row to see details.',
+    srchResultCount:'Loaded {n} results. Click a row to see details.',
     srchNoResult:'No results found.',
     srchTimeoutNote:' Note: yearly sheet (2026) data loading timed out and was not included in this search. Please press Search again shortly.',
     srchRowsFailNote:' Note: failed to load yearly sheet (2026) data; not included in this search. Please try again shortly.',
@@ -979,8 +979,8 @@ const I18N = {
     srchAutoRange:' * No date filter given, so the range was limited to the last 30 days. Specify dates for a wider range.',
     srchTruncated:' ⚠️ Safety limit reached. Please narrow the date range.',
     srchPaging:'Searching on the server... {n} rows loaded',
-    srchShown:'Showing {m} of {n} · Excel export and trends use all {n} rows',
-    srchShownAll:'All {n} rows shown · Excel export and trends also use all {n}',
+    srchShown:'Loaded {n} from server · showing {m}',
+    srchShownAll:'All {n} results are shown',
     srchOldModule:' ⚠️ IPQC_Search on Apps Script is v1. Results were cut at {n} — replace with v2 and redeploy.',
     srchMoreBtn:'▼ Show {k} more',
     srchShowAllBtn:'Show all',
@@ -1891,15 +1891,40 @@ function buildSheetRows(){
   return rows;
 }
 
-function postToSheet(action, payload){
+function delayMs(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
+
+// Apps Script Web App은 교차 출처 POST 응답을 브라우저에서 직접 읽기 어렵습니다.
+// POST 후 JSONP get으로 저장 토큰/삭제 결과를 확인해 실제 성공만 성공으로 처리합니다.
+async function postToSheet(action, payload){
+  const requestToken = 'req_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+  const requestPayload = {...(payload||{}), _requestToken:requestToken};
   const form = new URLSearchParams();
   form.set('action', action);
-  form.set('payload', JSON.stringify(payload || {}));
-  return fetch(GOOGLE_SHEET_WEB_APP_URL, {
+  form.set('payload', JSON.stringify(requestPayload));
+  await fetch(GOOGLE_SHEET_WEB_APP_URL, {
     method: 'POST',
     mode: 'no-cors',
     body: form
   });
+
+  if(action !== 'save' && action !== 'delete') return {ok:true};
+  const id = String(requestPayload.id || '');
+  if(!id) throw new Error('Missing record id');
+
+  let lastError = '';
+  for(let attempt=0; attempt<8; attempt++){
+    if(attempt) await delayMs(Math.min(3500, 500 + attempt*400));
+    try{
+      const check = await sheetJsonp({action:'get', id}, 20000);
+      if(action === 'delete'){
+        if(check && check.ok && !check.record) return {ok:true, deleted:true};
+      }else if(check && check.ok && check.record && check.record._requestToken === requestToken){
+        return {ok:true, record:check.record};
+      }
+      if(check && check.error) lastError = check.error;
+    }catch(err){ lastError = err.message || String(err); }
+  }
+  throw new Error(lastError || 'Server verification timed out');
 }
 
 function sheetJsonp(params = {}, timeoutMs = 20000){
@@ -1998,7 +2023,7 @@ async function loadFromServer(){
   const statusEl = document.getElementById('cloudStatus');
   statusEl.className='loading'; statusEl.textContent=tr('serverLoading');
   try{
-    const result = await sheetJsonp({action:'list'});
+    const result = await sheetJsonp({action:'list', limit:'30'});
     if(!result || !result.ok) throw new Error(result?.error || 'Load failed');
     const records = (result.records || []).map(normalizeServerRecord).filter(Boolean);
     if(!records.length){
@@ -2034,20 +2059,19 @@ async function loadFromServer(){
 
 let searchResultRows = [];
 let searchRowsApiReady = true;
-let searchRowsCache = null;      // 연도별 시트(rows) 응답 캐시 - 응답이 커서 재요청 비용이 큼
-let searchRowsCacheAt = 0;
-let searchRowsError = '';        // '' | 'timeout' | 'error'
-const SEARCH_ROWS_CACHE_MS = 10 * 60 * 1000;
-const SEARCH_ROWS_TIMEOUT_MS = 300000;
-// ── 서버측 필터링 검색(IPQC_Search.gs) 설정 ──
-const SEARCH_API_TIMEOUT_MS = 90000;   // action=search 1페이지 대기 시간
-const LIST_TIMEOUT_MS       = 25000;   // action=list 는 실패해도 검색을 막지 않음
-const SEARCH_PAGE_SIZE      = 5000;    // 1회 요청당 행 수 (결과 상한 아님 - 자동으로 이어받음)
-const SEARCH_MAX_PAGES      = 200;     // 안전장치: 최대 100만 행
-const SEARCH_RENDER_CHUNK   = 3000;    // 화면 표에 한 번에 그리는 행 수 ([더 보기] 로 계속 추가)
+let searchRowsError = '';
+const SEARCH_API_TIMEOUT_MS = 90000;
+const SEARCH_PAGE_SIZE      = 300;     // 서버에서 실제로 가져오는 페이지 크기
+const SEARCH_TREND_PAGE_SIZE = 1000;   // 선택 품목 트렌드 전용 페이지 크기
+const SEARCH_MAX_PAGES      = 100;
+const SEARCH_RENDER_CHUNK   = 500;
 let searchRenderCount = 0;             // 현재 화면에 그려진 행 수
-let searchServerMode = 'auto';         // 'auto' | 'search'(서버필터 지원) | 'legacy'(구버전)
-let searchServerOldModule = false;     // IPQC_Search v1(페이지네이션 미지원) 감지
+let searchServerMode = 'search';
+let searchNextCursor = '';
+let searchHasMore = false;
+let searchActiveFilters = null;
+let searchLoadingMore = false;
+let searchSeenKeys = new Set();
 let ipqcTrendSourceRows = [];
 let ipqcTrendSelection = null;
 let ipqcSelectedMolds = new Set();
@@ -2055,7 +2079,8 @@ let ipqcMoldSelectionKey = '';
 const IPQC_TREND_MEASURES = [12,13,14,15,17,18,19,22,23,24,25,26,27,28,29,30,31,33,34];
 const IPQC_TREND_COLORS = ['#2563eb','#f97316','#16a34a','#9333ea','#dc2626','#0891b2','#ca8a04','#db2777','#4f46e5','#0f766e'];
 const BAKE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1ytq5HYgmpsHxNLMhf4JNBoLHmyu1xHpEaoDwFd7nUGo/gviz/tq';
-let bakeSheetCache = null;
+let bakeQueryCache = new Map();
+let bakeFullSheetCache = null;
 let bakeMatchedRows = [];
 
 function initIpqcTrend(){
@@ -2160,27 +2185,33 @@ function drawIpqcTrend(skipMoldRender=false, reload=false){
   legend.innerHTML=molds.map(m=>`<span class="trend-legend-item"><i class="trend-swatch" style="background:${IPQC_TREND_COLORS[allMolds.indexOf(m)%IPQC_TREND_COLORS.length]}"></i>${esc(tr('trendMoldPrefix'))} ${esc(m)}</span>`).join('')+(a>=0?`<span class="trend-legend-item"><i class="trend-swatch" style="background:#475569"></i>${esc(HEADERS[a])}</span>`:'')+(b>=0?`<span class="trend-legend-item"><i class="trend-swatch trend-dash"></i>${esc(HEADERS[b])}</span>`:'');
 }
 
-async function loadBakeSheet(){
-  if(bakeSheetCache)return bakeSheetCache;
+async function loadBakeSheet(selectedRow){
+  const sap=String(selectedRow?.[6]??'').trim();
+  const desc=String(selectedRow?.[5]??'').trim();
+  const key=(sap?'sap:':'desc:')+(sap||desc).toLowerCase();
+  if(bakeQueryCache.has(key)) return bakeQueryCache.get(key);
   try{
-    const result=await sheetJsonp({action:'bakeRows'},60000);
+    const params={action:'searchBake',limit:'500'};
+    if(sap) params.sap=sap; else params.desc=desc;
+    const result=await sheetJsonp(params,60000);
     if(result&&result.ok&&Array.isArray(result.headers)&&Array.isArray(result.rows)){
       const headers=result.headers.map(h=>String(h||'').replace(/\s+/g,' ').trim());
       const rows=result.rows.map((item,rowIndex)=>({rowIndex:item.rowNumber||rowIndex+2,cells:(item.row||[]).map(v=>({v:v??'',f:''}))}));
-      bakeSheetCache={headers,rows};
-      return bakeSheetCache;
+      const data={headers,rows,truncated:result.done===false};
+      bakeQueryCache.set(key,data);
+      return data;
     }
-  }catch(err){console.warn('bakeRows API fallback:',err);}
+  }catch(err){console.warn('searchBake API fallback:',err);}
   return loadBakeSheetDirect_();
 }
 
 function loadBakeSheetDirect_(){
-  if(bakeSheetCache)return Promise.resolve(bakeSheetCache);
+  if(bakeFullSheetCache)return Promise.resolve(bakeFullSheetCache);
   return new Promise((resolve,reject)=>{
     const cb='ipqcBakeCb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),script=document.createElement('script');
     const timer=setTimeout(()=>{cleanup();reject(new Error('Bake test timeout'));},15000);
     function cleanup(){clearTimeout(timer);delete window[cb];script.remove();}
-    window[cb]=response=>{cleanup();if(!response||response.status==='error'||!response.table){reject(new Error('Bake test load failed'));return;}const headers=(response.table.cols||[]).map(c=>String(c.label||c.id||'').replace(/\s+/g,' ').trim());const rows=(response.table.rows||[]).map((r,rowIndex)=>({rowIndex,cells:(r.c||[]).map(c=>({v:c?.v??'',f:c?.f??''}))}));bakeSheetCache={headers,rows};resolve(bakeSheetCache);};
+    window[cb]=response=>{cleanup();if(!response||response.status==='error'||!response.table){reject(new Error('Bake test load failed'));return;}const headers=(response.table.cols||[]).map(c=>String(c.label||c.id||'').replace(/\s+/g,' ').trim());const rows=(response.table.rows||[]).map((r,rowIndex)=>({rowIndex,cells:(r.c||[]).map(c=>({v:c?.v??'',f:c?.f??''}))}));bakeFullSheetCache={headers,rows};resolve(bakeFullSheetCache);};
     script.onerror=()=>{cleanup();reject(new Error('Bake test network error'));};
     const url=new URL(BAKE_SHEET_URL);url.searchParams.set('sheet','Bake test');url.searchParams.set('tqx',`responseHandler:${cb}`);script.src=url.toString();document.body.appendChild(script);
   });
@@ -2193,11 +2224,11 @@ function bakeNorm(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' 
 
 async function loadBakeTestResults(selectedRow=null){
   const status=document.getElementById('bakeStatus'),wrap=document.getElementById('bakeResultWrap'),table=document.getElementById('bakeResultTable');if(!status)return;
-  status.textContent=tr('bakeLoading');wrap.style.display='none';table.innerHTML='';
-  if(!searchResultRows.length){status.textContent=tr('bakeNone');return;}
+  wrap.style.display='none';table.innerHTML='';
+  if(!selectedRow){bakeMatchedRows=[];status.textContent=searchResultRows.length?tr('bakeSelectItem'):tr('bakeInit');return;}
+  status.textContent=tr('bakeLoading');
   try{
-    const data=await loadBakeSheet(),h=data.headers,start=bakeHeaderIndex(h,'Star Date','Start Date'),end=bakeHeaderIndex(h,'End Date'),sap=bakeHeaderIndex(h,'SAP PN'),desc=bakeHeaderIndex(h,'Description');
-    if(!selectedRow){bakeMatchedRows=[];status.textContent=tr('bakeSelectItem');return;}
+    const data=await loadBakeSheet(selectedRow),h=data.headers,start=bakeHeaderIndex(h,'Star Date','Start Date'),end=bakeHeaderIndex(h,'End Date'),sap=bakeHeaderIndex(h,'SAP PN'),desc=bakeHeaderIndex(h,'Description');
     const matched=new Map();
     const ipDate=String(selectedRow[0]||'').slice(0,10),year=ipDate.slice(0,4),ipSap=bakeNorm(selectedRow[6]),ipDesc=bakeNorm(selectedRow[5]);data.rows.forEach(item=>{const bSap=bakeNorm(bakeDisplay(item,sap)),bDesc=bakeNorm(bakeDisplay(item,desc));const sameProduct=ipSap?(bSap===ipSap):Boolean(ipDesc&&bDesc===ipDesc);if(sameProduct)matched.set(item.rowIndex,{item,startDate:bakeIsoDate(item,start,year)||bakeDisplay(item,start),endDate:bakeIsoDate(item,end,year)||bakeDisplay(item,end),headers:h});});
     bakeMatchedRows=[...matched.values()].sort((a,b)=>`${a.startDate}|${a.endDate}`.localeCompare(`${b.startDate}|${b.endDate}`));renderBakeResults();
@@ -2276,10 +2307,12 @@ function recordFromSheetRow(row, meta = {}){
     ratio: row[33] || '',
     sess: ''
   }];
-  const id = meta.recordId || `sheet_${meta.sheetName || 'data'}_${meta.rowNumber || Date.now()}`;
+  const serverRecordId = String(meta.recordId || '');
+  const id = serverRecordId || `sheet_${meta.sheetName || 'data'}_${meta.rowNumber || Date.now()}`;
   return {
     id,
-    docId: id,
+    docId: serverRecordId || null,
+    serverRecordId,
     submittedAt: `${row[0] || ''} ${row[1] || ''}`.trim(),
     date: row[0] || '',
     time: row[1] || '',
@@ -2334,28 +2367,29 @@ function buildSearchParams(filters, extra){
   return p;
 }
 
-// nextCursor 가 없어질 때까지 자동으로 이어받는다 → 결과 건수 제한 없음
-async function fetchServerSearch(filters, extra, onProgress){
-  let cursor = '', pages = 0, all = [], truncated = false;
-  while(pages < SEARCH_MAX_PAGES){
-    const ex = Object.assign({limit:SEARCH_PAGE_SIZE}, extra||{});
-    if(cursor) ex.cursor = cursor;
-    const res = await sheetJsonp(buildSearchParams(filters, ex), SEARCH_API_TIMEOUT_MS);
-    if(!res || !res.ok || !Array.isArray(res.rows)){
-      if(pages === 0) return null;              // 미설치(구버전 doGet) → 폴백
-      truncated = true; break;                  // 도중 실패 → 받은 만큼 사용
-    }
-    all = all.concat(res.rows);
-    pages++;
-    if(typeof onProgress === 'function') onProgress(all.length);
-    if(!res.nextCursor){
-      // v2 는 done 필드를 항상 보낸다. 없는데 페이지가 꽉 찼다면 v1(상한 잘림)이다.
-      if(res.done === undefined && res.rows.length >= (res.pageSize || SEARCH_PAGE_SIZE)) searchServerOldModule = true;
-      return {ok:true, rows:all, truncated:false, pages};
-    }
-    cursor = res.nextCursor;
+async function fetchServerSearchPage(filters, extra){
+  const ex = Object.assign({limit:SEARCH_PAGE_SIZE}, extra||{});
+  const res = await sheetJsonp(buildSearchParams(filters, ex), SEARCH_API_TIMEOUT_MS);
+  if(!res || !res.ok || !Array.isArray(res.rows)){
+    throw new Error(res?.error || 'IPQC_Search v3 server module is not available');
   }
-  return {ok:true, rows:all, truncated:true, pages};
+  return res;
+}
+
+// 트렌드는 선택된 한 품목만 기간 범위 안에서 전부 필요하므로 별도 전체 조회를 사용합니다.
+async function fetchAllServerSearch(filters, extra, onProgress){
+  let cursor='', pages=0, all=[];
+  while(pages < SEARCH_MAX_PAGES){
+    const ex=Object.assign({limit:SEARCH_TREND_PAGE_SIZE},extra||{});
+    if(cursor) ex.cursor=cursor;
+    const res=await fetchServerSearchPage(filters,ex);
+    all=all.concat(res.rows);
+    pages++;
+    if(typeof onProgress==='function') onProgress(all.length);
+    if(!res.nextCursor) return {ok:true,rows:all,truncated:false,pages};
+    cursor=res.nextCursor;
+  }
+  return {ok:true,rows:all,truncated:true,pages};
 }
 
 // 트렌드용: 선택한 품목의 행만 서버에서 다시 가져온다
@@ -2367,7 +2401,7 @@ async function refreshTrendRows(){
   f.dateFrom = document.getElementById('ipqcTrendFrom')?.value || '';
   f.dateTo   = document.getElementById('ipqcTrendTo')?.value   || '';
   try{
-    const res = await fetchServerSearch(f, {exact:'1'});
+    const res = await fetchAllServerSearch(f, {exact:'1'});
     if(res) ipqcTrendSourceRows = res.rows.map(it=>(it.row||[]).slice(0,HEADERS.length));
   }catch(err){ console.warn('trend reload failed', err); }
 }
@@ -2379,6 +2413,9 @@ async function searchServerRecords(){
   const table = document.getElementById('searchResultTable');
   searchResultRows = [];
   ipqcTrendSourceRows = [];
+  searchNextCursor = '';
+  searchHasMore = false;
+  searchSeenKeys = new Set();
   if(wrap) wrap.style.display='none';
   if(table) table.innerHTML='';
 
@@ -2396,126 +2433,37 @@ async function searchServerRecords(){
   }
 
   let noteAuto = autoRange ? tr('srchAutoRange') : '';
-  let noteExtra = '';
   searchRowsError = '';
-
   status.textContent = tr('srchServerFast');
 
   try{
-    // ── 1) 서버측 필터링 시도 ──────────────────────────────
-    let serverRes = null;
-    if(searchServerMode !== 'legacy'){
-      searchServerOldModule = false;
-      try{
-        serverRes = await fetchServerSearch(filters, null, n=>{
-          status.textContent = tr('srchPaging').replace('{n}', n.toLocaleString());
-        });
-      }catch(err){
-        console.warn('server search failed', err);
-      }
-      if(serverRes) searchServerMode = 'search';
-      else if(searchServerMode === 'auto') searchServerMode = 'legacy';
-    }
-
-    if(serverRes){
-      searchRowsApiReady = true;
-      const seen = new Set();
-      serverRes.rows.forEach(item=>{
-        const row = (item.row || []).slice(0, HEADERS.length);
-        const key = `${item.sheetName||''}#${item.rowNumber||''}|${row.join('|')}`;
-        if(seen.has(key)) return;
-        seen.add(key);
-        ipqcTrendSourceRows.push(row);
-        searchResultRows.push({record:recordFromSheetRow(row, item), row});
-      });
-
-      // 시트에 아직 반영되지 않은 최근 제출분 보강 (실패해도 검색은 유지)
-      try{
-        const listRes = await sheetJsonp({action:'list'}, LIST_TIMEOUT_MS);
-        if(listRes && listRes.ok){
-          (listRes.records||[]).map(normalizeServerRecord).filter(Boolean).forEach(record=>{
-            serverRecordToRows(record).forEach(row=>{
-              const r = row.slice(0, HEADERS.length);
-              if(!rowMatchesSearch(r, filters)) return;
-              const key = `rec|${record.id||record.docId||''}|${r.join('|')}`;
-              if(seen.has(key)) return;
-              seen.add(key);
-              ipqcTrendSourceRows.push(r);
-              searchResultRows.push({record, row:r});
-            });
-          });
-        }else{
-          noteExtra += tr('srchListSkipped');
-        }
-      }catch(err){
-        console.warn('list skipped', err);
-        noteExtra += tr('srchListSkipped');
-      }
-
-      if(serverRes.truncated){
-        noteExtra += tr('srchTruncated');
-      }
-      if(searchServerOldModule){
-        noteExtra += tr('srchOldModule').replace('{n}', searchResultRows.length.toLocaleString());
-      }
-    }else{
-      // ── 2) 폴백: 기존 방식 (전체 다운로드) ────────────────
-      status.textContent = tr('srchLegacyFallback');
-      const result = await sheetJsonp({action:'list'}, LIST_TIMEOUT_MS).catch(()=>null);
-      let rowsResult = {ok:false, rows:[]};
-      if(searchRowsCache && (Date.now() - searchRowsCacheAt) < SEARCH_ROWS_CACHE_MS){
-        rowsResult = searchRowsCache;
-      }else{
-        status.textContent = tr('srchLoadingRows');
-        try{
-          rowsResult = await sheetJsonp({action:'rows'}, SEARCH_ROWS_TIMEOUT_MS);
-          if(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows)){
-            searchRowsCache = rowsResult;
-            searchRowsCacheAt = Date.now();
-          }
-        }catch(e){
-          console.warn(e);
-          searchRowsError = (e && e.message === 'Request timeout') ? 'timeout' : 'error';
-        }
-      }
-      searchRowsApiReady = !!(rowsResult && rowsResult.ok && Array.isArray(rowsResult.rows));
-      const records = ((result && result.records) || []).map(normalizeServerRecord).filter(Boolean);
-      ipqcTrendSourceRows = searchRowsApiReady ? (rowsResult.rows || []).map(item=>(item.row||[]).slice(0,HEADERS.length)) : [];
-      records.forEach(record=>serverRecordToRows(record).forEach(row=>ipqcTrendSourceRows.push(row.slice(0,HEADERS.length))));
-      const seen = new Set();
-      records.forEach(record=>{
-        serverRecordToRows(record).forEach(row=>{
-          if(rowMatchesSearch(row, filters)){
-            const key = `${record.id || record.docId || ''}|${row.join('|')}`;
-            seen.add(key);
-            searchResultRows.push({record, row});
-          }
-        });
-      });
-      if(searchRowsApiReady){
-        (rowsResult.rows || []).forEach(item=>{
-          const row = (item.row || []).slice(0, HEADERS.length);
-          if(!rowMatchesSearch(row, filters)) return;
-          const key = `${item.recordId || ''}|${row.join('|')}`;
-          if(seen.has(key)) return;
-          seen.add(key);
-          searchResultRows.push({record:recordFromSheetRow(row, item), row});
-        });
-      }
-    }
-
-    searchResultRows.sort((a,b)=>{
-      const ad = `${a.row[0]||''} ${a.row[1]||''}`;
-      const bd = `${b.row[0]||''} ${b.row[1]||''}`;
-      return bd.localeCompare(ad);
-    });
+    searchActiveFilters = filters;
+    const serverRes = await fetchServerSearchPage(filters);
+    searchRowsApiReady = true;
+    appendServerSearchItems(serverRes.rows);
+    searchNextCursor = serverRes.nextCursor || '';
+    searchHasMore = Boolean(searchNextCursor);
     renderSearchResults();
-    status.textContent += noteAuto + noteExtra;
+    status.textContent += noteAuto;
     loadBakeTestResults();
   }catch(err){
     console.error(err);
+    searchRowsApiReady = false;
+    searchRowsError = 'error';
     status.textContent = tr('srchFail') + err.message;
+    updateSearchMoreBox();
   }
+}
+
+function appendServerSearchItems(items){
+  (items||[]).forEach(item=>{
+    const row=(item.row||[]).slice(0,HEADERS.length);
+    const key=`${item.sheetName||''}#${item.rowNumber||''}|${item.recordId||''}`;
+    if(searchSeenKeys.has(key)) return;
+    searchSeenKeys.add(key);
+    ipqcTrendSourceRows.push(row);
+    searchResultRows.push({record:recordFromSheetRow(row,item),row});
+  });
 }
 
 function renderSearchResults(){
@@ -2590,37 +2538,95 @@ function updateSearchMoreBox(){
   box.style.display = 'flex';           // 결과가 있으면 현황은 항상 표시
   const rest = total - searchRenderCount;
 
-  if(rest <= 0){                        // 전부 그려짐 → 버튼만 감춤
+  if(rest <= 0 && !searchHasMore){
     if(btn) btn.style.display = 'none';
     if(all) all.style.display = 'none';
     if(info) info.textContent = tr('srchShownAll').replace(/\{n\}/g, total.toLocaleString());
     return;
   }
-  if(btn){ btn.style.display = ''; btn.textContent = tr('srchMoreBtn').replace('{k}', Math.min(SEARCH_RENDER_CHUNK, rest).toLocaleString()); }
-  if(all){ all.style.display = ''; }
-  if(info) info.textContent = tr('srchShown')
-      .replace('{m}', searchRenderCount.toLocaleString())
-      .replace(/\{n\}/g, total.toLocaleString());
+  const nextCount = rest > 0 ? Math.min(SEARCH_RENDER_CHUNK, rest) : SEARCH_PAGE_SIZE;
+  if(btn){
+    btn.style.display='';
+    btn.disabled=searchLoadingMore;
+    btn.textContent=searchLoadingMore
+      ? tr('srchSearching')
+      : tr('srchMoreBtn').replace('{k}',nextCount.toLocaleString());
+  }
+  if(all){ all.style.display=searchHasMore?'':'none'; all.disabled=searchLoadingMore; }
+  if(info) info.textContent=tr('srchShown')
+      .replace('{m}',searchRenderCount.toLocaleString())
+      .replace(/\{n\}/g,total.toLocaleString()) + (searchHasMore?' +':'');
 }
 
-function showMoreSearchRows(){ appendSearchRows(); }
-
-function showAllSearchRows(){
-  const rest = searchResultRows.length - searchRenderCount;
-  if(rest <= 0) return;
-  if(rest > 10000 && !confirm(tr('srchShowAllConfirm').replace('{n}', searchResultRows.length.toLocaleString()))) return;
-  appendSearchRows(rest);
+async function showMoreSearchRows(){
+  const localRest=searchResultRows.length-searchRenderCount;
+  if(localRest>0){ appendSearchRows(); return; }
+  if(!searchHasMore||searchLoadingMore||!searchActiveFilters) return;
+  searchLoadingMore=true;updateSearchMoreBox();
+  try{
+    const res=await fetchServerSearchPage(searchActiveFilters,{cursor:searchNextCursor});
+    appendServerSearchItems(res.rows);
+    searchNextCursor=res.nextCursor||'';
+    searchHasMore=Boolean(searchNextCursor);
+    appendSearchRows();
+  }catch(err){
+    document.getElementById('searchStatus').textContent=tr('srchFail')+err.message;
+  }finally{
+    searchLoadingMore=false;updateSearchMoreBox();
+  }
 }
 
-function openSearchResult(idx){
+async function showAllSearchRows(){
+  if(searchLoadingMore||!searchActiveFilters) return;
+  if(!confirm(tr('srchShowAllConfirm').replace('{n}',searchResultRows.length.toLocaleString()+'+'))) return;
+  searchLoadingMore=true;updateSearchMoreBox();
+  try{
+    let pages=0;
+    while(searchHasMore&&pages<SEARCH_MAX_PAGES){
+      const res=await fetchServerSearchPage(searchActiveFilters,{cursor:searchNextCursor});
+      appendServerSearchItems(res.rows);
+      searchNextCursor=res.nextCursor||'';
+      searchHasMore=Boolean(searchNextCursor);
+      pages++;
+      document.getElementById('searchStatus').textContent=tr('srchPaging').replace('{n}',searchResultRows.length.toLocaleString());
+    }
+    appendSearchRows(searchResultRows.length-searchRenderCount);
+    if(searchHasMore) document.getElementById('searchStatus').textContent+=tr('srchTruncated');
+  }catch(err){
+    document.getElementById('searchStatus').textContent=tr('srchFail')+err.message;
+  }finally{
+    searchLoadingMore=false;updateSearchMoreBox();
+  }
+}
+
+async function openSearchResult(idx){
   const item = searchResultRows[idx];
   if(!item || !item.record) return;
-  const rec = normalizeServerRecord({...item.record});
+  let rec;
+  const serverRecordId=String(item.record.serverRecordId||'');
+  if(serverRecordId){
+    try{
+      const result=await sheetJsonp({action:'get',id:serverRecordId},20000);
+      if(result&&result.ok&&result.record){
+        rec=normalizeServerRecord(result.record);
+      }else{
+        rec=normalizeServerRecord({...item.record});
+        rec.docId=null;
+      }
+    }catch(err){
+      console.warn('Full record lookup failed:',err);
+      rec=normalizeServerRecord({...item.record});
+      rec.docId=null;
+    }
+  }else{
+    rec=normalizeServerRecord({...item.record});
+    rec.docId=null; // 수동 업로드 행은 원본 제출 기록이 없으므로 조회 전용
+  }
   const hist = getHistory().filter(h=>(h.id||h.docId) !== (rec.id||rec.docId));
   hist.unshift({
     ...rec,
     id: rec.id || rec.docId,
-    docId: rec.id || rec.docId,
+    docId: rec.docId || null,
     savedAt: rec.submittedAt || rec.savedAt || ''
   });
   localStorage.setItem(HIST_KEY, JSON.stringify(hist.slice(0,30)));
@@ -2628,11 +2634,32 @@ function openSearchResult(idx){
   openHistModal(0);
 }
 
-function exportSearchResults(){
+async function exportSearchResults(){
   if(!searchResultRows.length){ alert(tr('srchNoResult')); return; }
   if(typeof XLSX === 'undefined'){
     alert(tr('srchNoXlsx'));
     return;
+  }
+  // Excel 내보내기는 화면 페이지와 달리 남은 서버 페이지를 의도적으로 모두 읽습니다.
+  if(searchHasMore&&searchActiveFilters&&!searchLoadingMore){
+    searchLoadingMore=true;updateSearchMoreBox();
+    try{
+      let pages=0;
+      while(searchHasMore&&pages<SEARCH_MAX_PAGES){
+        const res=await fetchServerSearchPage(searchActiveFilters,{cursor:searchNextCursor});
+        appendServerSearchItems(res.rows);
+        searchNextCursor=res.nextCursor||'';
+        searchHasMore=Boolean(searchNextCursor);
+        pages++;
+        document.getElementById('searchStatus').textContent=tr('srchPaging').replace('{n}',searchResultRows.length.toLocaleString());
+      }
+      if(searchHasMore) alert(tr('srchTruncated'));
+    }catch(err){
+      alert(tr('srchFail')+err.message);
+      return;
+    }finally{
+      searchLoadingMore=false;updateSearchMoreBox();
+    }
   }
   const rows = searchResultRows.map(item=>item.row);
   const wb = XLSX.utils.book_new();
@@ -2649,6 +2676,10 @@ function clearSearchFilters(){
     if(el) el.value = '';
   });
   searchResultRows = [];
+  searchActiveFilters = null;
+  searchNextCursor = '';
+  searchHasMore = false;
+  searchSeenKeys = new Set();
   document.getElementById('searchStatus').textContent = tr('srchInit');
   document.getElementById('searchResultWrap').style.display = 'none';
   document.getElementById('searchResultTable').innerHTML = '';
@@ -2659,8 +2690,6 @@ function clearSearchFilters(){
   if(bakeStatus)bakeStatus.textContent=tr('bakeInit');if(bakeWrap)bakeWrap.style.display='none';if(bakeTable)bakeTable.innerHTML='';
   ipqcTrendSelection = null;
   ipqcTrendSourceRows = [];
-  searchRowsCache = null;
-  searchRowsCacheAt = 0;
   drawIpqcTrend();
 }
 
@@ -2809,10 +2838,15 @@ function renderHistory(){
 async function deleteHistItemByIdx(idx,e){
   if(e) e.stopPropagation();
   const hist=getHistory(); const item=hist[idx];
-  if(!confirm(`[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?\n서버 데이터도 함께 삭제됩니다.`)) return;
-  const serverId = item.id || item.docId;
-  if(serverId && ensureSheetWebAppUrl()){
-    try{ await postToSheet('delete', {id:serverId}); }catch(e){ console.warn(e.message); }
+  const serverId = item.docId;
+  const message=serverId
+    ? `[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?\n서버 데이터도 함께 삭제됩니다.`
+    : `[${item.inspector}] ${item.date} 로컬 조회 기록을 삭제하시겠습니까?`;
+  if(!confirm(message)) return;
+  if(serverId){
+    if(!ensureSheetWebAppUrl()) return;
+    try{ await postToSheet('delete', {id:serverId}); }
+    catch(err){ alert(tr('hSaveFail')+err.message); return; }
   }
   hist.splice(idx,1); localStorage.setItem(HIST_KEY,JSON.stringify(hist)); renderHistory();
 }
@@ -2959,7 +2993,7 @@ async function saveHistEdit(){
   if(currentHistIdx===null) return;
   if(!ensureSheetWebAppUrl()) return;
   const hist=getHistory(); const item=hist[currentHistIdx];
-  const serverId = item && (item.id || item.docId);
+  const serverId = item && item.docId;
   if(!item||!serverId){ alert(tr('hNoFbIdAlert')); return; }
   const status=document.getElementById('hSaveStatus');
   status.className='loading'; status.textContent=tr('hSaving'); status.style.display='block';
@@ -3041,9 +3075,11 @@ async function deleteHistItem(){
   if(currentHistIdx===null) return;
   const hist=getHistory(); const item=hist[currentHistIdx];
   if(!confirm(`[${item.inspector}] ${item.date} 데이터를 삭제하시겠습니까?`)) return;
-  const serverId = item && (item.id || item.docId);
-  if(serverId && ensureSheetWebAppUrl()){
-    try{ await postToSheet('delete', {id:serverId}); }catch(e){ console.warn(e.message); }
+  const serverId = item && item.docId;
+  if(serverId){
+    if(!ensureSheetWebAppUrl()) return;
+    try{ await postToSheet('delete', {id:serverId}); }
+    catch(err){ alert(tr('hSaveFail')+err.message); return; }
   }
   hist.splice(currentHistIdx,1); localStorage.setItem(HIST_KEY,JSON.stringify(hist));
   closeHistModal(); renderHistory();
