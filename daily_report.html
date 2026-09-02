@@ -809,21 +809,17 @@ async function loadPhotos(btn, i){
   btn.disabled = true; btn.textContent = t('photo_loading');
   const issues = [rec.problemVisual, rec.problemPocket, rec.problemOther].filter(Boolean);
   if(!issues.length) issues.push(rec.dimension==='F'?'Dimension':'Visual');
-  let found = 0;
-  for(const issue of issues){
-    try{
-      const q = JSON.stringify([{id:'q_'+Math.random(), partNumber:rec.partNumber, date:rec.date, machine:rec.machine, mold:rec.mold, issue}]);
-      const r = await jsonp(BUYOFF_URL, {action:'buyoffPhotos', queries:q, partNumber:rec.partNumber, issue, dates:rec.date}, 20000);
-      if(r && r.ok && Array.isArray(r.photos)){
-        r.photos.forEach(p=>{
-          found++;
-          const cap = rec.partNumber+' · '+issue;
-          target.innerHTML += '<div class="photoitem"><img src="'+esc(p.imageUrl)+'" data-caption="'+esc(cap)+'" data-caption-zh="'+esc(issue)+'" loading="lazy" onclick="openPhotoModal(this.src,this.dataset.caption)"><div class="photocap i18n-dyn" data-zh="'+esc(issue.slice(0,40))+'">'+esc(issue.slice(0,40))+'</div></div>';
-        });
-      }
-    }catch(e){ /* skip failed query */ }
-    await new Promise(res=>setTimeout(res,300));
-  }
+  let photos = [];
+  try{
+    const q = JSON.stringify(issues.map((issue,n)=>({id:'q_'+n+'_'+Math.random(),partNumber:rec.partNumber,date:rec.date,machine:rec.machine,mold:rec.mold,issue})));
+    let r = await jsonp(BUYOFF_URL,{action:'buyoffPhotos',queries:q,partNumber:rec.partNumber,issue:issues[0],dates:rec.date},20000);
+    photos = r&&r.ok&&Array.isArray(r.photos)?r.photos:[];
+    r=await jsonp(BUYOFF_URL,{action:'buyoffPhotos',partNumber:rec.partNumber,dates:rec.date},20000);
+    if(r&&r.ok&&Array.isArray(r.photos))photos.push(...r.photos);
+  }catch(e){ /* keep an empty result */ }
+  photos=[...new Map(photos.map(p=>[p.id||p.viewUrl||p.imageUrl||p.name,p])).values()];
+  photos.forEach(p=>{const issue=p.issue||issues[0],cap=rec.partNumber+' · '+issue;target.innerHTML+='<div class="photoitem"><img src="'+esc(p.imageUrl)+'" data-caption="'+esc(cap)+'" data-caption-zh="'+esc(issue)+'" loading="lazy" onclick="openPhotoModal(this.src,this.dataset.caption)"><div class="photocap i18n-dyn" data-zh="'+esc((p.name||issue).slice(0,80))+'">'+esc((p.name||issue).slice(0,80))+'</div></div>'});
+  const found=photos.length;
   btn.textContent = found? unitPhoto(found) : t('photo_none');
   if(!found) btn.disabled = false;
   translateDynamicText();
