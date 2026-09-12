@@ -1,0 +1,25 @@
+{
+  "id": "./production.html",
+  "name": "FOL M/C",
+  "short_name": "FOL M/C",
+  "lang": "ko",
+  "start_url": "./production.html?view=display&app=1",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f6f8",
+  "theme_color": "#102b3c",
+  "icons": [
+    {
+      "src": "fol-mc-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "fol-mc-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
