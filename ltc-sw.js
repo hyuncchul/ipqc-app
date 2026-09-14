@@ -2,7 +2,7 @@
 const CACHE='ltc-production-shell-v1';
 const directory=new URL('./',self.location.href).pathname;
 const isPage=url=>url.origin===self.location.origin&&(url.pathname===directory+'production.html'||(directory==='/'&&url.pathname==='/'));
-const isAppAsset=url=>/\/(?:(?:ltc|fol-mc)-(?:icon-\d+|apple-touch-icon)\.png|peak-logo\.png|(?:ltc-)?manifest\.webmanifest)$/.test(url.pathname);
+const isAppAsset=url=>/\/(?:(?:ltc|fol-mc(?:-simple)?)-(?:icon-\d+|apple-touch-icon)\.png|peak-logo\.png|(?:ltc-)?manifest\.webmanifest)$/.test(url.pathname);
 const key=url=>new Request(url.origin+url.pathname);
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
