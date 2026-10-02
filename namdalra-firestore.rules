@@ -11,10 +11,13 @@ service cloud.firestore {
 
     // Only a project owner using the Firebase console / Admin SDK can provision
     // this document. Profile fields and client-supplied claims grant no privilege.
+    function protectedAdmin(uid) {
+      return exists(/databases/$(database)/documents/namdalraAdmins/$(uid))
+        && get(/databases/$(database)/documents/namdalraAdmins/$(uid)).data.enabled == true;
+    }
+
     function isAdmin() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/namdalraAdmins/$(request.auth.uid))
-        && get(/databases/$(database)/documents/namdalraAdmins/$(request.auth.uid)).data.enabled == true;
+      return signedIn() && protectedAdmin(request.auth.uid);
     }
 
     function activeMember(uid) {
@@ -86,9 +89,24 @@ service cloud.firestore {
         && data.updatedAt == request.time;
     }
 
+    function validLogin(data, uid, loginId) {
+      let fields = ['userId', 'kind', 'createdAt', 'authTime'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && data.userId == uid
+        && data.kind in ['login', 'signup']
+        && data.authTime is int && data.authTime > 0
+        && request.auth.token.auth_time is int
+        && data.authTime == request.auth.token.auth_time
+        && loginId == string(data.authTime)
+        && data.createdAt == request.time
+        && timestamp.value(data.authTime * 1000) <= request.time
+        && request.time <= timestamp.value(data.authTime * 1000) + duration.value(300, 's');
+    }
+
     match /namdalraAdmins/{uid} {
-      // Missing and disabled self-documents may be checked to determine role.
-      allow get: if isSelf(uid);
+      // Self reads determine role; admin lookups protect other administrators'
+      // profiles. No client can enumerate or change authority documents.
+      allow get: if isSelf(uid) || isAdmin();
       allow list, create, update, delete: if false;
     }
 
@@ -105,15 +123,30 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
       allow update: if isAdmin()
+        && !protectedAdmin(uid)
         && validMember(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['name', 'phone', 'address', 'school', 'grade', 'status', 'updatedAt'])
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
+
+      match /logins/{loginId} {
+        // A client can record one event per signed Firebase authentication time.
+        // Reads support transaction deduplication; only admins may list history.
+        allow get: if isSelf(uid) || isAdmin();
+        allow list: if isAdmin()
+          && request.query.limit != null && request.query.limit <= 30
+          && request.query.orderBy.createdAt == 'DESC';
+        allow create: if ownProgressAllowed(uid)
+          && validLogin(request.resource.data, uid, loginId);
+        allow update, delete: if false;
+      }
     }
 
     match /namdalraProgress/{uid} {
-      allow get: if ownProgressAllowed(uid);
+      // Administrators may inspect an individual student's report, including
+      // suspended students. This grants no collection listing or cross-user write.
+      allow get: if ownProgressAllowed(uid) || isAdmin();
       allow list: if false;
       allow create, update: if ownProgressAllowed(uid)
         && validProgress(request.resource.data, uid)

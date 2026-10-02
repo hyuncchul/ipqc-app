@@ -2,13 +2,13 @@
 // This file contains no administrator password, private key, or privileged credential.
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import {
-  getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged,
+  getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, getIdTokenResult,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser,
   EmailAuthProvider, reauthenticateWithCredential, updatePassword, sendPasswordResetEmail,
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import {
   getFirestore, doc, collection, getDocFromServer, getDocsFromServer,
-  setDoc, updateDoc, serverTimestamp, runTransaction, query, limit, onSnapshot,
+  setDoc, updateDoc, serverTimestamp, runTransaction, query, orderBy, limit, onSnapshot,
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
 const GRADES = new Set(['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'm1', 'm2', 'm3']);
@@ -16,6 +16,7 @@ const LEVELS = new Set(['sprout', 'leaf', 'tree', 'forest']);
 const CATEGORIES = new Set(['everyday', 'school', 'nature', 'people', 'world']);
 const MEMBER_FIELDS = new Set(['name', 'phone', 'address', 'school', 'grade', 'status']);
 const AUTH_MUTATIONS = new Set(['/api/login', '/api/register', '/api/logout', '/api/change-password']);
+const LOGIN_HISTORY_LIMIT = 30;
 const plainObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 function apiError(status, message) { return Object.assign(new Error(message), { status }); }
@@ -64,17 +65,20 @@ function profileFields(body, partial = false) {
   return fields;
 }
 function timestampText(value) {
-  if (typeof value?.toDate === 'function') return value.toDate().toISOString();
-  return typeof value === 'string' ? value : '';
+  try {
+    const date = typeof value?.toDate === 'function' ? value.toDate() : typeof value === 'string' ? new Date(value) : null;
+    return date && Number.isFinite(date.valueOf()) ? date.toISOString() : '';
+  } catch { return ''; }
 }
 function publicUser(id, profile, isAdmin = false, authUser = null) {
-  const data = profile || {};
+  const data = plainObject(profile) ? profile : {};
+  const string = key => typeof data[key] === 'string' ? data[key] : '';
   const level = levelForGrade(data.grade);
   return {
-    id, name: data.name || (isAdmin ? '남달라 관리자' : ''), phone: data.phone || '',
-    address: data.address || '', school: data.school || '', grade: data.grade || '',
-    email: data.email || authUser?.email || '', role: isAdmin ? 'admin' : 'member',
-    status: isAdmin ? 'active' : data.status, mustChangePassword: false,
+    id, name: string('name') || (isAdmin ? '남달라 관리자' : ''), phone: string('phone'),
+    address: string('address'), school: string('school'), grade: GRADES.has(data.grade) ? data.grade : '',
+    email: string('email') || authUser?.email || '', role: isAdmin ? 'admin' : 'member',
+    status: isAdmin ? 'active' : data.status === 'active' ? 'active' : 'suspended', mustChangePassword: false,
     createdAt: timestampText(data.createdAt), updatedAt: timestampText(data.updatedAt),
     level, recommendedLevel: level,
   };
@@ -142,7 +146,7 @@ function sanitizeProgress(raw, account) {
   return progress;
 }
 function mergeProgress(stored, incoming, account) {
-  const previous = sanitizeProgress(stored || {}, account);
+  const previous = sanitizeProgress(plainObject(stored) ? stored : {}, account);
   const next = sanitizeProgress(incoming, account);
   const merged = { ...next, words: { ...previous.words }, days: { ...previous.days }, gameBest: { ...previous.gameBest } };
   for (const [id, word] of Object.entries(next.words)) if (!merged.words[id] || word.updatedAt >= merged.words[id].updatedAt) merged.words[id] = word;
@@ -174,6 +178,7 @@ export function createFirebaseAdapter(config) {
   const memberRef = uid => doc(db, 'namdalraMembers', uid);
   const adminRef = uid => doc(db, 'namdalraAdmins', uid);
   const progressRef = uid => doc(db, 'namdalraProgress', uid);
+  const loginCollection = uid => collection(db, 'namdalraMembers', uid, 'logins');
   function signature(user) { return JSON.stringify(user); }
   function acceptAccount(user) { activeAccount = user; accountSignature = signature(user); return { user, csrfToken: '' }; }
   function notifyAccount(user, reason, force = false) {
@@ -221,9 +226,40 @@ export function createFirebaseAdapter(config) {
     if (admin && account.role !== 'admin') fail(403, '관리자만 사용할 수 있어요.');
     return { firebaseUser, account };
   }
+  async function recordSuccessfulLogin(firebaseUser, account, kind) {
+    if (account.role !== 'member') return;
+    try {
+      const { claims } = await getIdTokenResult(firebaseUser);
+      const authTime = claims.auth_time;
+      // Firestore rules validate the signed auth_time against trusted server time.
+      if (!Number.isSafeInteger(authTime) || authTime <= 0 || auth.currentUser?.uid !== firebaseUser.uid) throw new Error('invalid-auth-time');
+      const eventRef = doc(loginCollection(firebaseUser.uid), String(authTime));
+      await runTransaction(db, async transaction => {
+        const existing = await transaction.get(eventRef);
+        if (!existing.exists()) transaction.set(eventRef, { userId: firebaseUser.uid, kind, createdAt: serverTimestamp(), authTime });
+      });
+    } catch {
+      // History is best effort; never print credentials, email, UID, or SDK error details.
+      console.warn('남달라: 로그인 이력을 저장하지 못했어요.');
+    }
+  }
+  async function finishAuthentication(firebaseUser, kind) {
+    try {
+      const account = await loadAccount(firebaseUser);
+      await recordSuccessfulLogin(firebaseUser, account, kind);
+      return acceptAccount(await loadAccount(firebaseUser));
+    } catch (error) {
+      if (auth.currentUser?.uid === firebaseUser.uid) {
+        await signOut(auth);
+        if (!auth.currentUser) acceptAccount(null);
+      }
+      throw error;
+    }
+  }
   async function targetMember(id) {
     if (id === auth.currentUser?.uid) fail(403, '관리자 본인의 계정은 회원 목록에서 변경할 수 없어요.');
-    const snapshot = await getDocFromServer(memberRef(id));
+    const [snapshot, protectedAdmin] = await Promise.all([getDocFromServer(memberRef(id)), getDocFromServer(adminRef(id))]);
+    if (protectedAdmin.exists() && protectedAdmin.data().enabled === true) fail(403, '관리자 계정은 회원 관리에서 조회하거나 변경할 수 없어요.');
     if (!snapshot.exists()) fail(404, '회원을 찾을 수 없어요.');
     return snapshot.data();
   }
@@ -243,10 +279,10 @@ export function createFirebaseAdapter(config) {
       try {
         await setDoc(memberRef(credential.user.uid), { ...fields, role: 'member', status: 'active', createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
       } catch (error) {
-        try { await deleteUser(credential.user); } catch { await signOut(auth).catch(() => {}); }
+        try { await deleteUser(credential.user); } catch { if (auth.currentUser?.uid === credential.user.uid) await signOut(auth).catch(() => {}); }
         throw error;
       }
-      return acceptAccount(await loadAccount(credential.user));
+      return finishAuthentication(credential.user, 'signup');
     }
     if (pathname === '/api/login' && method === 'POST') {
       let email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
@@ -256,8 +292,7 @@ export function createFirebaseAdapter(config) {
       } else email = emailField(email);
       if (typeof body?.password !== 'string' || !body.password.length || body.password.length > 128) fail(401, '이메일 또는 비밀번호를 확인해 주세요.');
       const credential = await signInWithEmailAndPassword(auth, email, body.password);
-      try { return acceptAccount(await loadAccount(credential.user)); }
-      catch (error) { await signOut(auth); acceptAccount(null); throw error; }
+      return finishAuthentication(credential.user, 'login');
     }
     if (pathname === '/api/logout' && method === 'POST') { await signOut(auth); return acceptAccount(null); }
     if (pathname === '/api/change-password' && method === 'POST') {
@@ -273,7 +308,8 @@ export function createFirebaseAdapter(config) {
       const { firebaseUser, account } = await requireAccount();
       if (method === 'GET') {
         const snapshot = await getDocFromServer(progressRef(firebaseUser.uid));
-        return { progress: sanitizeProgress(snapshot.exists() ? snapshot.data().payload : {}, account) };
+        const payload = snapshot.exists() ? snapshot.data().payload : null;
+        return { progress: sanitizeProgress(plainObject(payload) ? payload : {}, account) };
       }
       if (!plainObject(body?.progress)) fail(400, '학습 기록 형식이 올바르지 않아요.');
       if (new TextEncoder().encode(JSON.stringify(body.progress)).byteLength > 128 * 1024) fail(413, '학습 기록 크기를 초과했어요. 관리자에게 문의해 주세요.');
@@ -293,9 +329,38 @@ export function createFirebaseAdapter(config) {
       const search = (url.searchParams.get('query') || '').trim().toLowerCase().slice(0, 100);
       const grade = url.searchParams.get('grade') || '';
       const status = url.searchParams.get('status') || '';
-      const members = snapshot.docs.filter(item => item.id !== account.id).map(item => publicUser(item.id, item.data())).filter(user => (!grade || user.grade === grade) && (!status || user.status === status) && (!search || [user.name, user.email, user.phone, user.school].some(value => value.toLowerCase().includes(search))));
+      const profiles = snapshot.docs.filter(item => item.id !== account.id);
+      const classified = [];
+      for (let offset = 0; offset < profiles.length; offset += 10) {
+        classified.push(...await Promise.all(profiles.slice(offset, offset + 10).map(async item => {
+          const protectedAdmin = await getDocFromServer(adminRef(item.id));
+          return publicUser(item.id, item.data(), protectedAdmin.exists() && protectedAdmin.data().enabled === true);
+        })));
+      }
+      const members = classified.filter(user => (!grade || user.grade === grade) && (!status || user.status === status) && (!search || [user.name, user.email, user.phone, user.school].some(value => value.toLowerCase().includes(search))));
       members.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       return { members };
+    }
+    const activity = pathname.match(/^\/api\/members\/([A-Za-z0-9_-]{1,128})\/activity$/);
+    if (activity && method === 'GET') {
+      const { firebaseUser } = await requireAccount(true);
+      const member = publicUser(activity[1], await targetMember(activity[1]));
+      const [saved, history] = await Promise.all([
+        getDocFromServer(progressRef(member.id)),
+        getDocsFromServer(query(loginCollection(member.id), orderBy('createdAt', 'desc'), limit(LOGIN_HISTORY_LIMIT))),
+      ]);
+      if (auth.currentUser?.uid !== firebaseUser.uid) fail(401, '접속 계정이 변경되었어요. 다시 로그인해 주세요.');
+      const stored = saved.exists() ? saved.data() : {};
+      const logins = history.docs.flatMap(item => {
+        const event = item.data();
+        const createdAt = timestampText(event.createdAt);
+        return event.userId === member.id && ['login', 'signup'].includes(event.kind) && Number.isSafeInteger(event.authTime) && event.authTime > 0 && item.id === String(event.authTime) && createdAt
+          ? [{ id: item.id, createdAt, kind: event.kind }] : [];
+      });
+      return {
+        member, progress: sanitizeProgress(plainObject(stored.payload) ? stored.payload : {}, member),
+        progressUpdatedAt: timestampText(stored.updatedAt), logins, loginHistoryLimit: LOGIN_HISTORY_LIMIT,
+      };
     }
     const target = pathname.match(/^\/api\/members\/([A-Za-z0-9_-]{1,128})(\/reset-password)?$/);
     if (target && ['PATCH', 'POST'].includes(method)) {
