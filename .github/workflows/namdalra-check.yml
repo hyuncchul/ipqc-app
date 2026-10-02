@@ -1,0 +1,46 @@
+name: Namdalra emulator checks
+
+on:
+  pull_request:
+    paths:
+      - 'namdalra.html'
+      - 'namdalra-assets/**'
+      - 'namdalra-tests/**'
+      - 'namdalra-firestore.rules'
+      - '.github/workflows/namdalra-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  emulator-tests:
+    name: Firestore rules and Firebase adapter
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: namdalra-tests
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_UPDATE_CHECK: 'true'
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: namdalra-tests/package-lock.json
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install test dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Test rules and adapter in local emulators
+        run: npm test
