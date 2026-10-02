@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Only a project owner using the Firebase console / Admin SDK can provision
+    // this document. Profile fields and client-supplied claims grant no privilege.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/namdalraAdmins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/namdalraAdmins/$(request.auth.uid)).data.enabled == true;
+    }
+
+    function activeMember(uid) {
+      return isSelf(uid)
+        && exists(/databases/$(database)/documents/namdalraMembers/$(uid))
+        && get(/databases/$(database)/documents/namdalraMembers/$(uid)).data.status == 'active'
+        && get(/databases/$(database)/documents/namdalraMembers/$(uid)).data.role == 'member';
+    }
+
+    function ownProgressAllowed(uid) {
+      return isSelf(uid) && (isAdmin() || activeMember(uid));
+    }
+
+    function validGrade(grade) {
+      return grade in ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'm1', 'm2', 'm3'];
+    }
+
+    function recommendedLevel(grade) {
+      return grade in ['e5', 'e6'] ? 'leaf'
+        : grade == 'm1' ? 'tree'
+        : grade in ['m2', 'm3'] ? 'forest'
+        : 'sprout';
+    }
+
+    function textWithin(value, minimum, maximum) {
+      return value is string && value.size() >= minimum && value.size() <= maximum;
+    }
+
+    function validMember(data) {
+      let fields = ['name', 'phone', 'address', 'school', 'grade', 'email', 'role', 'status', 'createdAt', 'updatedAt'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && textWithin(data.name, 2, 50)
+        && textWithin(data.phone, 9, 15) && data.phone.matches('^[0-9]{9,15}$')
+        && textWithin(data.address, 5, 200)
+        && textWithin(data.school, 2, 100)
+        && validGrade(data.grade)
+        && textWithin(data.email, 5, 254) && data.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')
+        && data.role == 'member'
+        && data.status in ['active', 'suspended']
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function validScore(value) {
+      return value is int && value >= 0 && value <= 100000;
+    }
+
+    function validProgress(data, uid) {
+      let fields = ['userId', 'level', 'payload', 'updatedAt'];
+      let payloadFields = ['words', 'days', 'gameBest', 'level', 'category'];
+      let speeds = ['easy', 'normal', 'fast'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && data.userId == uid
+        && data.level in ['sprout', 'leaf', 'tree', 'forest']
+        && data.payload is map
+        && data.payload.keys().hasAll(payloadFields) && data.payload.keys().hasOnly(payloadFields)
+        && data.payload.level == data.level
+        && data.payload.category in ['everyday', 'school', 'nature', 'people', 'world']
+        // Firestore Rules cannot iterate over arbitrary map entries. Access,
+        // ownership, envelope types, and map sizes are enforced here; the adapter
+        // also normalizes every word/day value before use. These are private
+        // self-reported practice records, not trusted grades or leaderboards.
+        && data.payload.words is map && data.payload.words.size() <= 1000
+        && data.payload.days is map && data.payload.days.size() <= 730
+        && data.payload.gameBest is map
+        && data.payload.gameBest.keys().hasAll(speeds) && data.payload.gameBest.keys().hasOnly(speeds)
+        && validScore(data.payload.gameBest.easy)
+        && validScore(data.payload.gameBest.normal)
+        && validScore(data.payload.gameBest.fast)
+        && data.updatedAt == request.time;
+    }
+
+    match /namdalraAdmins/{uid} {
+      // Missing and disabled self-documents may be checked to determine role.
+      allow get: if isSelf(uid);
+      allow list, create, update, delete: if false;
+    }
+
+    match /namdalraMembers/{uid} {
+      // A suspended student can still read their own status and be signed out.
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin() && request.query.limit != null && request.query.limit <= 1000;
+      allow create: if isSelf(uid)
+        && validMember(request.resource.data)
+        && request.auth.token.email is string
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'member'
+        && request.resource.data.status == 'active'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin()
+        && validMember(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'phone', 'address', 'school', 'grade', 'status', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /namdalraProgress/{uid} {
+      allow get: if ownProgressAllowed(uid);
+      allow list: if false;
+      allow create, update: if ownProgressAllowed(uid)
+        && validProgress(request.resource.data, uid)
+        && (isAdmin() || request.resource.data.level == recommendedLevel(
+          get(/databases/$(database)/documents/namdalraMembers/$(uid)).data.grade));
+      allow delete: if false;
+    }
+
+    // No implicit access to additional collections or nested documents.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
