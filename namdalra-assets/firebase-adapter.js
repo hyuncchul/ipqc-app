@@ -17,7 +17,13 @@ const CATEGORIES = new Set(['everyday', 'school', 'nature', 'people', 'world']);
 const MEMBER_FIELDS = new Set(['name', 'phone', 'address', 'school', 'grade', 'status']);
 const AUTH_MUTATIONS = new Set(['/api/login', '/api/register', '/api/logout', '/api/change-password']);
 const LOGIN_HISTORY_LIMIT = 30;
+const MAX_BOOKS = 200;
+const MAX_BOOK_WORDS = 1000;
+const MAX_ASSIGNED_BOOKS = 20;
+const MAX_DOCUMENT_BYTES = 750 * 1024;
 const plainObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const validBookId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
+const validWordId = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value);
 
 function apiError(status, message) { return Object.assign(new Error(message), { status }); }
 function fail(status, message) { throw apiError(status, message); }
@@ -69,6 +75,62 @@ function timestampText(value) {
     const date = typeof value?.toDate === 'function' ? value.toDate() : typeof value === 'string' ? new Date(value) : null;
     return date && Number.isFinite(date.valueOf()) ? date.toISOString() : '';
   } catch { return ''; }
+}
+function boundedText(value, label, max, required = false) {
+  if (value === undefined && !required) return '';
+  if (typeof value !== 'string') fail(400, `${label} 형식을 확인해 주세요.`);
+  const text = value.trim();
+  if ((required && !text) || text.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) fail(400, `${label}은(는) ${required ? '1' : '0'}~${max}자로 입력해 주세요.`);
+  return text;
+}
+function requireByteLimit(value, message) {
+  if (new TextEncoder().encode(JSON.stringify(value)).byteLength > MAX_DOCUMENT_BYTES) fail(413, message);
+}
+function bookWord(raw) {
+  if (!plainObject(raw) || !validWordId(raw.id)) fail(400, '단어 ID 형식을 확인해 주세요.');
+  const word = { id: raw.id };
+  for (const [key, label, max] of [['en', '영어 단어', 120], ['ko', '한글 뜻', 300], ['pos', '품사', 40], ['emoji', '그림', 16], ['example', '예문', 500], ['translation', '예문 해석', 500]]) word[key] = boundedText(raw[key], label, max, key === 'en');
+  return word;
+}
+function bookFields(raw) {
+  if (!plainObject(raw) || !Array.isArray(raw.words) || raw.words.length < 1 || raw.words.length > MAX_BOOK_WORDS) fail(400, `단어장은 1~${MAX_BOOK_WORDS}개 단어로 저장해 주세요.`);
+  const words = raw.words.map(bookWord);
+  if (new Set(words.map(word => word.id)).size !== words.length) fail(400, '단어장 안의 단어 ID가 중복되었어요. 다시 불러와 주세요.');
+  const fields = { title: boundedText(raw.title, '단어장 이름', 120, true), description: boundedText(raw.description, '설명', 2000), sourceName: boundedText(raw.sourceName, '원본 파일 이름', 200), words, wordCount: words.length };
+  requireByteLimit(fields, '단어장 크기는 750KiB 이하여야 해요. 단어장을 나눠 주세요.');
+  return fields;
+}
+function publicBook(id, data, full = false) {
+  const source = plainObject(data) ? data : {};
+  const seen = new Set();
+  const words = (Array.isArray(source.words) ? source.words : []).slice(0, MAX_BOOK_WORDS).flatMap(raw => {
+    try {
+      const word = bookWord(raw);
+      if (seen.has(word.id)) return [];
+      seen.add(word.id);
+      return [word];
+    } catch { return []; }
+  });
+  const text = (key, max) => typeof source[key] === 'string' ? source[key].slice(0, max) : '';
+  return { id, title: text('title', 120), description: text('description', 2000), sourceName: text('sourceName', 200), wordCount: words.length, revision: Number.isSafeInteger(source.revision) && source.revision > 0 ? source.revision : 0, createdAt: timestampText(source.createdAt), updatedAt: timestampText(source.updatedAt), ...(full ? { words } : {}) };
+}
+function publicAssignment(data) {
+  const source = plainObject(data) ? data : {};
+  return { bookIds: [...new Set((Array.isArray(source.bookIds) ? source.bookIds : []).filter(validBookId))].slice(0, MAX_ASSIGNED_BOOKS), revision: Number.isSafeInteger(source.revision) && source.revision > 0 ? source.revision : 0 };
+}
+function usableBook(data, book) {
+  return Array.isArray(data?.words) && book.wordCount > 0 && book.wordCount === data.words.length && book.wordCount === data.wordCount && book.revision > 0 && Boolean(book.title.trim());
+}
+function assignmentFields(raw) {
+  if (!plainObject(raw) || !Array.isArray(raw.bookIds) || raw.bookIds.length > MAX_ASSIGNED_BOOKS || raw.bookIds.some(id => !validBookId(id)) || new Set(raw.bookIds).size !== raw.bookIds.length) fail(400, '배정할 단어장은 중복 없이 최대 20개까지 선택해 주세요.');
+  if (!Number.isSafeInteger(raw.revision) || raw.revision < 0) fail(400, '배정 정보를 새로고침한 뒤 다시 저장해 주세요.');
+  return { bookIds: [...raw.bookIds], revision: raw.revision };
+}
+function requireWordCapacity(raw) {
+  if (plainObject(raw?.words) && Object.keys(raw.words).length > MAX_BOOK_WORDS) fail(413, '보관할 단어 기록이 1,000개를 초과했어요. 기존 기록은 그대로 유지됩니다. 관리자에게 문의해 주세요.');
+  if (plainObject(raw?.days)) {
+    if (Object.keys(raw.days).length > 730 || Object.values(raw.days).some(ids => Array.isArray(ids) && new Set(ids.filter(validWordId)).size > MAX_BOOK_WORDS)) fail(413, '날짜별 학습 기록의 보관 한도를 초과했어요. 기존 기록은 그대로 유지됩니다. 관리자에게 문의해 주세요.');
+  }
 }
 function publicUser(id, profile, isAdmin = false, authUser = null) {
   const data = plainObject(profile) ? profile : {};
@@ -127,7 +189,7 @@ function sanitizeProgress(raw, account) {
     level: account.role === 'admin' && LEVELS.has(raw.level) ? raw.level : levelForGrade(account.grade),
     category: CATEGORIES.has(raw.category) ? raw.category : 'everyday',
   };
-  const validId = id => typeof id === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(id);
+  const validId = validWordId;
   const count = value => Number.isFinite(Number(value)) ? Math.max(0, Math.min(1000000, Math.floor(Number(value)))) : 0;
   if (plainObject(raw.words)) for (const [id, value] of Object.entries(raw.words).slice(0, 1000)) {
     if (!validId(id) || !plainObject(value)) continue;
@@ -146,13 +208,18 @@ function sanitizeProgress(raw, account) {
   return progress;
 }
 function mergeProgress(stored, incoming, account) {
+  requireWordCapacity(stored);
+  requireWordCapacity(incoming);
   const previous = sanitizeProgress(plainObject(stored) ? stored : {}, account);
   const next = sanitizeProgress(incoming, account);
   const merged = { ...next, words: { ...previous.words }, days: { ...previous.days }, gameBest: { ...previous.gameBest } };
   for (const [id, word] of Object.entries(next.words)) if (!merged.words[id] || word.updatedAt >= merged.words[id].updatedAt) merged.words[id] = word;
   for (const [day, ids] of Object.entries(next.days)) merged.days[day] = [...new Set([...(merged.days[day] || []), ...ids])];
   for (const speed of ['easy', 'normal', 'fast']) merged.gameBest[speed] = Math.max(merged.gameBest[speed], next.gameBest[speed]);
-  return sanitizeProgress(merged, account);
+  requireWordCapacity(merged);
+  const result = sanitizeProgress(merged, account);
+  requireByteLimit(result, '학습 기록 크기가 750KiB를 초과했어요. 기존 기록은 그대로 유지됩니다. 관리자에게 문의해 주세요.');
+  return result;
 }
 
 export function createFirebaseAdapter(config) {
@@ -177,8 +244,14 @@ export function createFirebaseAdapter(config) {
   let watches = [];
   const memberRef = uid => doc(db, 'namdalraMembers', uid);
   const adminRef = uid => doc(db, 'namdalraAdmins', uid);
-  const progressRef = uid => doc(db, 'namdalraProgress', uid);
+  const progressRef = (uid, bookId = null) => bookId ? doc(db, 'namdalraProgress', uid, 'books', bookId) : doc(db, 'namdalraProgress', uid);
+  const bookCollection = collection(db, 'namdalraBooks');
+  const bookRef = id => doc(bookCollection, id);
+  const assignmentRef = uid => doc(db, 'namdalraAssignments', uid);
   const loginCollection = uid => collection(db, 'namdalraMembers', uid, 'logins');
+  function ensureIdentity(firebaseUser) {
+    if (!firebaseUser || auth.currentUser?.uid !== firebaseUser.uid) fail(401, '접속 계정이 변경되었어요. 다시 로그인해 주세요.');
+  }
   function signature(user) { return JSON.stringify(user); }
   function acceptAccount(user) { activeAccount = user; accountSignature = signature(user); return { user, csrfToken: '' }; }
   function notifyAccount(user, reason, force = false) {
@@ -256,12 +329,50 @@ export function createFirebaseAdapter(config) {
       throw error;
     }
   }
-  async function targetMember(id) {
+  async function targetMember(id, firebaseUser = auth.currentUser) {
     if (id === auth.currentUser?.uid) fail(403, '관리자 본인의 계정은 회원 목록에서 변경할 수 없어요.');
     const [snapshot, protectedAdmin] = await Promise.all([getDocFromServer(memberRef(id)), getDocFromServer(adminRef(id))]);
+    ensureIdentity(firebaseUser);
     if (protectedAdmin.exists() && protectedAdmin.data().enabled === true) fail(403, '관리자 계정은 회원 관리에서 조회하거나 변경할 수 없어요.');
     if (!snapshot.exists()) fail(404, '회원을 찾을 수 없어요.');
     return snapshot.data();
+  }
+  async function readAssignment(uid, firebaseUser, includeProgress = null) {
+    const snapshot = await getDocFromServer(assignmentRef(uid));
+    ensureIdentity(firebaseUser);
+    const assignment = publicAssignment(snapshot.exists() ? snapshot.data() : null);
+    const books = []; const unavailableBookIds = [];
+    for (let offset = 0; offset < assignment.bookIds.length; offset += 5) {
+      const batch = await Promise.all(assignment.bookIds.slice(offset, offset + 5).map(async id => {
+        const [book, saved] = await Promise.all([getDocFromServer(bookRef(id)), includeProgress ? getDocFromServer(progressRef(uid, id)) : Promise.resolve(null)]);
+        if (!book.exists()) return { missing: id };
+        const result = publicBook(id, book.data(), Boolean(includeProgress));
+        if (!usableBook(book.data(), result)) return { missing: id };
+        if (includeProgress) {
+          const stored = saved.exists() ? saved.data() : {};
+          result.progress = sanitizeProgress(plainObject(stored.payload) ? stored.payload : {}, includeProgress);
+          result.progressUpdatedAt = timestampText(stored.updatedAt);
+        }
+        return { book: result };
+      }));
+      ensureIdentity(firebaseUser);
+      for (const item of batch) if (item.missing) unavailableBookIds.push(item.missing); else books.push(item.book);
+    }
+    return { assignment, books, unavailableBookIds };
+  }
+  async function requireBook(id, firebaseUser, account) {
+    if (!validBookId(id)) fail(400, '단어장 선택을 확인해 주세요.');
+    if (account.role !== 'admin') {
+      const assignment = await getDocFromServer(assignmentRef(firebaseUser.uid));
+      ensureIdentity(firebaseUser);
+      if (!publicAssignment(assignment.exists() ? assignment.data() : null).bookIds.includes(id)) fail(403, '현재 배정되지 않은 단어장이에요. 단어장 목록을 새로고침해 주세요.');
+    }
+    const snapshot = await getDocFromServer(bookRef(id));
+    ensureIdentity(firebaseUser);
+    if (!snapshot.exists()) fail(404, '단어장을 찾을 수 없어요. 관리자에게 문의해 주세요.');
+    const book = publicBook(id, snapshot.data(), true);
+    if (!usableBook(snapshot.data(), book)) fail(422, '단어장 내용에 문제가 있어요. 관리자에게 다시 저장을 요청해 주세요.');
+    return book;
   }
   async function route(path, { method = 'GET', body } = {}) {
     const url = new URL(path, 'https://namdalra.invalid');
@@ -304,23 +415,109 @@ export function createFirebaseAdapter(config) {
       await updatePassword(firebaseUser, password);
       return acceptAccount(await loadAccount(firebaseUser));
     }
+    if (pathname === '/api/books' && ['GET', 'POST'].includes(method)) {
+      const { firebaseUser } = await requireAccount(true);
+      if (method === 'GET') {
+        const snapshot = await getDocsFromServer(query(bookCollection, orderBy('updatedAt', 'desc'), limit(MAX_BOOKS)));
+        ensureIdentity(firebaseUser);
+        const books = snapshot.docs.map(item => {
+          const book = publicBook(item.id, item.data());
+          return { ...book, ...(!usableBook(item.data(), book) ? { unavailable: true } : {}) };
+        });
+        books.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.title.localeCompare(b.title, 'ko'));
+        return { books, limitReached: snapshot.size === MAX_BOOKS, limit: MAX_BOOKS };
+      }
+      const fields = bookFields(body);
+      const reference = doc(bookCollection);
+      ensureIdentity(firebaseUser);
+      await setDoc(reference, { ...fields, revision: 1, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      ensureIdentity(firebaseUser);
+      const snapshot = await getDocFromServer(reference);
+      ensureIdentity(firebaseUser);
+      return { book: publicBook(snapshot.id, snapshot.data(), true) };
+    }
+    const selectedBook = pathname.match(/^\/api\/books\/([A-Za-z0-9_-]{1,128})$/);
+    if (selectedBook && ['GET', 'PUT'].includes(method)) {
+      const { firebaseUser, account } = await requireAccount(method === 'PUT');
+      if (method === 'GET') return { book: await requireBook(selectedBook[1], firebaseUser, account) };
+      const fields = bookFields(body);
+      if (!Number.isSafeInteger(body.revision) || body.revision < 1 || body.revision >= Number.MAX_SAFE_INTEGER) fail(400, '단어장 정보를 새로고침한 뒤 다시 저장해 주세요.');
+      const reference = bookRef(selectedBook[1]);
+      await runTransaction(db, async transaction => {
+        const snapshot = await transaction.get(reference);
+        ensureIdentity(firebaseUser);
+        if (!snapshot.exists()) fail(404, '단어장을 찾을 수 없어요.');
+        if (snapshot.data().revision !== body.revision) fail(409, '다른 곳에서 단어장을 수정했어요. 새로고침한 뒤 다시 저장해 주세요.');
+        transaction.update(reference, { ...fields, revision: body.revision + 1, updatedAt: serverTimestamp() });
+      });
+      ensureIdentity(firebaseUser);
+      const snapshot = await getDocFromServer(reference);
+      ensureIdentity(firebaseUser);
+      return { book: publicBook(snapshot.id, snapshot.data(), true) };
+    }
+    const assignedMember = pathname.match(/^\/api\/members\/([A-Za-z0-9_-]{1,128})\/assignments$/);
+    if (assignedMember && ['GET', 'PUT'].includes(method)) {
+      const { firebaseUser } = await requireAccount(true);
+      const uid = assignedMember[1];
+      await targetMember(uid, firebaseUser);
+      if (method === 'GET') return readAssignment(uid, firebaseUser);
+      const fields = assignmentFields(body);
+      if (fields.revision >= Number.MAX_SAFE_INTEGER) fail(400, '배정 정보를 확인해 주세요.');
+      const result = await runTransaction(db, async transaction => {
+        const [saved, member, protectedAdmin, ...books] = await Promise.all([
+          transaction.get(assignmentRef(uid)), transaction.get(memberRef(uid)), transaction.get(adminRef(uid)),
+          ...fields.bookIds.map(id => transaction.get(bookRef(id))),
+        ]);
+        ensureIdentity(firebaseUser);
+        if (!member.exists()) fail(404, '회원을 찾을 수 없어요.');
+        if (protectedAdmin.exists() && protectedAdmin.data().enabled === true) fail(403, '관리자 계정에는 학생 단어장을 배정할 수 없어요.');
+        const revision = saved.exists() ? saved.data().revision : 0;
+        if (revision !== fields.revision) fail(409, '다른 곳에서 배정을 수정했어요. 새로고침한 뒤 다시 저장해 주세요.');
+        if (books.some(book => !book.exists())) fail(404, '선택한 단어장 중 찾을 수 없는 항목이 있어요. 목록을 새로고침해 주세요.');
+        if (books.some(book => !usableBook(book.data(), publicBook(book.id, book.data())))) fail(422, '선택한 단어장 내용에 문제가 있어요. 다시 저장한 뒤 배정해 주세요.');
+        const assignment = { bookIds: fields.bookIds, revision: revision + 1 };
+        transaction.set(assignmentRef(uid), { userId: uid, ...assignment, updatedAt: serverTimestamp() });
+        return { assignment, books: books.map(book => publicBook(book.id, book.data())), unavailableBookIds: [] };
+      });
+      ensureIdentity(firebaseUser);
+      return result;
+    }
+    if (pathname === '/api/curriculum' && method === 'GET') {
+      const { firebaseUser } = await requireAccount();
+      return readAssignment(firebaseUser.uid, firebaseUser);
+    }
     if (pathname === '/api/progress' && ['GET', 'PUT'].includes(method)) {
       const { firebaseUser, account } = await requireAccount();
+      const bookId = url.searchParams.has('book') ? url.searchParams.get('book') : null;
+      if (bookId !== null && !validBookId(bookId)) fail(400, '단어장 선택을 확인해 주세요.');
+      const reference = progressRef(firebaseUser.uid, bookId);
       if (method === 'GET') {
-        const snapshot = await getDocFromServer(progressRef(firebaseUser.uid));
+        if (bookId) await requireBook(bookId, firebaseUser, account);
+        const snapshot = await getDocFromServer(reference);
+        ensureIdentity(firebaseUser);
         const payload = snapshot.exists() ? snapshot.data().payload : null;
         return { progress: sanitizeProgress(plainObject(payload) ? payload : {}, account) };
       }
       if (!plainObject(body?.progress)) fail(400, '학습 기록 형식이 올바르지 않아요.');
-      if (new TextEncoder().encode(JSON.stringify(body.progress)).byteLength > 128 * 1024) fail(413, '학습 기록 크기를 초과했어요. 관리자에게 문의해 주세요.');
+      requireByteLimit(body.progress, '학습 기록 크기가 750KiB를 초과했어요. 기존 기록은 그대로 유지됩니다. 관리자에게 문의해 주세요.');
+      requireWordCapacity(body.progress);
       const progress = await runTransaction(db, async transaction => {
-        const [saved, member, admin] = await Promise.all([transaction.get(progressRef(firebaseUser.uid)), transaction.get(memberRef(firebaseUser.uid)), transaction.get(adminRef(firebaseUser.uid))]);
-        if (auth.currentUser?.uid !== firebaseUser.uid) fail(401, '접속 계정이 변경되었어요. 다시 로그인해 주세요.');
+        const [saved, member, admin, assignment, book] = await Promise.all([
+          transaction.get(reference), transaction.get(memberRef(firebaseUser.uid)), transaction.get(adminRef(firebaseUser.uid)),
+          bookId ? transaction.get(assignmentRef(firebaseUser.uid)) : Promise.resolve(null),
+          bookId ? transaction.get(bookRef(bookId)) : Promise.resolve(null),
+        ]);
+        ensureIdentity(firebaseUser);
         const currentAccount = accountFromSnapshots(firebaseUser, member, admin);
+        if (bookId) {
+          if (!book.exists()) fail(404, '단어장을 찾을 수 없어요. 단어장 목록을 새로고침해 주세요.');
+          if (currentAccount.role !== 'admin' && !publicAssignment(assignment.exists() ? assignment.data() : null).bookIds.includes(bookId)) fail(403, '현재 배정되지 않은 단어장이에요. 단어장 목록을 새로고침해 주세요.');
+        }
         const merged = mergeProgress(saved.exists() ? saved.data().payload : {}, body.progress, currentAccount);
-        transaction.set(progressRef(firebaseUser.uid), { userId: firebaseUser.uid, level: merged.level, payload: merged, updatedAt: serverTimestamp() });
+        transaction.set(reference, { userId: firebaseUser.uid, level: merged.level, payload: merged, updatedAt: serverTimestamp() });
         return merged;
       });
+      ensureIdentity(firebaseUser);
       return { progress };
     }
     if (pathname === '/api/members' && method === 'GET') {
@@ -344,10 +541,11 @@ export function createFirebaseAdapter(config) {
     const activity = pathname.match(/^\/api\/members\/([A-Za-z0-9_-]{1,128})\/activity$/);
     if (activity && method === 'GET') {
       const { firebaseUser } = await requireAccount(true);
-      const member = publicUser(activity[1], await targetMember(activity[1]));
-      const [saved, history] = await Promise.all([
+      const member = publicUser(activity[1], await targetMember(activity[1], firebaseUser));
+      const [saved, history, curriculum] = await Promise.all([
         getDocFromServer(progressRef(member.id)),
         getDocsFromServer(query(loginCollection(member.id), orderBy('createdAt', 'desc'), limit(LOGIN_HISTORY_LIMIT))),
+        readAssignment(member.id, firebaseUser, member),
       ]);
       if (auth.currentUser?.uid !== firebaseUser.uid) fail(401, '접속 계정이 변경되었어요. 다시 로그인해 주세요.');
       const stored = saved.exists() ? saved.data() : {};
@@ -359,13 +557,13 @@ export function createFirebaseAdapter(config) {
       });
       return {
         member, progress: sanitizeProgress(plainObject(stored.payload) ? stored.payload : {}, member),
-        progressUpdatedAt: timestampText(stored.updatedAt), logins, loginHistoryLimit: LOGIN_HISTORY_LIMIT,
+        progressUpdatedAt: timestampText(stored.updatedAt), logins, loginHistoryLimit: LOGIN_HISTORY_LIMIT, ...curriculum,
       };
     }
     const target = pathname.match(/^\/api\/members\/([A-Za-z0-9_-]{1,128})(\/reset-password)?$/);
     if (target && ['PATCH', 'POST'].includes(method)) {
-      await requireAccount(true);
-      const member = await targetMember(target[1]);
+      const { firebaseUser } = await requireAccount(true);
+      const member = await targetMember(target[1], firebaseUser);
       if (method === 'POST' && target[2]) {
         await sendPasswordResetEmail(auth, member.email);
         return { resetEmailSent: true };
@@ -390,7 +588,13 @@ export function createFirebaseAdapter(config) {
         if (!intentionalAuth) { intentionalBaseline = activeAccount ? { id: activeAccount.id, signature: accountSignature } : null; pendingAccountChange = null; }
         intentionalAuth++;
       }
-      try { await ready; return await route(path, options); }
+      try {
+        await ready;
+        const uid = auth.currentUser?.uid;
+        const result = await route(path, options);
+        if (!intentional && uid !== auth.currentUser?.uid) fail(401, '접속 계정이 변경되었어요. 다시 로그인해 주세요.');
+        return result;
+      }
       catch (error) { throw normalizeError(error); }
       finally {
         if (intentional && --intentionalAuth === 0) {

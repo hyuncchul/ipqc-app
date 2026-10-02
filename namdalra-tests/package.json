@@ -1,0 +1,19 @@
+{
+  "name": "namdalra-firestore-security-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pretest": "node --input-type=module -e \"import { copyFileSync } from 'node:fs'; copyFileSync('../namdalra-firestore.rules', '.test-firestore.rules');\"",
+    "test": "firebase emulators:exec --project demo-namdalra-rules --only auth,firestore --config firebase.json \"npm run test:running-emulator\"",
+    "test:running-emulator": "node --test --test-concurrency=1 security.test.mjs && node adapter.integration.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.32.1"
+  }
+}

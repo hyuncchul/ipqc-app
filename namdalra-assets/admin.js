@@ -13,6 +13,7 @@
   let requestVersion = 0;
   let dialogNumber = 0;
   let searchTimer = null;
+  let booksCleanup = null;
 
   const auth = () => window.NamdalraAuth;
   const escape = value => auth().escape(value == null ? '' : String(value));
@@ -27,6 +28,7 @@
   const notify = text => auth().notify(text);
 
   function destroy() {
+    booksCleanup?.(); booksCleanup = null; window.NamdalraWorkbookAdmin?.destroy();
     clearTimeout(searchTimer);
     requestVersion++;
     if (activeRoot) {
@@ -88,46 +90,60 @@
     if (!result || !result.member || String(result.member.id) !== memberId(member)) throw new Error('회원 기록을 확인할 수 없어요. 다시 불러와 주세요.');
     const person = result.member;
     if (protectedMember(person)) throw new Error('관리자 계정의 학습 기록은 이 목록에서 조회하지 않아요.');
-    const words = vocabulary();
-    const ids = new Set(words.map(word => word.id));
-    const progress = plainObject(result.progress) ? result.progress : {};
-    const savedWords = plainObject(progress.words) ? progress.words : {};
-    const savedDays = plainObject(progress.days) ? progress.days : {};
     const level = gradeLevel(person.grade);
-    const curriculum = words.filter(word => word.level === level);
-    let incomplete = !words.length || !level || !plainObject(result.progress) ||
-      ['words', 'days', 'gameBest'].some(key => progress[key] !== undefined && !plainObject(progress[key])) ||
-      (result.logins !== undefined && !Array.isArray(result.logins));
-    for (const [id, value] of Object.entries(savedWords)) {
-      if (!ids.has(id) || !plainObject(value) || ['known', 'wrong', 'starred'].some(key => value[key] !== undefined && typeof value[key] !== 'boolean')) incomplete = true;
+    const assignmentIds = [...new Set((Array.isArray(result.assignment?.bookIds) ? result.assignment.bookIds : []).filter(id => typeof id === 'string' && id))];
+    const assigned = assignmentIds.length > 0;
+    const available = new Map((Array.isArray(result.books) ? result.books : []).filter(book => book && typeof book.id === 'string' && Array.isArray(book.words)).map(book => [book.id, book]));
+    const missingBooks = assigned ? assignmentIds.filter(id => !available.has(id)) : [];
+    const records = assigned ? assignmentIds.filter(id => available.has(id)).map(id => {
+      const book = available.get(id); return {key:id,title:String(book.title || '배정 단어장'),words:book.words,progress:book.progress,updatedAt:book.progressUpdatedAt};
+    }) : [{key:'builtin',title:LEVEL_LABELS[level] || '학년 확인 필요',words:vocabulary(),progress:result.progress,updatedAt:result.progressUpdatedAt}];
+    let incomplete = (!assigned && (!vocabulary().length || !level)) || (result.logins !== undefined && !Array.isArray(result.logins));
+    const known = [], wrong = [], starred = [], curriculum = [], categories = [], dayMap = new Map();
+    const gameBest = {easy:null,normal:null,fast:null}; let curriculumKnown = 0, progressUpdatedAt = '';
+    for (const record of records) {
+      const words = record.words.filter(word => plainObject(word) && typeof word.id === 'string' && typeof word.en === 'string' && typeof word.ko === 'string');
+      if (words.length !== record.words.length) incomplete = true;
+      const ids = new Set(words.map(word => word.id));
+      const progress = plainObject(record.progress) ? record.progress : {};
+      const savedWords = plainObject(progress.words) ? progress.words : {};
+      const savedDays = plainObject(progress.days) ? progress.days : {};
+      if ((record.progress != null && !plainObject(record.progress)) || ['words','days','gameBest'].some(key => progress[key] !== undefined && !plainObject(progress[key]))) incomplete = true;
+      for (const [id,value] of Object.entries(savedWords)) {
+        // Old or removed word IDs remain legitimate history; they do not invalidate current content.
+        if (ids.has(id) && (!plainObject(value) || ['known','wrong','starred'].some(key => value[key] !== undefined && typeof value[key] !== 'boolean'))) incomplete = true;
+      }
+      const marked = flag => words.filter(word => plainObject(savedWords[word.id]) && savedWords[word.id][flag] === true);
+      const recordKnown = marked('known'); const knownIds = new Set(recordKnown.map(word => word.id));
+      known.push(...recordKnown); wrong.push(...marked('wrong')); starred.push(...marked('starred'));
+      const target = assigned ? words : words.filter(word => word.level === level);
+      const count = target.filter(word => knownIds.has(word.id)).length;
+      curriculum.push(...target); curriculumKnown += count;
+      if (assigned) categories.push({id:record.key,label:['📗',record.title],target:target.length,known:count});
+      else categories.push(...Object.entries(CATEGORY_LABELS).map(([id,label]) => ({id,label,target:target.filter(word => word.category === id).length,known:target.filter(word => word.category === id && knownIds.has(word.id)).length})));
+      for (const [day,value] of Object.entries(savedDays)) {
+        if (!validDay(day) || !Array.isArray(value)) { incomplete = true; continue; }
+        const historyIds = value.filter(id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(id));
+        if (historyIds.length !== value.length) incomplete = true;
+        if (!historyIds.length) continue;
+        if (!dayMap.has(day)) dayMap.set(day,new Set());
+        historyIds.forEach(id => dayMap.get(day).add(record.key + ':' + id));
+      }
+      for (const mode of ['easy','normal','fast']) {
+        const value = plainObject(progress.gameBest) ? progress.gameBest[mode] : undefined; const valid = number(value);
+        if (value !== undefined && valid === null) incomplete = true;
+        if (valid !== null) gameBest[mode] = gameBest[mode] === null ? valid : Math.max(gameBest[mode],valid);
+      }
+      if (validDate(record.updatedAt) && (!progressUpdatedAt || new Date(record.updatedAt) > new Date(progressUpdatedAt))) progressUpdatedAt = record.updatedAt;
     }
-    const marked = flag => words.filter(word => plainObject(savedWords[word.id]) && savedWords[word.id][flag] === true);
-    const known = marked('known'), wrong = marked('wrong'), starred = marked('starred');
-    const knownIds = new Set(known.map(word => word.id));
-    const curriculumKnown = curriculum.filter(word => knownIds.has(word.id)).length;
-    const days = [];
-    for (const [date, value] of Object.entries(savedDays)) {
-      if (!validDay(date) || !Array.isArray(value)) { incomplete = true; continue; }
-      const unique = [...new Set(value.filter(id => typeof id === 'string' && ids.has(id)))];
-      if (value.some(id => typeof id !== 'string' || !ids.has(id))) incomplete = true;
-      if (unique.length) days.push({date, count: unique.length});
-    }
-    days.sort((a, b) => b.date.localeCompare(a.date));
+    const days = [...dayMap].map(([date,ids]) => ({date,count:ids.size})).sort((a,b) => b.date.localeCompare(a.date));
     const logins = (Array.isArray(result.logins) ? result.logins : []).filter(item => {
-      const valid = plainObject(item) && validDate(item.createdAt) && ['login', 'signup'].includes(item.kind);
-      if (!valid) incomplete = true;
-      return valid;
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 30);
-    const gameBest = {};
-    for (const mode of ['easy', 'normal', 'fast']) {
-      const value = plainObject(progress.gameBest) ? progress.gameBest[mode] : undefined;
-      gameBest[mode] = number(value);
-      if (value !== undefined && gameBest[mode] === null) incomplete = true;
-    }
-    return {member: person, curriculum, level, known, wrong, starred, curriculumKnown, days, logins, gameBest, incomplete,
-      percent: curriculum.length ? Math.round(curriculumKnown / curriculum.length * 100) : 0,
-      categories: Object.entries(CATEGORY_LABELS).map(([id, label]) => ({id, label, target: curriculum.filter(word => word.category === id).length, known: curriculum.filter(word => word.category === id && knownIds.has(word.id)).length})),
-      progressUpdatedAt: validDate(result.progressUpdatedAt) ? result.progressUpdatedAt : ''};
+      const valid = plainObject(item) && validDate(item.createdAt) && ['login','signup'].includes(item.kind); if (!valid) incomplete = true; return valid;
+    }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0,30);
+    return {member:person,level,assigned,assignmentIds,missingBooks,curriculum,known,wrong,starred,curriculumKnown,days,logins,gameBest,incomplete,categories,bookProgress:assigned ? categories : [],progressUpdatedAt,
+      curriculumLabel:assigned ? (missingBooks.length ? '확인 가능한 배정 단어' : '배정 단어장') : '현재 학년 단어',
+      curriculumTitle:assigned ? '배정 단어장 ' + records.length + '개' : (LEVEL_LABELS[level] || '학년 확인 필요') + ' 단어 학습',
+      percent:curriculum.length ? Math.round(curriculumKnown / curriculum.length * 100) : 0};
   }
   function scheduleActivity(root, version, member) {
     return new Promise(resolve => { activityQueue.push({root, version, member, resolve}); pumpActivity(); });
@@ -149,6 +165,7 @@
       (!query || [member.name, member.email, member.school].some(value => String(value || '').toLocaleLowerCase('ko-KR').includes(query))));
   }
   async function render() {
+    booksCleanup?.(); booksCleanup = null;
     clearTimeout(searchTimer);
     requestVersion++;
     activityVersion++;
@@ -158,7 +175,7 @@
     if (!workspace || !auth() || !authorized(auth().user) || auth().view() !== 'admin') { destroy(); return; }
     workspace.innerHTML = '<div class="admin-root">' +
       '<div class="admin-heading"><div><p class="admin-eyebrow">MEMBER GARDEN</p><h2>함께 자라는 영어 숲</h2><p class="admin-subtitle">회원 정보부터 한 단어씩 쌓인 배움까지, 한눈에 살펴보세요.</p></div><span class="admin-shield" aria-hidden="true">🌱</span></div>' +
-      '<div class="admin-tabs" role="tablist" aria-label="회원 관리 화면"><button type="button" role="tab" id="admin-members-tab" data-admin-tab="members" aria-controls="admin-member-panel">회원 정보</button><button type="button" role="tab" id="admin-activity-tab" data-admin-tab="activity" aria-controls="admin-member-panel">학습 현황 <span aria-hidden="true">↗</span></button></div>' +
+      '<div class="admin-tabs" role="tablist" aria-label="회원 관리 화면"><button type="button" role="tab" id="admin-members-tab" data-admin-tab="members" aria-controls="admin-member-panel">회원 정보</button><button type="button" role="tab" id="admin-activity-tab" data-admin-tab="activity" aria-controls="admin-member-panel">학습 현황 <span aria-hidden="true">↗</span></button><button type="button" role="tab" id="admin-books-tab" data-admin-tab="books" aria-controls="admin-member-panel">단어장 <span aria-hidden="true">📚</span></button></div>' +
       '<div class="admin-stat-grid" aria-label="현재 필터로 조회한 회원 통계"><div class="admin-stat"><span>조회한 회원</span><strong data-stat="all">—</strong></div><div class="admin-stat"><span>이용 중</span><strong data-stat="active">—</strong></div><div class="admin-stat"><span>이용 정지</span><strong data-stat="suspended">—</strong></div></div>' +
       '<form class="admin-filters" role="search" aria-label="회원 찾기"><label class="admin-search"><span>이름 · 이메일 · 학교 검색</span><div class="admin-search-input"><span aria-hidden="true">⌕</span><input name="query" type="search" maxlength="200" value="' + escape(state.query) + '" placeholder="찾고 싶은 회원을 입력해 주세요" autocomplete="off"></div></label>' +
       '<label><span>학년</span><select name="grade">' + gradeOptions(state.grade, true) + '</select></label><label><span>이용 상태</span><select name="status"><option value="">전체 상태</option><option value="active"' + (state.status === 'active' ? ' selected' : '') + '>이용 중</option><option value="suspended"' + (state.status === 'suspended' ? ' selected' : '') + '>이용 정지</option></select></label><button class="btn btn-primary admin-search-button" type="submit">검색</button></form>' +
@@ -178,23 +195,24 @@
     root.querySelector('[data-clear]').addEventListener('click', () => { clearTimeout(searchTimer); form.elements.query.value = ''; form.elements.grade.value = ''; form.elements.status.value = ''; applyFilters(); });
     const tabs = [...root.querySelectorAll('[data-admin-tab]')];
     tabs.forEach((button, index) => {
-      button.addEventListener('click', () => { if (!current(root)) return; state.tab = button.dataset.adminTab; state.page = 1; updateTabs(root); if (membersReady) showMembers(root); });
+      button.addEventListener('click', () => { if (!current(root)) return; if (window.NamdalraWorkbookAdmin?.isBusy()) { notify('저장이 끝난 뒤 화면을 바꿔 주세요.'); return; } if (state.tab !== button.dataset.adminTab) { booksCleanup?.(); booksCleanup = null; } state.tab = button.dataset.adminTab; state.page = 1; updateTabs(root); if (state.tab === 'books' || membersReady) showMembers(root); else loadMembers(root); });
       button.addEventListener('keydown', event => {
         let target;
-        if (['ArrowLeft', 'ArrowRight'].includes(event.key)) target = tabs[1 - index];
-        else if (event.key === 'Home') target = tabs[0]; else if (event.key === 'End') target = tabs[1];
+        if (['ArrowLeft', 'ArrowRight'].includes(event.key)) target = tabs[(index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+        else if (event.key === 'Home') target = tabs[0]; else if (event.key === 'End') target = tabs[tabs.length-1];
         if (target) { event.preventDefault(); target.click(); target.focus(); }
       });
     });
     updateTabs(root);
-    await loadMembers(root);
+    if (state.tab === 'books') showMembers(root); else await loadMembers(root);
   }
   function updateTabs(root) {
     root.querySelectorAll('[data-admin-tab]').forEach(button => {
       const selected = button.dataset.adminTab === state.tab;
       button.setAttribute('aria-selected', String(selected)); button.tabIndex = selected ? 0 : -1;
     });
-    root.querySelector('#admin-member-panel').setAttribute('aria-labelledby', state.tab === 'activity' ? 'admin-activity-tab' : 'admin-members-tab');
+    root.querySelector('#admin-member-panel').setAttribute('aria-labelledby', 'admin-' + (state.tab === 'activity' ? 'activity' : state.tab === 'books' ? 'books' : 'members') + '-tab');
+    root.querySelectorAll('.admin-stat-grid,.admin-filters,.admin-list-heading,.admin-footnote').forEach(element => { element.hidden = state.tab === 'books'; });
   }
   async function loadMembers(root) {
     if (!current(root)) return;
@@ -211,6 +229,7 @@
       showMembers(root);
     } catch (error) {
       if (!current(root) || version !== requestVersion) return;
+      if (state.tab === 'books') return;
       list.setAttribute('aria-busy', 'false'); root.querySelector('[data-result-label]').textContent = '목록을 불러오지 못했어요.';
       list.innerHTML = '<div class="admin-empty admin-error-state"><span aria-hidden="true">🌧️</span><h3>회원 목록을 불러오지 못했어요</h3><p>' + escape(message(error)) + '</p><button type="button" class="btn btn-outline" data-retry>다시 불러오기</button></div>';
       list.querySelector('[data-retry]').addEventListener('click', () => loadMembers(root));
@@ -219,7 +238,16 @@
   function showMembers(root) {
     if (!current(root)) return;
     const version = ++activityVersion; pageActivities.clear();
-    const list = root.querySelector('.admin-member-list'); const filtered = filteredMembers();
+    const list = root.querySelector('.admin-member-list');
+    if (state.tab === 'books') {
+      if (!booksCleanup) {
+        list.setAttribute('aria-busy','false');
+        if (!window.NamdalraWorkbookAdmin) { list.innerHTML = '<p class="admin-inline-error">단어장 관리 기능을 준비하지 못했어요. 화면을 새로고침해 주세요.</p>'; return; }
+        booksCleanup = window.NamdalraWorkbookAdmin.mount(list,{isCurrent:() => current(root) && state.tab === 'books',onBusy:busy => root.querySelectorAll('[data-admin-tab]').forEach(button => { button.disabled = busy; })});
+      }
+      return;
+    }
+    const filtered = filteredMembers();
     root.querySelector('[data-stat="all"]').textContent = filtered.length.toLocaleString('ko-KR');
     root.querySelector('[data-stat="active"]').textContent = filtered.filter(member => member.status === 'active').length.toLocaleString('ko-KR');
     root.querySelector('[data-stat="suspended"]').textContent = filtered.filter(member => member.status === 'suspended').length.toLocaleString('ko-KR');
@@ -229,8 +257,9 @@
       list.innerHTML = '<div class="admin-empty"><span aria-hidden="true">🌿</span><h3>' + (members.length ? '조건에 맞는 회원이 없어요' : '아직 가입한 회원이 없어요') + '</h3><p>' + (members.length ? '검색어 또는 학년·이용 상태를 바꿔 보세요.' : '학생이 회원가입하면 이곳에서 확인할 수 있어요.') + '</p></div>'; return;
     }
     if (state.tab === 'activity') { showLearningPage(root, filtered, version); return; }
-    list.innerHTML = '<div class="admin-table-head" aria-hidden="true"><span>회원</span><span>학교 · 학년</span><span>가입일</span><span>상태</span><span>관리</span></div>' + filtered.map((member, index) => '<article class="admin-member-card"><div class="admin-member-identity"><span class="admin-avatar" aria-hidden="true">' + escape(Array.from(member.name || '학')[0]) + '</span><div class="admin-identity-copy"><h3>' + escape(member.name) + '</h3><p>' + escape(member.email) + '</p></div></div><div class="admin-school"><strong>' + escape(member.school || '학교 미등록') + '</strong><span>' + escape(GRADES[member.grade] || (member.role === 'admin' ? '관리자' : '학년 미등록')) + '</span></div><div class="admin-date"><span class="admin-mobile-label">가입일 </span>' + escape(formatDate(member.createdAt)) + '</div><div class="admin-status-cell">' + statusBadge(member) + '</div><div class="admin-member-actions">' + (protectedMember(member) ? '<span class="admin-protected">관리자 · 보호됨</span>' : '<button class="btn btn-outline admin-detail-button" type="button" data-member-index="' + index + '" aria-label="' + escape(member.name + ' 회원 상세 정보') + '">상세 관리 <span aria-hidden="true">↗</span></button>') + '</div></article>').join('');
+    list.innerHTML = '<div class="admin-table-head" aria-hidden="true"><span>회원</span><span>학교 · 학년</span><span>가입일</span><span>상태</span><span>관리</span></div>' + filtered.map((member, index) => '<article class="admin-member-card"><div class="admin-member-identity"><span class="admin-avatar" aria-hidden="true">' + escape(Array.from(member.name || '학')[0]) + '</span><div class="admin-identity-copy"><h3>' + escape(member.name) + '</h3><p>' + escape(member.email) + '</p></div></div><div class="admin-school"><strong>' + escape(member.school || '학교 미등록') + '</strong><span>' + escape(GRADES[member.grade] || (member.role === 'admin' ? '관리자' : '학년 미등록')) + '</span></div><div class="admin-date"><span class="admin-mobile-label">가입일 </span>' + escape(formatDate(member.createdAt)) + '</div><div class="admin-status-cell">' + statusBadge(member) + '</div><div class="admin-member-actions">' + (protectedMember(member) ? '<span class="admin-protected">관리자 · 보호됨</span>' : '<button class="btn btn-outline admin-detail-button" type="button" data-member-index="' + index + '" aria-label="' + escape(member.name + ' 회원 상세 정보') + '">상세 관리 <span aria-hidden="true">↗</span></button><button class="books-assign-button" type="button" data-member-assignment="' + index + '" aria-label="' + escape(member.name + ' 단어장 배정') + '">단어장 배정</button>') + '</div></article>').join('');
     list.querySelectorAll('[data-member-index]').forEach(button => button.addEventListener('click', () => { const member = filtered[Number(button.dataset.memberIndex)]; if (current(root) && member && !protectedMember(member)) openMember(root, member); }));
+    list.querySelectorAll('[data-member-assignment]').forEach(button => button.addEventListener('click', () => { const member = filtered[Number(button.dataset.memberAssignment)]; if (!current(root) || !member || protectedMember(member)) return; if (!window.NamdalraWorkbookAdmin) { notify('단어장 기능을 준비하지 못했어요. 새로고침해 주세요.'); return; } window.NamdalraWorkbookAdmin.openAssignments(root,member,{isCurrent:() => current(root),onSaved:() => { if (current(root)) showMembers(root); }}); }));
   }
   function learningIdentity(member) {
     return '<div class="admin-learning-person"><span class="admin-avatar" aria-hidden="true">' + escape(Array.from(member.name || '학')[0]) + '</span><div><h4>' + escape(member.name || '이름 미등록') + '</h4><p>' + escape(GRADES[member.grade] || '학년 미등록') + ' · ' + escape(member.school || '학교 미등록') + '</p></div>' + statusBadge(member) + '</div>';
@@ -240,7 +269,7 @@
     state.page = Math.min(Math.max(1, state.page), pages);
     const offset = (state.page - 1) * PAGE_SIZE; const page = filtered.slice(offset, offset + PAGE_SIZE);
     list.setAttribute('aria-busy', 'true');
-    list.innerHTML = '<div class="admin-learning-intro"><div><span class="admin-eyebrow">LEARNING GARDEN</span><h3>' + escape(state.grade ? GRADES[state.grade] : '전체 학년') + ' 학습 현황</h3><p>완료율은 현재 학년의 단어 기준, 학습일은 저장된 전체 기록 기준이에요.</p></div><span class="admin-learning-leaf" aria-hidden="true">🌿</span></div><div class="admin-learning-grid">' + page.map((member, index) => '<article class="admin-learning-card" data-activity-slot="' + index + '" aria-busy="true">' + learningIdentity(member) + '<div class="admin-activity-placeholder" role="status">학습 기록을 불러오고 있어요…</div></article>').join('') + '</div><nav class="admin-pagination" aria-label="학습 현황 페이지"><button type="button" class="btn btn-outline" data-previous-page ' + (state.page === 1 ? 'disabled' : '') + '>← 이전</button><p tabindex="-1" data-page-status><strong>' + state.page + '</strong> / ' + pages + '<span>' + (offset + 1) + '–' + (offset + page.length) + '명 · 총 ' + filtered.length + '명</span></p><button type="button" class="btn btn-outline" data-next-page ' + (state.page === pages ? 'disabled' : '') + '>다음 →</button></nav><p class="admin-report-note">로그인 기록은 이 기능 적용 후 저장된 성공 로그인·가입 기록이에요. 새로고침은 포함하지 않아요. 이전 기록은 복원되지 않으며, 현재 접속 여부나 학습 시간을 나타내지 않아요.</p>';
+    list.innerHTML = '<div class="admin-learning-intro"><div><span class="admin-eyebrow">LEARNING GARDEN</span><h3>' + escape(state.grade ? GRADES[state.grade] : '전체 학년') + ' 학습 현황</h3><p>배정된 단어장, 미배정 시 현재 학년 단어를 기준으로 보여 드려요.</p></div><span class="admin-learning-leaf" aria-hidden="true">🌿</span></div><div class="admin-learning-grid">' + page.map((member, index) => '<article class="admin-learning-card" data-activity-slot="' + index + '" aria-busy="true">' + learningIdentity(member) + '<div class="admin-activity-placeholder" role="status">학습 기록을 불러오고 있어요…</div></article>').join('') + '</div><nav class="admin-pagination" aria-label="학습 현황 페이지"><button type="button" class="btn btn-outline" data-previous-page ' + (state.page === 1 ? 'disabled' : '') + '>← 이전</button><p tabindex="-1" data-page-status><strong>' + state.page + '</strong> / ' + pages + '<span>' + (offset + 1) + '–' + (offset + page.length) + '명 · 총 ' + filtered.length + '명</span></p><button type="button" class="btn btn-outline" data-next-page ' + (state.page === pages ? 'disabled' : '') + '>다음 →</button></nav><p class="admin-report-note">로그인 기록은 이 기능 적용 후 저장된 성공 로그인·가입 기록이에요. 새로고침은 포함하지 않아요. 이전 기록은 복원되지 않으며, 현재 접속 여부나 학습 시간을 나타내지 않아요.</p>';
     for (const [selector, step] of [['[data-previous-page]', -1], ['[data-next-page]', 1]]) list.querySelector(selector).addEventListener('click', () => { if (!current(root)) return; state.page += step; showMembers(root); root.querySelector('[data-page-status]')?.focus({preventScroll: true}); });
     Promise.all(page.map((member, index) => loadActivityCard(root, version, member, index))).then(() => { if (current(root) && version === activityVersion) list.setAttribute('aria-busy', 'false'); });
   }
@@ -254,7 +283,7 @@
     try {
       if (response.error) throw response.error;
       const summary = activitySummary(response.result, member); pageActivities.set(memberId(member), summary);
-      card.innerHTML = learningIdentity(summary.member) + '<div class="admin-card-progress"><div><span>현재 학년 기억한 단어</span><strong>' + summary.curriculumKnown + '<small> / ' + summary.curriculum.length + '개</small></strong></div><b>' + (summary.curriculum.length ? summary.percent + '%' : '—') + '</b></div><div class="admin-progress-track" role="progressbar" aria-label="현재 학년 단어 완료율" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + summary.percent + '"><span style="width:' + summary.percent + '%"></span></div><dl class="admin-card-metrics"><div><dt>학습한 날</dt><dd>' + summary.days.length + '<small>일</small></dd></div><div><dt>마지막 학습</dt><dd class="admin-metric-date">' + dayLabel(summary.days[0]?.date) + '</dd></div><div><dt>최근 로그인·가입</dt><dd class="admin-metric-date">' + escape(timeLabel(summary.logins[0]?.createdAt)) + '</dd></div></dl>' + (summary.incomplete ? '<p class="admin-data-note">확인할 수 있는 기록만 표시했어요.</p>' : '') + '<button class="admin-report-button" type="button" data-open-report aria-label="' + escape(summary.member.name + ' 학습 상세 보기') + '">학습 상세 보기 <span aria-hidden="true">↗</span></button>';
+      card.innerHTML = learningIdentity(summary.member) + '<div class="admin-card-progress"><div><span>' + escape(summary.curriculumLabel) + ' · 기억한 단어</span><strong>' + summary.curriculumKnown + '<small> / ' + summary.curriculum.length + '개</small></strong></div><b>' + (summary.curriculum.length ? summary.percent + '%' : '—') + '</b></div><div class="admin-progress-track" role="progressbar" aria-label="학습 범위의 단어 완료율" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + summary.percent + '"><span style="width:' + summary.percent + '%"></span></div><dl class="admin-card-metrics"><div><dt>학습한 날</dt><dd>' + summary.days.length + '<small>일</small></dd></div><div><dt>마지막 학습</dt><dd class="admin-metric-date">' + dayLabel(summary.days[0]?.date) + '</dd></div><div><dt>최근 로그인·가입</dt><dd class="admin-metric-date">' + escape(timeLabel(summary.logins[0]?.createdAt)) + '</dd></div></dl>' + (summary.missingBooks.length ? '<p class="admin-data-note">배정된 단어장 ' + summary.missingBooks.length + '개를 확인할 수 없어요. 확인 가능한 배정 기록만 표시해요.</p>' : '') + (summary.incomplete ? '<p class="admin-data-note">확인할 수 있는 기록만 표시했어요.</p>' : '') + '<button class="admin-report-button" type="button" data-open-report aria-label="' + escape(summary.member.name + ' 학습 상세 보기') + '">학습 상세 보기 <span aria-hidden="true">↗</span></button>';
       card.querySelector('[data-open-report]').addEventListener('click', () => { if (current(root) && version === activityVersion) openLearningReport(root, summary); });
     } catch (error) {
       card.innerHTML = learningIdentity(member) + '<div class="admin-card-error"><p>' + escape(message(error)) + '</p><button type="button" class="btn btn-outline" data-retry-activity>다시 불러오기</button></div>';
@@ -266,12 +295,13 @@
     const s = summary;
     const modal = createDialog(root, s.member.name + '의 학습 기록',
       '<div class="admin-report-profile"><span class="admin-profile-avatar" aria-hidden="true">' + escape(Array.from(s.member.name || '학')[0]) + '</span><div><strong>' + escape(s.member.name) + '</strong><p>' + escape(GRADES[s.member.grade] || '학년 미등록') + ' · ' + escape(s.member.school || '학교 미등록') + '</p><small>' + escape(s.member.email) + '</small></div>' + statusBadge(s.member) + '</div>' +
+      (s.missingBooks.length ? '<p class="admin-data-note">배정된 단어장 ' + s.missingBooks.length + '개를 확인할 수 없어요. 아래 완료율은 확인 가능한 배정 단어장만 포함해요.</p>' : '') +
       (s.incomplete ? '<p class="admin-data-note">일부 기록의 형식을 확인할 수 없어, 확인 가능한 내용만 표시했어요.</p>' : '') +
-      '<section class="admin-report-hero"><div><p class="admin-eyebrow">한 단어씩, 자라는 중</p><h3>' + escape(LEVEL_LABELS[s.level] || '학년 확인 필요') + ' 단어 학습</h3><p><strong>' + s.curriculumKnown + '</strong> / ' + s.curriculum.length + '개를 기억하고 있어요.</p><small>현재 학년의 단어 중 ‘외웠어요’로 기록된 상태예요.</small></div><div class="admin-completion-ring" style="--completion:' + s.percent + '%"><div><strong>' + (s.curriculum.length ? s.percent + '%' : '—') + '</strong><span>현재 완료율</span></div></div></section>' +
+      '<section class="admin-report-hero"><div><p class="admin-eyebrow">한 단어씩, 자라는 중</p><h3>' + escape(s.curriculumTitle) + '</h3><p><strong>' + s.curriculumKnown + '</strong> / ' + s.curriculum.length + '개를 기억하고 있어요.</p><small>현재 학습 범위의 단어 중 ‘외웠어요’로 기록된 상태예요.</small></div><div class="admin-completion-ring" style="--completion:' + s.percent + '%"><div><strong>' + (s.curriculum.length ? s.percent + '%' : '—') + '</strong><span>현재 완료율</span></div></div></section>' +
       '<dl class="admin-report-facts"><div><dt>학습한 날</dt><dd>' + s.days.length + '<small>일</small></dd></div><div><dt>마지막 학습일</dt><dd>' + dayLabel(s.days[0]?.date) + '</dd></div><div><dt>최근 로그인·가입</dt><dd>' + escape(timeLabel(s.logins[0]?.createdAt)) + '</dd></div></dl>' +
-      '<section class="admin-report-section"><div class="admin-section-heading"><h3>주제별로 얼마나 익혔나요?</h3><span>현재 학년 기준</span></div><div class="admin-category-progress">' + s.categories.map(category => '<div><span class="admin-category-icon" aria-hidden="true">' + category.label[0] + '</span><div><p><strong>' + category.label[1] + '</strong><span>' + category.known + ' / ' + category.target + '개</span></p><div class="admin-progress-track"><span style="width:' + (category.target ? Math.round(category.known / category.target * 100) : 0) + '%"></span></div></div></div>').join('') + '</div></section>' +
-      '<section class="admin-report-section"><div class="admin-section-heading"><h3>지금의 단어 기록</h3><span>모든 학년의 저장 기록</span></div><div class="admin-word-filters" role="group" aria-label="단어 기록 종류"><button type="button" data-word-kind="wrong" aria-pressed="true">다시 연습 <b>' + s.wrong.length + '</b></button><button type="button" data-word-kind="known" aria-pressed="false">기억한 단어 <b>' + s.known.length + '</b></button><button type="button" data-word-kind="starred" aria-pressed="false">별표 단어 <b>' + s.starred.length + '</b></button></div><div class="admin-report-words" data-report-words tabindex="0" aria-label="선택한 단어 기록" aria-live="polite"></div><p class="admin-report-note">다시 연습·기억한 단어·별표는 현재 저장 상태이며 서로 겹칠 수 있어요. 테스트 정답률을 뜻하지 않아요.</p></section>' +
-      '<div class="admin-report-columns"><section class="admin-report-section"><div class="admin-section-heading"><h3>최근 학습한 날</h3><span>최근 14개 학습일</span></div>' + (s.days.length ? '<ol class="admin-study-days">' + s.days.slice(0, 14).map(day => '<li><time datetime="' + day.date + '">' + dayLabel(day.date) + '</time><span><b>' + day.count + '</b>개 단어</span></li>').join('') + '</ol>' : '<p class="admin-section-empty">아직 저장된 학습일이 없어요.<br>단어를 연습하거나 게임에서 만나면 쌓여요.</p>') + '<p class="admin-report-note">같은 날 만난 단어는 한 번씩 세어요. 게임에서 만난 단어도 포함돼요.</p></section><section class="admin-report-section"><div class="admin-section-heading"><h3>단어 톡톡! 최고 기록</h3><span>속도별</span></div><div class="admin-game-records">' + [['easy', '🌱', '천천히'], ['normal', '🌿', '보통'], ['fast', '⚡', '빠르게']].map(([mode, icon, title]) => '<div><span aria-hidden="true">' + icon + '</span><p>' + title + '</p><strong>' + (s.gameBest[mode] === null ? '기록 없음' : s.gameBest[mode].toLocaleString('ko-KR') + '<small>점</small>') + '</strong></div>').join('') + '</div><p class="admin-report-note">게임 점수는 단어 완료율과 별도로 저장돼요.</p></section></div>' +
+      '<section class="admin-report-section"><div class="admin-section-heading"><h3>' + (s.assigned ? '단어장별로 얼마나 익혔나요?' : '주제별로 얼마나 익혔나요?') + '</h3><span>' + (s.assigned ? '현재 배정 기준' : '현재 학년 기준') + '</span></div><div class="admin-category-progress">' + s.categories.map(category => '<div><span class="admin-category-icon" aria-hidden="true">' + escape(category.label[0]) + '</span><div><p><strong>' + escape(category.label[1]) + '</strong><span>' + category.known + ' / ' + category.target + '개</span></p><div class="admin-progress-track"><span style="width:' + (category.target ? Math.round(category.known / category.target * 100) : 0) + '%"></span></div></div></div>').join('') + '</div></section>' +
+      '<section class="admin-report-section"><div class="admin-section-heading"><h3>지금의 단어 기록</h3><span>' + (s.assigned ? '현재 배정 단어장' : '모든 학년의 기본 단어 기록') + '</span></div><div class="admin-word-filters" role="group" aria-label="단어 기록 종류"><button type="button" data-word-kind="wrong" aria-pressed="true">다시 연습 <b>' + s.wrong.length + '</b></button><button type="button" data-word-kind="known" aria-pressed="false">기억한 단어 <b>' + s.known.length + '</b></button><button type="button" data-word-kind="starred" aria-pressed="false">별표 단어 <b>' + s.starred.length + '</b></button></div><div class="admin-report-words" data-report-words tabindex="0" aria-label="선택한 단어 기록" aria-live="polite"></div><p class="admin-report-note">다시 연습·기억한 단어·별표는 현재 저장 상태이며 서로 겹칠 수 있어요. 테스트 정답률을 뜻하지 않아요.</p></section>' +
+      '<div class="admin-report-columns"><section class="admin-report-section"><div class="admin-section-heading"><h3>최근 학습한 날</h3><span>최근 14개 학습일</span></div>' + (s.days.length ? '<ol class="admin-study-days">' + s.days.slice(0, 14).map(day => '<li><time datetime="' + day.date + '">' + dayLabel(day.date) + '</time><span><b>' + day.count + '</b>개 단어</span></li>').join('') + '</ol>' : '<p class="admin-section-empty">아직 저장된 학습일이 없어요.<br>단어를 연습하거나 게임에서 만나면 쌓여요.</p>') + '<p class="admin-report-note">현재 학습 범위에 저장된 기록이에요. 같은 날 만난 단어는 한 번씩 세고, 바뀐 옛 단어와 게임 기록도 포함해요.</p></section><section class="admin-report-section"><div class="admin-section-heading"><h3>단어 톡톡! 최고 기록</h3><span>' + (s.assigned ? '배정 단어장 중 최고' : '속도별') + '</span></div><div class="admin-game-records">' + [['easy', '🌱', '천천히'], ['normal', '🌿', '보통'], ['fast', '⚡', '빠르게']].map(([mode, icon, title]) => '<div><span aria-hidden="true">' + icon + '</span><p>' + title + '</p><strong>' + (s.gameBest[mode] === null ? '기록 없음' : s.gameBest[mode].toLocaleString('ko-KR') + '<small>점</small>') + '</strong></div>').join('') + '</div><p class="admin-report-note">게임 점수는 단어 완료율과 별도로 저장돼요.</p></section></div>' +
       '<section class="admin-report-section"><div class="admin-section-heading"><h3>저장된 최근 로그인 기록</h3><span>최근 최대 30건 · 한국 시간</span></div>' + (s.logins.length ? '<ol class="admin-login-history">' + s.logins.map(login => '<li><span class="admin-login-dot" aria-hidden="true"></span><div><strong>' + (login.kind === 'signup' ? '회원가입 완료' : '로그인 성공') + '</strong><time datetime="' + escape(login.createdAt) + '">' + escape(timeLabel(login.createdAt)) + '</time></div></li>').join('') + '</ol>' : '<p class="admin-section-empty">아직 기록된 로그인이 없어요.<br>이 기능 적용 후 다음 로그인부터 표시돼요.</p>') + '<p class="admin-report-note">이 기능 적용 후 저장된 성공 로그인·가입 기록이며, 새로고침은 포함하지 않아요. 이전 기록은 복원하지 않으며, 현재 접속 상태나 학습 시간을 측정하지 않아요.</p></section>' +
       '<p class="admin-report-saved">학습 기록 마지막 저장: ' + escape(timeLabel(s.progressUpdatedAt)) + '</p>', 'admin-learning-dialog');
     const buttons = [...modal.element.querySelectorAll('[data-word-kind]')];

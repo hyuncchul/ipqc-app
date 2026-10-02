@@ -1,0 +1,7 @@
+node_modules/
+.cache/
+.firebase/
+*-debug.log
+*-debug.*.log
+adapter.test-module.mjs
+.test-firestore.rules
