@@ -103,6 +103,68 @@ service cloud.firestore {
         && request.time <= timestamp.value(data.authTime * 1000) + duration.value(300, 's');
     }
 
+    function validBookId(bookId) {
+      return bookId is string && bookId.matches('^[A-Za-z0-9_-]{1,128}$');
+    }
+
+    function validBook(data) {
+      let fields = ['title', 'description', 'sourceName', 'words', 'wordCount', 'revision', 'createdAt', 'updatedAt'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && textWithin(data.title, 1, 120)
+        && textWithin(data.description, 0, 2000)
+        && textWithin(data.sourceName, 0, 200)
+        // Only administrators may publish books. The adapter validates every
+        // word and the 750 KiB JSON limit; Rules cannot iterate 1,000 entries.
+        && data.words is list && data.words.size() >= 1 && data.words.size() <= 1000
+        && data.wordCount is int && data.wordCount == data.words.size()
+        && data.revision is int && data.revision >= 1
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function validBookIdAt(ids, index) {
+      return ids.size() <= index || validBookId(ids[index]);
+    }
+
+    function validAssignment(data, uid) {
+      let fields = ['userId', 'bookIds', 'revision', 'updatedAt'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && data.userId == uid
+        && data.bookIds is list && data.bookIds.size() <= 20
+        && data.bookIds.toSet().size() == data.bookIds.size()
+        && validBookIdAt(data.bookIds, 0) && validBookIdAt(data.bookIds, 1)
+        && validBookIdAt(data.bookIds, 2) && validBookIdAt(data.bookIds, 3)
+        && validBookIdAt(data.bookIds, 4) && validBookIdAt(data.bookIds, 5)
+        && validBookIdAt(data.bookIds, 6) && validBookIdAt(data.bookIds, 7)
+        && validBookIdAt(data.bookIds, 8) && validBookIdAt(data.bookIds, 9)
+        && validBookIdAt(data.bookIds, 10) && validBookIdAt(data.bookIds, 11)
+        && validBookIdAt(data.bookIds, 12) && validBookIdAt(data.bookIds, 13)
+        && validBookIdAt(data.bookIds, 14) && validBookIdAt(data.bookIds, 15)
+        && validBookIdAt(data.bookIds, 16) && validBookIdAt(data.bookIds, 17)
+        && validBookIdAt(data.bookIds, 18) && validBookIdAt(data.bookIds, 19)
+        // Checking existence of 20 books exceeds Rules' 10-document budget.
+        // The administrator's adapter transaction checks every selected book.
+        && data.revision is int && data.revision >= 1
+        && data.updatedAt == request.time;
+    }
+
+    function assignableMember(uid) {
+      return exists(/databases/$(database)/documents/namdalraMembers/$(uid))
+        && get(/databases/$(database)/documents/namdalraMembers/$(uid)).data.role == 'member'
+        && !protectedAdmin(uid);
+    }
+
+    function assignedBook(uid, bookId) {
+      return activeMember(uid)
+        && exists(/databases/$(database)/documents/namdalraAssignments/$(uid))
+        && bookId in get(/databases/$(database)/documents/namdalraAssignments/$(uid)).data.bookIds;
+    }
+
+    function ownBookProgressAllowed(uid, bookId) {
+      return isSelf(uid)
+        && (isAdmin() || assignedBook(uid, bookId))
+        && exists(/databases/$(database)/documents/namdalraBooks/$(bookId));
+    }
+
     match /namdalraAdmins/{uid} {
       // Self reads determine role; admin lookups protect other administrators'
       // profiles. No client can enumerate or change authority documents.
@@ -153,6 +215,41 @@ service cloud.firestore {
         && (isAdmin() || request.resource.data.level == recommendedLevel(
           get(/databases/$(database)/documents/namdalraMembers/$(uid)).data.grade));
       allow delete: if false;
+
+      match /books/{bookId} {
+        allow get: if isAdmin() || ownBookProgressAllowed(uid, bookId);
+        allow list, delete: if false;
+        allow create, update: if validBookId(bookId)
+          && ownBookProgressAllowed(uid, bookId)
+          && validProgress(request.resource.data, uid)
+          && (isAdmin() || request.resource.data.level == recommendedLevel(
+            get(/databases/$(database)/documents/namdalraMembers/$(uid)).data.grade));
+      }
+    }
+
+    match /namdalraBooks/{bookId} {
+      allow get: if isAdmin() || (signedIn() && assignedBook(request.auth.uid, bookId));
+      allow list: if isAdmin() && request.query.limit != null && request.query.limit <= 200;
+      allow create: if isAdmin() && validBookId(bookId)
+        && validBook(request.resource.data)
+        && request.resource.data.revision == 1
+        && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && validBookId(bookId)
+        && validBook(request.resource.data)
+        && request.resource.data.revision == resource.data.revision + 1
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+
+    match /namdalraAssignments/{uid} {
+      allow get: if isAdmin() || activeMember(uid);
+      allow list, delete: if false;
+      allow create: if isAdmin() && assignableMember(uid)
+        && validAssignment(request.resource.data, uid)
+        && request.resource.data.revision == 1;
+      allow update: if isAdmin() && assignableMember(uid)
+        && validAssignment(request.resource.data, uid)
+        && request.resource.data.revision == resource.data.revision + 1;
     }
 
     // No implicit access to additional collections or nested documents.
