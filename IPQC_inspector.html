@@ -560,7 +560,7 @@
 // production.html과 동일한 조회 API 및 세션 형식을 사용합니다.
 const PRODUCTION_API_BASE = 'https://ltc-equipment-monitor.pwjwx2rg6w.chatgpt.site';
 const PRODUCTION_SESSION_KEY = 'ltc-login-session:' + PRODUCTION_API_BASE;
-const PRODUCTION_FIELDS = ['sap','desc','customer','material','mold'];
+const PRODUCTION_FIELDS = ['sap','desc','customer','material','mold','ratio'];
 let planMachines = [];
 let selectedPlanIdx = new Set();
 let productionRequest = null;
@@ -571,13 +571,33 @@ function productionText(value){
   const text = value == null ? '' : String(value).trim();
   return ['', '-', '—', '미등록'].includes(text) ? '' : text;
 }
+function splitProductionMaterial(value){
+  const material = productionText(value);
+  const match = material.match(/^(.*?)\s*(?:\(([^()]*)\)|（([^（）]*)）)\s*$/);
+  if(!match || !match[1].trim()) return {material,ratio:''};
+  const ratio = (match[2] ?? match[3]).normalize('NFKC').trim();
+  // 끝의 숫자 비율만 분리합니다. 원료 등급·색상 같은 괄호 내용은 유지합니다.
+  if(!/^\d+(?:\.\d+)?\s*%?(?:\s*[:/+]\s*\d+(?:\.\d+)?\s*%?)*$/.test(ratio)){
+    return {material,ratio:''};
+  }
+  return {material:match[1].trim(),ratio:ratio.replace(/\s/g,'')};
+}
+function splitSavedProductionMaterial(info){
+  const source = info.productionFields;
+  if(!source || info.material!==source.material) return;
+  const parsed = splitProductionMaterial(source.material);
+  if(!parsed.ratio) return;
+  info.material = parsed.material;
+  if(!productionText(info.ratio)) info.ratio = parsed.ratio;
+  info.productionFields = {...source,material:parsed.material,ratio:parsed.ratio};
+}
 function normalizeProductionMachines(payload){
   if(!payload || !Array.isArray(payload.machines)) throw new Error('Invalid production response');
   return payload.machines.filter(m=>m && m.status==='running' &&
     productionText(m.id) && typeof m.part==='string' && m.part.trim()).map(m=>({
       machine: productionText(m.id), sap: productionText(m.part),
       desc: productionText(m.description), customer: productionText(m.customer),
-      material: productionText(m.material), mold: productionText(m.mold),
+      ...splitProductionMaterial(m.material), mold: productionText(m.mold),
       // 생산 버전까지 비교하여 같은 설비의 이전 생산 측정값이 섞이지 않도록 합니다.
       productionKey: JSON.stringify([m.id,m.part,m.mold,m.material,m.card_date,m.order_no,m.version])
     })).sort((a,b)=>a.machine.localeCompare(b.machine, undefined, {numeric:true}));
@@ -696,7 +716,7 @@ function renderMachGrid(){
       <div class="mach-card-pn">${esc(m.sap)||'—'}</div>
       <div class="mach-card-desc">${esc(m.desc)||'—'}</div>
       <div class="mach-card-cust">👤 ${esc(m.customer)||'—'} · ${tr('productionRunning')}</div>
-      <div class="mach-card-desc">${tr('moldLabel')}: ${esc(m.mold)||'—'} · ${esc(m.material)||'—'}</div>
+      <div class="mach-card-desc">${tr('moldLabel')}: ${esc(m.mold)||'—'} · ${esc(m.material)||'—'}${m.ratio?` (${esc(m.ratio)})`:''}</div>
     </button>`;
   }).join('');
   updateSelCount();
@@ -1672,7 +1692,7 @@ function productionFieldInput(m,field,label,placeholder=''){
   const info = state.machineInfo[m]||emptyMachineInfo();
   const imported = info.productionFields?.[field] && info[field]===info.productionFields[field];
   const missing = info.productionKey && !info[field];
-  return `<div><label>${tr(label)}${imported?`<span class="production-badge">${tr('productionAuto')}</span>`:''}</label><input id="mi_${m}_${field}" value="${esc(info[field]||'')}" class="${missing?'production-manual':''}" placeholder="${esc(missing?tr('productionManual'):placeholder)}" oninput="${field==='sap'?`onSapPnInput(this,${m})`:'saveDebounced()'}"></div>`;
+  return `<div><label>${tr(label)}${imported?`<span class="production-badge">${tr('productionAuto')}</span>`:''}</label><input id="mi_${m}_${field}" value="${esc(info[field]||'')}" class="${missing?'production-manual':''}" placeholder="${esc(missing?tr('productionManual'):placeholder)}"${field==='ratio'?' inputmode="decimal"':''} oninput="${field==='sap'?`onSapPnInput(this,${m})`:'saveDebounced()'}"></div>`;
 }
 function buildMachineContent(m){
   const info = state.machineInfo[m]||emptyMachineInfo();
@@ -1732,7 +1752,7 @@ function buildMachineContent(m){
       </select>
     </div>
     ${productionFieldInput(m,'material','materialLabel')}
-    <div><label>${tr('ratioLabel')}</label><input id="mi_${m}_ratio" placeholder="${tr('productionManual')}" value="${esc(info.ratio||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
+    ${productionFieldInput(m,'ratio','ratioLabel',tr('productionManual'))}
     <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" placeholder="${tr('productionManual')}" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
     <div><label>${tr('resultLabel')}</label>
       <select id="mi_${m}_result" onchange="saveDebounced()">
@@ -3001,6 +3021,7 @@ function init(){
     state.machineInfo.slice(0,savedCount).every(info=>info && productionText(info.name));
   if(validDraft){
     state.machineInfo = state.machineInfo.slice(0,savedCount);
+    state.machineInfo.forEach(splitSavedProductionMaterial);
   }else{
     // 구버전의 이름 없는 측정값은 다른 설비에 배정하지 않고 원본 백업으로 보관합니다.
     if(Object.values(state.values).some(Boolean) && !backupEquipmentDraft()) return;

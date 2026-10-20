@@ -168,7 +168,7 @@ function previousInspection(app, machines, values = {}) {
   app.run(`
     state.machineInfo = normalizeProductionMachines({ machines: previousMachinesForTest }).map(machine => ({
       ...emptyMachineInfo(), name: machine.machine, sap: machine.sap,
-      desc: machine.desc, material: machine.material, mold: machine.mold,
+      desc: machine.desc, material: machine.material, ratio: machine.ratio, mold: machine.mold,
       customer: machine.customer, productionKey: machine.productionKey,
       productionFields: Object.fromEntries(PRODUCTION_FIELDS.map(field => [field, machine[field]])),
     }));
@@ -228,6 +228,143 @@ test('missing production fields stay empty for manual input, including placehold
   );
   app.context.value = 0;
   assert.equal(app.run('productionText(value)'), '0');
+});
+
+test('production material splits a trailing numeric ratio from its name', () => {
+  const app = page();
+  for (const [source, material, ratio] of [
+    ['Resin(30%)', 'Resin', '30%'],
+    [' Resin ( 30 % ) ', 'Resin', '30%'],
+    ['Resin（30％）', 'Resin', '30%'],
+    ['Resin（３０％）', 'Resin', '30%'],
+    ['Resin (70:30)', 'Resin', '70:30'],
+    ['Resin (70% : 30%)', 'Resin', '70%:30%'],
+    ['Resin (70 / 30)', 'Resin', '70/30'],
+    ['Resin (70 + 30)', 'Resin', '70+30'],
+    ['Resin (30)', 'Resin', '30'],
+    ['Resin (12.5%)', 'Resin', '12.5%'],
+    ['Resin (0%)', 'Resin', '0%'],
+    ['Resin (A130) (30%)', 'Resin (A130)', '30%'],
+  ]) {
+    app.context.source = source;
+    assert.deepEqual(app.read('splitProductionMaterial(source)'), { material, ratio }, source);
+  }
+});
+
+test('material names without a numeric ratio remain intact and leave ratio available for manual input', () => {
+  const app = page();
+  for (const source of ['Resin', 'Resin (BLACK)', 'Resin (A130)', 'Resin (30% glass fiber)', 'Resin (30%) grade']) {
+    app.context.source = source;
+    assert.deepEqual(app.read('splitProductionMaterial(source)'), { material: source, ratio: '' }, source);
+  }
+  for (const source of [undefined, null, '', '—', '미등록']) {
+    app.context.source = source;
+    assert.deepEqual(app.read('splitProductionMaterial(source)'), { material: '', ratio: '' });
+  }
+});
+
+test('normalizing material and ratio preserves the original production identity', () => {
+  const app = page();
+  const source = machine('A07', { material: 'Resin (30%)', card_date: '2026-10-20', order_no: 'ORDER-7', version: 3 });
+  app.context.payload = { machines: [source] };
+  const [result] = app.read('normalizeProductionMachines(payload)');
+  assert.equal(result.material, 'Resin');
+  assert.equal(result.ratio, '30%');
+  assert.equal(result.productionKey, JSON.stringify([
+    source.id, source.part, source.mold, source.material, source.card_date, source.order_no, source.version,
+  ]));
+});
+
+test('completing equipment selection fills separate material and ratio fields and saves both', () => {
+  const app = page();
+  inspectionForm(app);
+  app.context.nextMachinesForTest = [machine('A07', { material: 'Resin (30%)' })];
+  app.run(`
+    planMachines = normalizeProductionMachines({ machines: nextMachinesForTest });
+    selectedPlanIdx = new Set([0]);
+    productionPhase = 'ready';
+    applyPlanSelection();
+  `);
+  const info = app.read('state.machineInfo[0]');
+  assert.equal(info.material, 'Resin');
+  assert.equal(info.ratio, '30%');
+  assert.equal(info.productionFields.material, 'Resin');
+  assert.equal(info.productionFields.ratio, '30%');
+  assert.equal(app.elements.get('mi_0_material').value, 'Resin');
+  assert.equal(app.elements.get('mi_0_ratio').value, '30%');
+  const saved = JSON.parse(app.localStorage.getItem('ipqc_pad_v3'));
+  assert.equal(saved.machineInfo[0].material, 'Resin');
+  assert.equal(saved.machineInfo[0].ratio, '30%');
+});
+
+test('same-production reselection preserves manually entered or corrected material ratios', () => {
+  for (const material of ['Resin', 'Resin (30%)']) {
+    const app = page();
+    inspectionForm(app);
+    previousInspection(app, [machine('A07', { material })], { '0|0|0': '12.34' });
+    assert.equal(app.elements.get('mi_0_ratio').value, material === 'Resin' ? '' : '30%');
+    app.setElement('mi_0_ratio', '25');
+    app.context.nextMachinesForTest = [machine('A07', { material })];
+    app.run(`
+      planMachines = normalizeProductionMachines({ machines: nextMachinesForTest });
+      selectedPlanIdx = new Set([0]);
+      productionPhase = 'ready';
+      applyPlanSelection();
+    `);
+    assert.equal(app.read('state.machineInfo[0]').ratio, '25', material);
+    assert.equal(app.elements.get('mi_0_ratio').value, '25', material);
+    assert.deepEqual(app.read('state.values'), { '0|0|0': '12.34' });
+  }
+});
+
+test('same-production reselection refills an empty ratio from production material', () => {
+  const app = page();
+  inspectionForm(app);
+  previousInspection(app, [machine('A07', { material: 'Resin (30%)' })], { '0|0|0': '12.34' });
+  app.setElement('mi_0_ratio', '');
+  app.context.nextMachinesForTest = [machine('A07', { material: 'Resin (30%)' })];
+  app.run(`
+    planMachines = normalizeProductionMachines({ machines: nextMachinesForTest });
+    selectedPlanIdx = new Set([0]);
+    productionPhase = 'ready';
+    applyPlanSelection();
+  `);
+  assert.equal(app.read('state.machineInfo[0]').ratio, '30%');
+  assert.equal(app.elements.get('mi_0_ratio').value, '30%');
+  assert.deepEqual(app.read('state.values'), { '0|0|0': '12.34' });
+});
+
+test('reselecting a legacy draft splits its imported material while retaining manual ratios and measurements', () => {
+  for (const manualRatio of ['', '25']) {
+    const app = page();
+    inspectionForm(app);
+    previousInspection(app, [machine('A07', { material: 'Resin (30%)' })], { '0|0|0': '12.34' });
+    // Recreate a draft saved before ratios were imported separately.
+    app.context.manualRatio = manualRatio;
+    app.run(`
+      state.machineInfo[0].material = 'Resin (30%)';
+      state.machineInfo[0].ratio = manualRatio;
+      state.machineInfo[0].productionFields.material = 'Resin (30%)';
+      delete state.machineInfo[0].productionFields.ratio;
+      renderAll();
+    `);
+    const previousKey = app.run('state.machineInfo[0].productionKey');
+    app.context.nextMachinesForTest = [machine('A07', { material: 'Resin (30%)' })];
+    app.run(`
+      planMachines = normalizeProductionMachines({ machines: nextMachinesForTest });
+      selectedPlanIdx = new Set([0]);
+      productionPhase = 'ready';
+      applyPlanSelection();
+    `);
+    const info = app.read('state.machineInfo[0]');
+    assert.equal(info.material, 'Resin');
+    assert.equal(info.ratio, manualRatio || '30%');
+    assert.equal(info.productionFields.material, 'Resin');
+    assert.equal(info.productionFields.ratio, '30%');
+    assert.equal(info.productionKey, previousKey);
+    assert.deepEqual(app.read('state.values'), { '0|0|0': '12.34' });
+    assert.equal(app.localStorage.getItem('ipqc_pad_v3_equipment_backup'), null);
+  }
 });
 
 test('malformed production responses are rejected rather than treated as an empty list', () => {
@@ -584,6 +721,46 @@ test('reload preserves a valid saved draft together with its machine identity an
   assert.deepEqual(app.read('state.common'), draft.common);
   assert.equal(app.run('state.currentMachine'), 0);
   assert.equal(app.localStorage.getItem('ipqc_pad_v3_equipment_backup'), null);
+});
+
+test('reload separates legacy imported material and ratio without changing measurements or manual ratios', () => {
+  for (const manualRatio of ['', '25']) {
+    const app = page();
+    inspectionForm(app);
+    previousInspection(app, [machine('A07', { material: 'Resin (30%)' })], { '0|0|0': '12.34' });
+    const draft = app.read('state');
+    const info = draft.machineInfo[0];
+    info.material = 'Resin (30%)';
+    info.ratio = manualRatio;
+    info.productionFields.material = 'Resin (30%)';
+    delete info.productionFields.ratio;
+    app.localStorage.setItem('ipqc_pad_v3', JSON.stringify(draft));
+    initializeWithoutLayout(app);
+    const restored = app.read('state.machineInfo[0]');
+    assert.equal(restored.material, 'Resin');
+    assert.equal(restored.ratio, manualRatio || '30%');
+    assert.equal(restored.productionFields.material, 'Resin');
+    assert.equal(restored.productionFields.ratio, '30%');
+    assert.equal(restored.productionKey, info.productionKey);
+    assert.deepEqual(app.read('state.values'), draft.values);
+    assert.equal(app.localStorage.getItem('ipqc_pad_v3_equipment_backup'), null);
+  }
+});
+
+test('reload does not split manually edited material or infer a ratio from an obsolete imported name', () => {
+  const app = page();
+  inspectionForm(app);
+  previousInspection(app, [machine('A07', { material: 'Original resin (30%)' })], { '0|0|0': '12.34' });
+  const draft = app.read('state');
+  const info = draft.machineInfo[0];
+  info.material = 'Operator resin (BLACK)';
+  info.ratio = '';
+  info.productionFields.material = 'Original resin (30%)';
+  delete info.productionFields.ratio;
+  app.localStorage.setItem('ipqc_pad_v3', JSON.stringify(draft));
+  initializeWithoutLayout(app);
+  assert.deepEqual(app.read('state.machineInfo[0]'), info);
+  assert.deepEqual(app.read('state.values'), draft.values);
 });
 
 test('missing, expired, or malformed sessions open inline login without contacting the API', async () => {
