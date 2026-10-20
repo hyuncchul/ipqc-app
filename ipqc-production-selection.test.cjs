@@ -297,6 +297,107 @@ test('completing equipment selection fills separate material and ratio fields an
   assert.equal(saved.machineInfo[0].ratio, '30%');
 });
 
+test('new inspection decisions stay blank in the form, saved draft, and export row until selected', () => {
+  const app = page();
+  inspectionForm(app);
+  app.context.nextMachinesForTest = [machine('A07')];
+  app.run(`
+    planMachines = normalizeProductionMachines({ machines: nextMachinesForTest });
+    selectedPlanIdx = new Set([0]);
+    productionPhase = 'ready';
+    applyPlanSelection();
+  `);
+  const markup = app.run('buildMachineContent(0)');
+  for (const field of ['visual', 'result']) {
+    assert.equal(app.read('emptyMachineInfo()')[field], '');
+    assert.equal(app.elements.get(`mi_0_${field}`).value, '');
+    assert.equal(app.read('state.machineInfo[0]')[field], '');
+    assert.equal(JSON.parse(app.localStorage.getItem('ipqc_pad_v3')).machineInfo[0][field], '');
+    const options = markup.match(new RegExp(`<select id="mi_0_${field}"[^>]*>([\\s\\S]*?)</select>`))[1];
+    assert.match(options, /^\s*<option selected><\/option>/);
+  }
+  const row = app.read('buildDataRow(state.machineInfo[0], 0, 0)');
+  assert.equal(row[11], '');
+  assert.equal(row[20], '');
+});
+
+test('explicit inspection decisions survive save, same-production selection, and reload', () => {
+  const app = page();
+  inspectionForm(app);
+  previousInspection(app, [machine('A07')]);
+  app.setElement('mi_0_visual', 'OK');
+  app.setElement('mi_0_result', 'PASS');
+  app.context.nextMachinesForTest = [machine('A07')];
+  app.run(`
+    save();
+    planMachines = normalizeProductionMachines({ machines: nextMachinesForTest });
+    selectedPlanIdx = new Set([0]);
+    productionPhase = 'ready';
+    applyPlanSelection();
+  `);
+  initializeWithoutLayout(app);
+  assert.equal(app.read('state.machineInfo[0]').visual, 'OK');
+  assert.equal(app.read('state.machineInfo[0]').result, 'PASS');
+  const markup = app.run('buildMachineContent(0)');
+  assert.match(markup, /<option selected>OK<\/option>/);
+  assert.match(markup, /<option selected>PASS<\/option>/);
+});
+
+test('clearing a chosen inspection decision persists an empty value', () => {
+  const app = page();
+  inspectionForm(app);
+  previousInspection(app, [machine('A07')]);
+  app.setElement('mi_0_visual', 'NG');
+  app.setElement('mi_0_result', 'FAIL');
+  app.run('save()');
+  app.setElement('mi_0_visual', '');
+  app.setElement('mi_0_result', '');
+  app.run('save()');
+  initializeWithoutLayout(app);
+  const info = app.read('state.machineInfo[0]');
+  assert.equal(info.visual, '');
+  assert.equal(info.result, '');
+});
+
+test('history editing keeps empty decisions blank and preserves existing chosen decisions', async () => {
+  for (const [visual, result] of [['', ''], ['OK', 'PASS'], ['NG', 'FAIL']]) {
+    const app = page();
+    const history = [{
+      id: 'local-history-test', docId: 'local-history-test',
+      inspector: 'Test QC', date: '2026-10-20', time: '08:00',
+      machineCount: 1, roundCount: 1,
+      machineInfo: [{ name: 'A07', visual, result, ltcRounds: [''] }],
+      common: { date: '2026-10-20', time: '08:00', shift: 'Day' },
+      values: {},
+    }];
+    app.localStorage.setItem('ipqc_submit_history_v2', JSON.stringify(history));
+    app.run('openHistModal(0)');
+    const markup = app.elements.get('he_machines_container').children[0].innerHTML;
+    for (const [field, chosen] of [['visual', visual], ['result', result]]) {
+      const options = markup.match(new RegExp(`<select id="hem_${field}_0"[^>]*>([\\s\\S]*?)</select>`))[1];
+      assert.match(options, new RegExp(`<option selected>${chosen}</option>`));
+      assert.match(options, /<option(?: selected)?><\/option>/);
+      app.setElement(`hem_${field}_0`, chosen);
+    }
+    app.setElement('hem_name_0', 'A07');
+    app.run(`
+      ensureSheetWebAppUrl = function(){ return true; };
+      var historyPayloadForTest = null;
+      postToSheet = async function(action, payload) {
+        historyPayloadForTest = payload;
+      };
+      renderHistory = function(){};
+    `);
+    await app.run('saveHistEdit()');
+    const saved = JSON.parse(app.localStorage.getItem('ipqc_submit_history_v2'))[0];
+    assert.equal(saved.machineInfo[0].visual, visual);
+    assert.equal(saved.machineInfo[0].result, result);
+    assert.equal(app.read('historyPayloadForTest').machineInfo[0].visual, visual);
+    assert.equal(app.read('historyPayloadForTest').machineInfo[0].result, result);
+    assert.equal(app.requests.length, 0, 'history tests must never contact the actual sheet service');
+  }
+});
+
 test('same-production reselection preserves manually entered or corrected material ratios', () => {
   for (const material of ['Resin', 'Resin (30%)']) {
     const app = page();
@@ -595,8 +696,8 @@ test('backup storage failure cancels equipment replacement and retains prior inp
   assert.equal(app.alerts[0], app.run("tr('productionBackupFailed')"));
 });
 
-test('replacing a draft with only an NG visual or FAIL result still backs up that inspection', () => {
-  for (const [field, value] of [['visual', 'NG'], ['result', 'FAIL']]) {
+test('replacing a draft with any chosen visual or result still backs up that inspection', () => {
+  for (const [field, value] of [['visual', 'OK'], ['visual', 'NG'], ['result', 'PASS'], ['result', 'FAIL']]) {
     const app = page();
     inspectionForm(app);
     previousInspection(app, [machine('A07')]);

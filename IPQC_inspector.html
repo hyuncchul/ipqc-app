@@ -90,6 +90,18 @@
     .ltc-round-label{font-size:11px;color:#a16207;font-weight:700}
     .ltc-round-input{height:28px!important;min-height:28px!important;font-size:13px!important;padding:3px 8px!important;border:1px solid #fde68a!important;border-radius:8px!important;background:#fef9c3!important;width:100%}
     .ltc-round-input:focus{outline:none;border-color:#f59e0b!important;background:#fffbeb!important}
+    .ltc-entry{display:flex;gap:5px;align-items:center}
+    .ltc-entry .ltc-round-input{min-width:0;flex:1}
+    .ltc-qr-btn{white-space:nowrap;padding:5px 8px;min-height:32px}
+    .ltc-qr-dialog{width:min(460px,calc(100vw - 32px));max-height:90vh;overflow:auto;padding:20px;border:0;border-radius:16px;box-shadow:0 20px 60px #0005;color:var(--text)}
+    .ltc-qr-dialog::backdrop{background:#0f172ab3}
+    .ltc-qr-dialog h2{font-size:19px;margin:0 0 6px}
+    .ltc-qr-target{font-weight:700;color:#92400e;margin-bottom:12px}
+    .ltc-qr-video{display:block;width:100%;max-height:45vh;min-height:180px;object-fit:contain;background:#111827;border-radius:10px}
+    .ltc-qr-status{font-size:14px;line-height:1.6;margin:12px 0;min-height:44px}
+    .ltc-qr-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .ltc-qr-file{margin-top:10px}
+    .ltc-qr-file input{height:auto!important;max-width:100%;font-size:13px}
 
     /* ── 설비별 정보 그리드 ── */
     .info-section-title{font-size:13px;font-weight:800;color:#1e40af;margin:0 0 8px;padding:6px 10px;background:#eff6ff;border-radius:8px;border-left:4px solid var(--primary)}
@@ -233,6 +245,23 @@
   </style>
 </head>
 <body>
+<!-- QR images are decoded locally; no camera frames or photos are uploaded. -->
+<dialog id="ltcQrDialog" class="ltc-qr-dialog" aria-labelledby="ltcQrTitle" aria-describedby="ltcQrStatus">
+  <h2 id="ltcQrTitle" data-i18n="qrTitle">LTC No. QR 스캔</h2>
+  <div id="ltcQrTarget" class="ltc-qr-target"></div>
+  <video id="ltcQrVideo" class="ltc-qr-video" autoplay muted playsinline></video>
+  <canvas id="ltcQrCanvas" hidden></canvas>
+  <p id="ltcQrStatus" class="ltc-qr-status" role="status" aria-live="polite"></p>
+  <div class="ltc-qr-actions">
+    <button id="ltcQrRetry" type="button" class="btn primary sm" onclick="startLtcCamera()" data-i18n="qrRetry">카메라 다시 시작</button>
+    <button id="ltcQrClose" type="button" class="btn sm" onclick="closeLtcQr()" data-i18n="qrClose">닫기</button>
+  </div>
+  <div class="ltc-qr-file">
+    <label for="ltcQrPhoto" data-i18n="qrPhoto">또는 QR 사진 촬영 / 선택</label>
+    <input id="ltcQrPhoto" type="file" accept="image/*" capture="environment" onchange="readLtcQrPhoto(this)">
+  </div>
+  <p class="hint" data-i18n="qrHint">QR코드가 인식되면 해당 회차에 자동 입력됩니다. 직접 입력도 가능합니다.</p>
+</dialog>
 
 <!-- ══ 히스토리 모달 ══ -->
 <div id="histModal">
@@ -555,6 +584,7 @@
   <div class="footer-space"></div>
 </div>
 
+<script src="./jsQR-1.4.0.js"></script>
 <script>
 // ══ 생산 현황 연동 & 설비 선택 ══════════════
 // production.html과 동일한 조회 API 및 세션 형식을 사용합니다.
@@ -769,7 +799,7 @@ function applyPlanSelection(){
   const discarded = oldInfo.some((info,index)=>
     !selected.some(m=>m.machine===info.name && m.productionKey===info.productionKey) && (
       Object.entries(oldValues).some(([key,value])=>Number(key.split('|')[1])===index && value) ||
-      (info.visual && info.visual!=='OK') || (info.result && info.result!=='PASS') ||
+      info.visual || info.result ||
       (info.ltcRounds||[]).some(Boolean) || ['datecode','ltc','approval','ratio','sess'].some(field=>info[field]) ||
       PRODUCTION_FIELDS.some(field=>info[field] && info[field]!==info.productionFields?.[field])
     ));
@@ -1488,6 +1518,89 @@ const I18N = {
 
   }
 };
+const QR_MESSAGES = {
+  ko:{
+    qrTitle:'LTC No. QR 스캔', qrClose:'닫기', qrRetry:'카메라 다시 시작',
+    qrPhoto:'또는 QR 사진 촬영 / 선택',
+    qrHint:'QR코드가 인식되면 해당 회차에 자동 입력됩니다. 직접 입력도 가능합니다.',
+    qrStarting:'카메라를 켜는 중입니다. 카메라 권한을 허용해 주세요.',
+    qrScanning:'LTC No. QR코드를 카메라에 비춰 주세요.',
+    qrDenied:'카메라 권한이 차단되었습니다. 브라우저 설정에서 허용한 뒤 다시 시작하거나 QR 사진을 선택해 주세요.',
+    qrUnavailable:'카메라를 사용할 수 없습니다. QR 사진을 선택하거나 닫은 뒤 직접 입력해 주세요.',
+    qrError:'카메라를 열 수 없습니다. 다른 앱의 카메라 사용을 종료한 뒤 다시 시도하거나 QR 사진을 선택해 주세요.',
+    qrLibrary:'QR 인식 기능을 불러오지 못했습니다. 페이지를 새로고침하거나 직접 입력해 주세요.',
+    qrReading:'QR 사진을 인식하는 중입니다…',
+    qrNoCode:'QR코드를 찾지 못했습니다. 코드 전체가 선명하게 보이는 사진으로 다시 시도해 주세요.',
+    qrPhotoError:'사진을 읽을 수 없습니다. JPG 또는 PNG 사진으로 다시 시도해 주세요.',
+    qrPaused:'카메라가 중지되었습니다. 다시 시작하거나 QR 사진을 선택해 주세요.',
+    qrTargetChanged:'입력 대상이 변경되었습니다. 닫은 뒤 해당 설비의 QR 버튼을 다시 눌러 주세요.'
+  },
+  en:{
+    qrTitle:'Scan LTC No. QR', qrClose:'Close', qrRetry:'Restart camera',
+    qrPhoto:'Or take / choose a QR photo',
+    qrHint:'A recognized QR code fills this round automatically. Manual entry is also available.',
+    qrStarting:'Starting camera. Please allow camera access.',
+    qrScanning:'Point the camera at the LTC No. QR code.',
+    qrDenied:'Camera access is blocked. Allow it in browser settings and retry, or choose a QR photo.',
+    qrUnavailable:'Camera unavailable. Choose a QR photo, or close and enter the number manually.',
+    qrError:'Cannot open the camera. Close other camera apps and retry, or choose a QR photo.',
+    qrLibrary:'QR reader could not load. Refresh the page or enter the number manually.',
+    qrReading:'Reading QR photo…',
+    qrNoCode:'No QR code found. Try a clear photo showing the entire code.',
+    qrPhotoError:'Cannot read this photo. Try a JPG or PNG image.',
+    qrPaused:'Camera stopped. Restart it or choose a QR photo.',
+    qrTargetChanged:'The input target changed. Close and use the QR button for the correct machine.'
+  },
+  zh:{
+    qrTitle:'掃描 LTC No. QR碼', qrClose:'關閉', qrRetry:'重新開啟相機',
+    qrPhoto:'或拍攝 / 選擇 QR碼照片',
+    qrHint:'辨識後會自動填入此回合。也可以手動輸入。',
+    qrStarting:'正在開啟相機，請允許相機存取。',
+    qrScanning:'請將相機對準 LTC No. QR碼。',
+    qrDenied:'相機權限已封鎖。請在瀏覽器設定中允許後重試，或選擇 QR碼照片。',
+    qrUnavailable:'無法使用相機。請選擇 QR碼照片，或關閉後手動輸入。',
+    qrError:'無法開啟相機。請關閉其他使用相機的程式後重試，或選擇 QR碼照片。',
+    qrLibrary:'無法載入 QR碼辨識功能。請重新整理頁面或手動輸入。',
+    qrReading:'正在辨識 QR碼照片…',
+    qrNoCode:'找不到 QR碼。請使用清晰且包含完整 QR碼的照片重試。',
+    qrPhotoError:'無法讀取照片。請改用 JPG 或 PNG 照片。',
+    qrPaused:'相機已停止。請重新開啟或選擇 QR碼照片。',
+    qrTargetChanged:'輸入目標已變更。請關閉後重新點選正確機台的 QR 按鈕。'
+  },
+  vi:{
+    qrTitle:'Quét QR LTC No.', qrClose:'Đóng', qrRetry:'Mở lại camera',
+    qrPhoto:'Hoặc chụp / chọn ảnh QR',
+    qrHint:'Mã QR được nhận dạng sẽ tự điền vào lần này. Bạn vẫn có thể nhập thủ công.',
+    qrStarting:'Đang mở camera. Vui lòng cho phép truy cập camera.',
+    qrScanning:'Hướng camera vào mã QR LTC No.',
+    qrDenied:'Quyền camera bị chặn. Cho phép trong cài đặt trình duyệt rồi thử lại, hoặc chọn ảnh QR.',
+    qrUnavailable:'Không thể dùng camera. Chọn ảnh QR hoặc đóng và nhập thủ công.',
+    qrError:'Không mở được camera. Đóng ứng dụng khác đang dùng camera rồi thử lại, hoặc chọn ảnh QR.',
+    qrLibrary:'Không tải được bộ đọc QR. Tải lại trang hoặc nhập thủ công.',
+    qrReading:'Đang đọc ảnh QR…',
+    qrNoCode:'Không tìm thấy mã QR. Thử ảnh rõ nét có toàn bộ mã.',
+    qrPhotoError:'Không đọc được ảnh. Hãy thử ảnh JPG hoặc PNG.',
+    qrPaused:'Camera đã dừng. Mở lại hoặc chọn ảnh QR.',
+    qrTargetChanged:'Ô nhập đã thay đổi. Đóng và nhấn nút QR của đúng máy.'
+  },
+  id:{
+    qrTitle:'Pindai QR LTC No.', qrClose:'Tutup', qrRetry:'Mulai ulang kamera',
+    qrPhoto:'Atau ambil / pilih foto QR',
+    qrHint:'Kode QR yang terbaca otomatis mengisi putaran ini. Pengisian manual tetap tersedia.',
+    qrStarting:'Memulai kamera. Izinkan akses kamera.',
+    qrScanning:'Arahkan kamera ke kode QR LTC No.',
+    qrDenied:'Akses kamera diblokir. Izinkan di pengaturan browser lalu coba lagi, atau pilih foto QR.',
+    qrUnavailable:'Kamera tidak tersedia. Pilih foto QR, atau tutup dan isi secara manual.',
+    qrError:'Kamera tidak dapat dibuka. Tutup aplikasi kamera lain lalu coba lagi, atau pilih foto QR.',
+    qrLibrary:'Pembaca QR tidak dapat dimuat. Muat ulang halaman atau isi secara manual.',
+    qrReading:'Membaca foto QR…',
+    qrNoCode:'Kode QR tidak ditemukan. Coba foto jelas yang menampilkan seluruh kode.',
+    qrPhotoError:'Foto tidak dapat dibaca. Coba foto JPG atau PNG.',
+    qrPaused:'Kamera berhenti. Mulai ulang atau pilih foto QR.',
+    qrTargetChanged:'Tujuan input berubah. Tutup dan tekan tombol QR untuk mesin yang benar.'
+  }
+};
+Object.entries(QR_MESSAGES).forEach(([lang,messages])=>Object.assign(I18N[lang],messages));
 function tr(k){ return (I18N[state?.lang||'ko']||I18N.ko)[k] || I18N.ko[k] || k; }
 function setLang(v){ state.lang=v; save(); applyLanguage(); }
 function applyLanguage(){
@@ -1537,7 +1650,7 @@ const LSKEY   = 'ipqc_pad_v3';
 const HIST_KEY = 'ipqc_submit_history_v2';
 
 function emptyMachineInfo(){
-  return {name:'',desc:'',sap:'',customer:'',mold:'',datecode:'',ltc:'',ltcRounds:[],visual:'OK',result:'PASS',approval:'',material:'',ratio:'',sess:''};
+  return {name:'',desc:'',sap:'',customer:'',mold:'',datecode:'',ltc:'',ltcRounds:[],visual:'',result:'',approval:'',material:'',ratio:'',sess:''};
 }
 // ltcRounds 배열을 라운드 수에 맞게 보정
 function ensureLtcRounds(mi){
@@ -1727,11 +1840,15 @@ function buildMachineContent(m){
       <div class="ltc-rounds">
         ${rounds.map(r=>`
           <div class="ltc-round-cell">
-            <label class="ltc-round-label">${tr('ltcRound')} ${r+1}</label>
-            <input id="ltc_${m}_${r}" class="ltc-round-input"
-              value="${esc(info.ltcRounds[r]||'')}"
-              placeholder="LTC No."
-              oninput="setLtcRound(${m},${r},this.value)">
+            <label for="ltc_${m}_${r}" class="ltc-round-label">${tr('ltcRound')} ${r+1}</label>
+            <div class="ltc-entry">
+              <input id="ltc_${m}_${r}" class="ltc-round-input"
+                value="${esc(info.ltcRounds[r]||'')}"
+                placeholder="LTC No."
+                oninput="setLtcRound(${m},${r},this.value)">
+              <button type="button" class="btn sm ltc-qr-btn" onclick="openLtcQr(${m},${r})"
+                aria-label="${esc(tr('qrTitle'))} · ${esc(info.name)} · ${tr('ltcRound')} ${r+1}">📷 QR</button>
+            </div>
           </div>`).join('')}
       </div>
     </div>`;
@@ -1748,7 +1865,7 @@ function buildMachineContent(m){
     <div><label>${tr('datecodeLabel')}</label><input id="mi_${m}_datecode" placeholder="${tr('productionManual')}" value="${esc(info.datecode||'')}" oninput="saveDebounced()"></div>
     <div><label>${tr('visualLabel')}</label>
       <select id="mi_${m}_visual" onchange="saveDebounced()">
-        ${sel('visual',['OK','NG','N/A','Waive'],info.visual||'OK')}
+        ${sel('visual',['','OK','NG','N/A','Waive'],info.visual||'')}
       </select>
     </div>
     ${productionFieldInput(m,'material','materialLabel')}
@@ -1756,7 +1873,7 @@ function buildMachineContent(m){
     <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" placeholder="${tr('productionManual')}" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
     <div><label>${tr('resultLabel')}</label>
       <select id="mi_${m}_result" onchange="saveDebounced()">
-        ${sel('result',['PASS','FAIL','HOLD','N/A','Waive'],info.result||'PASS')}
+        ${sel('result',['','PASS','FAIL','HOLD','N/A','Waive'],info.result||'')}
       </select>
     </div>
     <div><label>${tr('approvalLabel')}</label><input id="mi_${m}_approval" placeholder="${tr('productionManual')}" value="${esc(info.approval||'')}" oninput="saveDebounced()"></div>
@@ -1876,6 +1993,158 @@ function closeMeasureSummary(){
   const modal = document.getElementById('measureSummaryModal');
   if(modal) modal.classList.remove('open');
 }
+
+// LTC QR: camera frames and selected photos stay on this device.
+let ltcQrSession = null;
+function setLtcQrStatus(key){ document.getElementById('ltcQrStatus').textContent=tr(key); }
+function stopLtcCamera(session){
+  if(!session) return;
+  session.cameraAttempt++;
+  clearTimeout(session.timer);
+  session.timer=null;
+  if(session.stream) session.stream.getTracks().forEach(track=>track.stop());
+  session.stream=null;
+  const video=document.getElementById('ltcQrVideo');
+  video.pause();
+  video.srcObject=null;
+}
+function closeLtcQr(restoreFocus=true){
+  const session=ltcQrSession;
+  ltcQrSession=null;
+  stopLtcCamera(session);
+  if(session?.photoUrl) URL.revokeObjectURL(session.photoUrl);
+  const dialog=document.getElementById('ltcQrDialog');
+  if(dialog.open) dialog.close();
+  document.getElementById('ltcQrPhoto').value='';
+  const canvas=document.getElementById('ltcQrCanvas');
+  canvas.width=canvas.height=0;
+  if(restoreFocus) session?.returnFocus?.focus();
+}
+function openLtcQr(m,r){
+  closeLtcQr(false);
+  const machine=state.machineInfo[m];
+  if(!machine || !Number.isInteger(r) || r<0 || r>=state.roundCount) return;
+  ltcQrSession={m,r,machine,returnFocus:document.activeElement,cameraAttempt:0,photoAttempt:0};
+  document.getElementById('ltcQrTarget').textContent=`${machine.name} · ${tr('ltcRound')} ${r+1}`;
+  document.getElementById('ltcQrDialog').showModal();
+  document.getElementById('ltcQrClose').focus();
+  startLtcCamera();
+}
+function decodeLtcQr(source,width,height,maxSize){
+  const canvas=document.getElementById('ltcQrCanvas');
+  const scale=Math.min(1,maxSize/Math.max(width,height));
+  canvas.width=Math.max(1,Math.round(width*scale));
+  canvas.height=Math.max(1,Math.round(height*scale));
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(source,0,0,canvas.width,canvas.height);
+  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+  return jsQR(pixels.data,pixels.width,pixels.height,{inversionAttempts:'attemptBoth'})?.data||'';
+}
+function applyLtcQrValue(session,value){
+  if(ltcQrSession!==session || !value.trim()) return false;
+  const input=document.getElementById(`ltc_${session.m}_${session.r}`);
+  // A delayed camera/photo result must never go to a newly selected machine.
+  if(state.machineInfo[session.m]!==session.machine || session.r>=state.roundCount || !input){
+    stopLtcCamera(session);
+    setLtcQrStatus('qrTargetChanged');
+    return false;
+  }
+  input.value=value.trim();
+  ensureLtcRounds(session.machine);
+  session.machine.ltcRounds[session.r]=input.value;
+  closeLtcQr(false);
+  save();
+  input.focus();
+  return true;
+}
+async function startLtcCamera(){
+  const session=ltcQrSession;
+  if(!session) return;
+  stopLtcCamera(session);
+  session.photoAttempt++;
+  session.mode='camera';
+  const attempt=session.cameraAttempt;
+  if(typeof jsQR!=='function'){ setLtcQrStatus('qrLibrary'); return; }
+  if(!navigator.mediaDevices?.getUserMedia){ setLtcQrStatus('qrUnavailable'); return; }
+  setLtcQrStatus('qrStarting');
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({
+      audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    });
+    if(ltcQrSession!==session || session.cameraAttempt!==attempt){
+      stream.getTracks().forEach(track=>track.stop());
+      return;
+    }
+    session.stream=stream;
+    const video=document.getElementById('ltcQrVideo');
+    video.srcObject=stream;
+    await video.play();
+    if(ltcQrSession!==session || session.cameraAttempt!==attempt) return;
+    setLtcQrStatus('qrScanning');
+    const scanFrame=()=>{
+      if(ltcQrSession!==session || session.cameraAttempt!==attempt) return;
+      try{
+        if(video.readyState>=2 && video.videoWidth && video.videoHeight){
+          const value=decodeLtcQr(video,video.videoWidth,video.videoHeight,960);
+          if(value.trim()){ applyLtcQrValue(session,value); return; }
+        }
+      }catch(error){
+        stopLtcCamera(session);
+        setLtcQrStatus('qrError');
+        return;
+      }
+      session.timer=setTimeout(scanFrame,150);
+    };
+    scanFrame();
+  }catch(error){
+    if(ltcQrSession!==session || session.cameraAttempt!==attempt) return;
+    stopLtcCamera(session);
+    setLtcQrStatus(error.name==='NotAllowedError' || error.name==='SecurityError' ? 'qrDenied'
+      : error.name==='NotFoundError' ? 'qrUnavailable' : 'qrError');
+  }
+}
+async function readLtcQrPhoto(input){
+  const session=ltcQrSession;
+  const file=input.files?.[0];
+  input.value='';
+  if(!session || !file) return;
+  stopLtcCamera(session);
+  session.mode='photo';
+  const attempt=++session.photoAttempt;
+  if(typeof jsQR!=='function'){ setLtcQrStatus('qrLibrary'); return; }
+  setLtcQrStatus('qrReading');
+  const url=URL.createObjectURL(file);
+  if(session.photoUrl) URL.revokeObjectURL(session.photoUrl);
+  session.photoUrl=url;
+  try{
+    const photo=await new Promise((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>resolve(image);
+      image.onerror=reject;
+      image.src=url;
+    });
+    if(ltcQrSession!==session || session.photoAttempt!==attempt) return;
+    const value=decodeLtcQr(photo,photo.naturalWidth,photo.naturalHeight,1600);
+    if(!value.trim()) setLtcQrStatus('qrNoCode');
+    else applyLtcQrValue(session,value);
+  }catch(error){
+    if(ltcQrSession===session && session.photoAttempt===attempt) setLtcQrStatus('qrPhotoError');
+  }finally{
+    URL.revokeObjectURL(url);
+    if(session.photoUrl===url) session.photoUrl=null;
+  }
+}
+document.getElementById('ltcQrDialog').addEventListener('cancel',event=>{
+  event.preventDefault();
+  closeLtcQr();
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden && ltcQrSession){
+    stopLtcCamera(ltcQrSession);
+    if(ltcQrSession.mode==='camera') setLtcQrStatus('qrPaused');
+  }
+});
+window.addEventListener('pagehide',()=>closeLtcQr(false));
 
 // LTC No. 라운드별 저장
 function setLtcRound(m, r, val){
@@ -2846,8 +3115,8 @@ function openHistModal(idx){
         <div class="edit-field"><label>MOLD</label><input id="hem_mold_${m}" value="${esc(mi.mold||'')}"></div>
         <div class="edit-field"><label>Datecode</label><input id="hem_datecode_${m}" value="${esc(mi.datecode||'')}"></div>
         ${(mi.ltcRounds||Array(rCount).fill('')).map((ltcV,r)=>`<div class="edit-field"><label>LTC No. R${r+1}</label><input id="hem_ltc_${m}_${r}" value="${esc(ltcV||'')}"></div>`).join('')}
-        <div class="edit-field"><label>VISUAL</label><select id="hem_visual_${m}">${selOpts(['OK','NG','N/A','Waive'],mi.visual)}</select></div>
-        <div class="edit-field"><label>RESULT</label><select id="hem_result_${m}">${selOpts(['PASS','FAIL','HOLD','N/A','Waive'],mi.result)}</select></div>
+        <div class="edit-field"><label>VISUAL</label><select id="hem_visual_${m}">${selOpts(['','OK','NG','N/A','Waive'],mi.visual)}</select></div>
+        <div class="edit-field"><label>RESULT</label><select id="hem_result_${m}">${selOpts(['','PASS','FAIL','HOLD','N/A','Waive'],mi.result)}</select></div>
         <div class="edit-field"><label>Approval</label><input id="hem_approval_${m}" value="${esc(mi.approval||'')}"></div>
         <div class="edit-field"><label>Material</label><input id="hem_material_${m}" value="${esc(mi.material||'')}"></div>
         <div class="edit-field"><label>Ratio(%)</label><input id="hem_ratio_${m}" value="${esc(mi.ratio||'')}"></div>
@@ -2936,8 +3205,8 @@ async function saveHistEdit(){
         mold:     document.getElementById(`hem_mold_${m}`)?.value||'',
         datecode:  document.getElementById(`hem_datecode_${m}`)?.value||'',
         ltcRounds: Array.from({length:rCount},(_,r)=>document.getElementById(`hem_ltc_${m}_${r}`)?.value||''),
-        visual:    document.getElementById(`hem_visual_${m}`)?.value||'OK',
-        result:   document.getElementById(`hem_result_${m}`)?.value||'PASS',
+        visual:    document.getElementById(`hem_visual_${m}`)?.value||'',
+        result:   document.getElementById(`hem_result_${m}`)?.value||'',
         approval: document.getElementById(`hem_approval_${m}`)?.value||'',
         material: document.getElementById(`hem_material_${m}`)?.value||'',
         ratio:    document.getElementById(`hem_ratio_${m}`)?.value||'',
