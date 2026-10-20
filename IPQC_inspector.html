@@ -37,17 +37,26 @@
     /* ── 공통 설정 그리드 ── */
     .common-grid{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:10px;margin-top:10px}
 
-    /* ── 생산계획 업로드 & 설비 선택 ── */
+    /* ── 생산 현황 연동 & 설비 선택 ── */
     .plan-upload-bar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;flex-wrap:wrap}
     .plan-file-label{font-size:12px;color:#0369a1;font-weight:700;white-space:nowrap}
-    .plan-file-name{font-size:12px;color:#0369a1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .plan-file-name{font-size:12px;color:#0369a1;flex:1;min-width:160px;overflow-wrap:anywhere}
+    .production-login{margin-top:10px;padding:12px;border:1px solid #bae6fd;border-radius:10px;background:#f0f9ff}
+    .production-login[hidden]{display:none}
+    .production-login .row{align-items:end}
+    .production-login input{max-width:240px}
+    .production-note{padding:9px 12px;background:#eff6ff;border-radius:8px;margin:8px 0;font-size:12px;color:#1d4ed8}
+    .production-badge{margin-left:6px;font-size:10px;color:#047857}
+    .production-manual{background:#fffbeb}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
     .plan-selector{margin-top:12px;display:none}
     .plan-selector.show{display:block}
     .plan-selector-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px}
     .plan-selector-title{font-size:13px;font-weight:800;color:#1d4ed8}
     .plan-sel-actions{display:flex;gap:6px;flex-wrap:wrap}
     .mach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:340px;overflow-y:auto;padding:2px}
-    .mach-card{border:2px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;background:white;transition:all .15s;user-select:none;position:relative}
+    .mach-card{text-align:left;font:inherit;color:inherit;border:2px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;background:white;transition:all .15s;user-select:none;position:relative}
+    .mach-card:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
     .mach-card:hover{border-color:#93c5fd;background:#eff6ff}
     .mach-card.selected{border-color:#2563eb;background:#dbeafe}
     .mach-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:16px;font-weight:900;color:#2563eb}
@@ -334,15 +343,21 @@
     <!-- hidden machineCount (내부용) -->
     <select id="machineCount" style="display:none"></select>
 
-    <!-- 생산계획 업로드 바 -->
+    <!-- 생산 현황에서 가동 중인 설비 선택 -->
     <div class="plan-upload-bar">
-      <span class="plan-file-label" data-i18n="planFileLabel">📂 생산계획 Excel</span>
-      <span id="planFileName" class="plan-file-name">파일을 선택하세요 (production_plan.xlsx)</span>
-      <button class="btn warn sm" id="manualSelectBtn" onclick="manualSelect()" data-i18n="manualSelectBtn">🔧 수동 선택</button>
-      <button class="btn primary sm" id="excelSelectBtn" onclick="document.getElementById('planFileInput').click()" data-i18n="planFileBtn">📂 파일 선택</button>
-      <button class="btn sm" onclick="clearPlan()" id="planClearBtn" style="display:none" data-i18n="planClearKey">✕ 초기화</button>
-      <input id="planFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadProductionPlan(this)">
+      <a class="plan-file-label" href="production.html" data-i18n="productionLabel">🏭 생산 현황</a>
+      <span id="productionStatus" class="plan-file-name" role="status" aria-live="polite"></span>
+      <button class="btn primary sm" id="equipmentSelectBtn" onclick="selectEquipment()" data-i18n="equipmentSelectBtn">🔧 설비 선택</button>
+      <button class="btn sm" onclick="clearPlan()" id="planClearBtn" style="display:none" data-i18n="planClose">닫기</button>
     </div>
+    <form id="productionLogin" class="production-login" hidden onsubmit="loginProduction(event)">
+      <p class="hint" data-i18n="productionLoginHint">생산 현황과 동일한 계정으로 로그인하면 가동 설비를 불러옵니다.</p>
+      <div class="row">
+        <div><label for="productionUsername" data-i18n="productionUsername">아이디</label><input id="productionUsername" autocomplete="username" required></div>
+        <div><label for="productionPassword" data-i18n="productionPassword">비밀번호</label><input id="productionPassword" type="password" autocomplete="current-password" required></div>
+        <button class="btn primary" id="productionLoginBtn" type="submit" data-i18n="productionLoginBtn">로그인 후 불러오기</button>
+      </div>
+    </form>
 
     <!-- 설비 선택 패널 -->
     <div class="plan-selector" id="planSelector">
@@ -355,12 +370,13 @@
       </div>
       <div class="mach-grid" id="machGrid"></div>
       <div class="plan-apply-bar">
-        <button class="btn primary" onclick="applyPlanSelection()" id="planApplyBtn">설비를 선택하세요</button>
+        <button class="btn primary" onclick="applyPlanSelection()" id="planApplyBtn" disabled>완료</button>
         <span class="sel-count-badge" id="selCountBadge">0대 선택</span>
-        <span class="hint" data-i18n="planHint">선택 후 버튼을 누르면 탭이 생성됩니다</span>
+        <span class="hint" data-i18n="planHint">선택 후 완료를 누르면 설비 정보가 자동 입력됩니다</span>
       </div>
     </div>
 
+    <button class="btn sm" id="productionBackupBtn" onclick="downloadProductionBackup()" style="display:none;margin-top:8px" data-i18n="productionBackup">이전 입력 백업(JSON)</button>
     <div id="setupSyncMsg" style="font-size:12px;color:#2563eb;font-weight:700;margin-top:8px;min-height:18px"></div>
   </div>
 
@@ -540,93 +556,160 @@
 </div>
 
 <script>
-// ══ 생산계획 Excel 업로드 & 설비 선택 ══════════════
-let planMachines = [];      // [{machine, sap, desc, material, mold, customer, moldSet}, ...]
-let selectedPlanIdx = new Set(); // 선택된 인덱스
+// ══ 생산 현황 연동 & 설비 선택 ══════════════
+// production.html과 동일한 조회 API 및 세션 형식을 사용합니다.
+const PRODUCTION_API_BASE = 'https://ltc-equipment-monitor.pwjwx2rg6w.chatgpt.site';
+const PRODUCTION_SESSION_KEY = 'ltc-login-session:' + PRODUCTION_API_BASE;
+const PRODUCTION_FIELDS = ['sap','desc','customer','material','mold'];
+let planMachines = [];
+let selectedPlanIdx = new Set();
+let productionRequest = null;
+let productionPhase = 'idle';
+let productionLoadedAt = '';
 
-function loadProductionPlan(input){
-  const file = input.files[0];
-  if(!file) return;
-  if(typeof XLSX === 'undefined'){
-    alert('XLSX 라이브러리가 아직 로드되지 않았습니다.\n잠시 후 다시 시도하거나 인터넷 연결을 확인하세요.\n\n(XLSX library not loaded. Please check your internet connection and try again.)');
-    input.value='';
+function productionText(value){
+  const text = value == null ? '' : String(value).trim();
+  return ['', '-', '—', '미등록'].includes(text) ? '' : text;
+}
+function normalizeProductionMachines(payload){
+  if(!payload || !Array.isArray(payload.machines)) throw new Error('Invalid production response');
+  return payload.machines.filter(m=>m && m.status==='running' &&
+    productionText(m.id) && typeof m.part==='string' && m.part.trim()).map(m=>({
+      machine: productionText(m.id), sap: productionText(m.part),
+      desc: productionText(m.description), customer: productionText(m.customer),
+      material: productionText(m.material), mold: productionText(m.mold),
+      // 생산 버전까지 비교하여 같은 설비의 이전 생산 측정값이 섞이지 않도록 합니다.
+      productionKey: JSON.stringify([m.id,m.part,m.mold,m.material,m.card_date,m.order_no,m.version])
+    })).sort((a,b)=>a.machine.localeCompare(b.machine, undefined, {numeric:true}));
+}
+function getProductionSession(){
+  try{
+    const session = JSON.parse(sessionStorage.getItem(PRODUCTION_SESSION_KEY)||'null');
+    return session && typeof session.token==='string' && session.token && session.expires>Date.now() ? session : null;
+  }catch(_){ return null; }
+}
+function renderProductionStatus(){
+  const el = document.getElementById('productionStatus');
+  const key = {idle:'productionHint',loading:'productionLoading',login:'productionLoginHint',
+    error:'productionError',loginError:'productionLoginError',empty:'productionEmpty'}[productionPhase];
+  el.textContent = key ? tr(key) : `${tr('productionReady')} ${planMachines.length} · ${productionLoadedAt}`;
+  document.getElementById('productionBackupBtn').style.display = localStorage.getItem(LSKEY+'_equipment_backup') ? '' : 'none';
+  el.style.color = ['error','loginError'].includes(productionPhase) ? '#b91c1c' : '';
+  document.getElementById('equipmentSelectBtn').disabled = productionPhase==='loading';
+  document.getElementById('productionLoginBtn').disabled = productionPhase==='loading';
+}
+function showProductionLogin(failed=false){
+  productionPhase = failed ? 'loginError' : 'login';
+  document.getElementById('productionLogin').hidden = false;
+  document.getElementById('planSelector').classList.remove('show');
+}
+async function selectEquipment(){
+  if(productionRequest) productionRequest.abort();
+  const request = new AbortController();
+  productionRequest = request;
+  const previousSelection = new Set(planMachines.length
+    ? [...selectedPlanIdx].map(i=>planMachines[i].machine)
+    : state.machineInfo.slice(0,state.machineCount).map(m=>m.name));
+  planMachines = [];
+  selectedPlanIdx.clear();
+  renderMachGrid();
+  document.getElementById('planClearBtn').style.display = '';
+  document.getElementById('productionLogin').hidden = true;
+  const session = getProductionSession();
+  if(!session){
+    productionRequest = null;
+    showProductionLogin();
+    renderProductionStatus();
     return;
   }
-  document.getElementById('planFileName').textContent = file.name;
-  document.getElementById('planClearBtn').style.display = '';
-  // 수동 선택 / 파일 선택 버튼 숨기기
-  const mb = document.getElementById('manualSelectBtn');
-  const eb = document.getElementById('excelSelectBtn');
-  if(mb) mb.style.display='none';
-  if(eb) eb.style.display='none';
-
-  const reader = new FileReader();
-  reader.onload = function(e){
-    try{
-      const wb = XLSX.read(e.target.result, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-
-      // 헤더 행 찾기 (Machine 컬럼 포함된 행)
-      let headerIdx = 0;
-      for(let i=0;i<Math.min(5,rows.length);i++){
-        if(rows[i].some(c=>String(c).toLowerCase().includes('machine'))){ headerIdx=i; break; }
-      }
-      const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
-      const col = name => headers.findIndex(h=>h.includes(name));
-      const cMachine  = col('machine');
-      const cPart     = col('part');
-      const cDesc     = col('desc');
-      const cMaterial = col('material');
-      const cMold     = col('mold');
-      const cCustomer = col('customer');
-      const cStatus   = col('status');
-
-      planMachines = [];
-      for(let r=headerIdx+1; r<rows.length; r++){
-        const row = rows[r];
-        const machine = String(row[cMachine]||'').trim();
-        if(!machine) continue;
-        planMachines.push({
-          machine,
-          sap:      String(row[cPart]     ||'').trim(),
-          desc:     String(row[cDesc]     ||'').trim(),
-          material: String(row[cMaterial] ||'').trim(),
-          mold:     String(row[cMold]     ||'').trim(),
-          customer: String(row[cCustomer] ||'').trim(),
-          status:   String(row[cStatus]   ||'').trim(),
-        });
-      }
-      selectedPlanIdx = new Set(); // 기본: 선택 없음
-      renderMachGrid();
-      document.getElementById('planSelector').classList.add('show');
-    } catch(err){
-      alert(tr('planExcelError')+': '+err.message);
+  productionPhase = 'loading';
+  document.getElementById('planSelector').classList.add('show');
+  renderProductionStatus();
+  const timeout = setTimeout(()=>request.abort(),15000);
+  try{
+    const response = await fetch(PRODUCTION_API_BASE+'/api/production', {
+      cache:'no-store', headers:{Authorization:'Bearer '+session.token}, signal:request.signal
+    });
+    if(productionRequest!==request) return;
+    if(response.status===401){
+      sessionStorage.removeItem(PRODUCTION_SESSION_KEY);
+      showProductionLogin();
+      return;
     }
-  };
-  reader.readAsArrayBuffer(file);
-  input.value='';
+    if(!response.ok) throw new Error('Production request failed');
+    const payload = await response.json();
+    if(productionRequest!==request) return;
+    planMachines = normalizeProductionMachines(payload);
+    selectedPlanIdx = new Set(planMachines.flatMap((m,i)=>previousSelection.has(m.machine)?[i]:[]));
+    productionPhase = planMachines.length ? 'ready' : 'empty';
+    productionLoadedAt = new Date().toLocaleTimeString();
+  }catch(_){
+    if(productionRequest===request) productionPhase = 'error';
+  }finally{
+    clearTimeout(timeout);
+    if(productionRequest===request){
+      productionRequest = null;
+      renderMachGrid();
+      renderProductionStatus();
+    }
+  }
 }
-
+async function loginProduction(event){
+  event.preventDefault();
+  if(productionRequest) return;
+  const request = new AbortController();
+  productionRequest = request;
+  productionPhase = 'loading';
+  renderProductionStatus();
+  const password = document.getElementById('productionPassword');
+  const timeout = setTimeout(()=>request.abort(),15000);
+  let loggedIn = false;
+  try{
+    const response = await fetch(PRODUCTION_API_BASE+'/api/auth', {
+      method:'POST',headers:{'Content-Type':'application/json'},signal:request.signal,
+      body:JSON.stringify({action:'login',username:document.getElementById('productionUsername').value.trim(),password:password.value})
+    });
+    const session = await response.json();
+    if(productionRequest!==request) return;
+    if(!response.ok || !session.token || !(session.expires>Date.now())) throw new Error('Login failed');
+    sessionStorage.setItem(PRODUCTION_SESSION_KEY,JSON.stringify({...session,lastActivity:Date.now()}));
+    window.dispatchEvent(new Event('ltc-auth-changed'));
+    loggedIn = true;
+  }catch(_){
+    if(productionRequest===request) showProductionLogin(true);
+  }finally{
+    password.value = '';
+    clearTimeout(timeout);
+    if(productionRequest===request){
+      productionRequest = null;
+      if(loggedIn) await selectEquipment();
+      else renderProductionStatus();
+    }
+  }
+}
 function renderMachGrid(){
   const grid = document.getElementById('machGrid');
   grid.innerHTML = planMachines.map((m,i)=>{
     const sel = selectedPlanIdx.has(i);
-    return `<div class="mach-card${sel?' selected':''}" onclick="toggleMachSel(${i})" id="mc_${i}">
-      <div class="mach-card-id">⚙️ ${m.machine}</div>
-      <div class="mach-card-pn">${m.sap||'—'}</div>
-      <div class="mach-card-desc">${m.desc||'—'}</div>
-      <div class="mach-card-cust">👤 ${m.customer||'—'} ${m.status&&m.status.trim()?'| 🔖'+m.status:''}</div>
-    </div>`;
+    return `<button type="button" class="mach-card${sel?' selected':''}" aria-pressed="${sel}" onclick="toggleMachSel(${i})" id="mc_${i}">
+      <div class="mach-card-id">⚙️ ${esc(m.machine)}</div>
+      <div class="mach-card-pn">${esc(m.sap)||'—'}</div>
+      <div class="mach-card-desc">${esc(m.desc)||'—'}</div>
+      <div class="mach-card-cust">👤 ${esc(m.customer)||'—'} · ${tr('productionRunning')}</div>
+      <div class="mach-card-desc">${tr('moldLabel')}: ${esc(m.mold)||'—'} · ${esc(m.material)||'—'}</div>
+    </button>`;
   }).join('');
   updateSelCount();
 }
-
 function toggleMachSel(idx){
+  if(productionPhase!=='ready' || !planMachines[idx]) return;
   if(selectedPlanIdx.has(idx)) selectedPlanIdx.delete(idx);
   else selectedPlanIdx.add(idx);
   const card = document.getElementById('mc_'+idx);
-  if(card) card.classList.toggle('selected', selectedPlanIdx.has(idx));
+  if(card){
+    card.classList.toggle('selected',selectedPlanIdx.has(idx));
+    card.setAttribute('aria-pressed',String(selectedPlanIdx.has(idx)));
+  }
   updateSelCount();
 }
 function selectAllMachines(){ planMachines.forEach((_,i)=>selectedPlanIdx.add(i)); renderMachGrid(); }
@@ -634,109 +717,99 @@ function deselectAllMachines(){ selectedPlanIdx.clear(); renderMachGrid(); }
 function updateSelCount(){
   const n = selectedPlanIdx.size;
   document.getElementById('selCountBadge').textContent = n + tr('planSelCount');
-  document.getElementById('planApplyBtn').textContent = n>0 ? `✅ ${n} ${tr('planApplyN')}` : tr('planSelectNone');
+  const button = document.getElementById('planApplyBtn');
+  button.textContent = n ? `✅ ${tr('planDone')} (${n})` : tr('planDone');
+  button.disabled = !n || productionPhase!=='ready';
 }
-
+function backupEquipmentDraft(){
+  try{
+    localStorage.setItem(LSKEY+'_equipment_backup',JSON.stringify(state));
+    document.getElementById('productionBackupBtn').style.display = '';
+    return true;
+  }catch(_){ alert(tr('productionBackupFailed')); return false; }
+}
+function downloadProductionBackup(){
+  const backup = localStorage.getItem(LSKEY+'_equipment_backup');
+  if(!backup) return;
+  const url = URL.createObjectURL(new Blob([backup],{type:'application/json'}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'ipqc-before-equipment-selection.json';
+  link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 function applyPlanSelection(){
-  if(selectedPlanIdx.size===0){ alert(tr('planAlertMin')); return; }
+  if(productionPhase!=='ready' || !selectedPlanIdx.size) return;
+  clearTimeout(saveTimer);
   collectCommon();
-  state.roundCount = parseInt(document.getElementById('roundCount').value,10)||3;
-  // 선택된 순서(인덱스 순)로 machineInfo 구성
+  collectCurrentMachineInfo();
+  const oldInfo = state.machineInfo.slice(0,state.machineCount);
+  const oldValues = state.values;
   const selected = [...selectedPlanIdx].sort((a,b)=>a-b).map(i=>planMachines[i]);
+  const discarded = oldInfo.some((info,index)=>
+    !selected.some(m=>m.machine===info.name && m.productionKey===info.productionKey) && (
+      Object.entries(oldValues).some(([key,value])=>Number(key.split('|')[1])===index && value) ||
+      (info.visual && info.visual!=='OK') || (info.result && info.result!=='PASS') ||
+      (info.ltcRounds||[]).some(Boolean) || ['datecode','ltc','approval','ratio','sess'].some(field=>info[field]) ||
+      PRODUCTION_FIELDS.some(field=>info[field] && info[field]!==info.productionFields?.[field])
+    ));
+  if(discarded){
+    if(!confirm(tr('productionReplaceConfirm'))) return;
+    if(!backupEquipmentDraft()) return;
+  }
+  const nextValues = {};
+  state.roundCount = parseInt(document.getElementById('roundCount').value,10)||3;
+  state.machineInfo = selected.map((machine,newIndex)=>{
+    const oldIndex = oldInfo.findIndex(info=>info.name===machine.machine && info.productionKey===machine.productionKey);
+    const previous = oldIndex<0 ? null : oldInfo[oldIndex];
+    const info = previous ? {...previous,ltcRounds:[...(previous.ltcRounds||[])]} : emptyMachineInfo();
+    info.name = machine.machine;
+    info.productionKey = machine.productionKey;
+    PRODUCTION_FIELDS.forEach(field=>{
+      // 수동 보정값은 같은 생산 버전일 때 유지하고, 원본값은 최신 조회값으로 갱신합니다.
+      if(!previous || !info[field] || info[field]===previous.productionFields?.[field]) info[field] = machine[field];
+    });
+    info.productionFields = Object.fromEntries(PRODUCTION_FIELDS.map(field=>[field,machine[field]]));
+    if(previous){
+      Object.entries(oldValues).forEach(([key,value])=>{
+        const [item,oldMachine,round] = key.split('|');
+        if(Number(oldMachine)===oldIndex && Number(round)<state.roundCount) nextValues[`${item}|${newIndex}|${round}`] = value;
+      });
+    }
+    return info;
+  });
+  state.values = nextValues;
   state.machineCount = selected.length;
-  state.machineInfo  = selected.map(m=>({
-    ...emptyMachineInfo(),
-    name:     m.machine,
-    sap:      m.sap,
-    desc:     m.desc,
-    material: m.material,
-    mold:     m.mold,
-    customer: m.customer,
-  }));
-  // hidden select 동기화
-  const mc = document.getElementById('machineCount');
-  mc.innerHTML=`<option value="${state.machineCount}">${state.machineCount}</option>`;
-  mc.value = state.machineCount;
-  document.getElementById('roundCount').value = state.roundCount;
   state.currentMachine = 0;
-  save();
+  // 새 폼을 먼저 렌더링하여 기존 설비 폼이 가져온 정보를 덮어쓰지 않게 합니다.
   renderAll();
-  const msg = document.getElementById('setupSyncMsg');
-  msg.textContent=`✅ ${state.machineCount} ${tr('planLoaded')}`;
-  setTimeout(()=>{msg.textContent=''},3000);
-  // 섹션2로 스크롤
-  setTimeout(()=>{
-    const s2 = document.querySelector('.mach-tabbar-wrap');
-    if(s2) s2.scrollIntoView({behavior:'smooth',block:'start'});
-  },200);
-}
-
-function clearPlan(){
-  planMachines=[]; selectedPlanIdx.clear();
-  document.getElementById('planFileName').textContent=tr('planFileHint');
-  document.getElementById('planClearBtn').style.display='none';
+  save();
   document.getElementById('planSelector').classList.remove('show');
-  document.getElementById('machGrid').innerHTML='';
-  // 수동 선택 / 파일 선택 버튼 복원
-  const mb = document.getElementById('manualSelectBtn');
-  const eb = document.getElementById('excelSelectBtn');
-  if(mb) mb.style.display='';
-  if(eb) eb.style.display='';
+  document.getElementById('setupSyncMsg').textContent = `✅ ${state.machineCount} ${tr('planLoaded')} ${tr('productionManualHint')}`;
+  document.querySelector('.mach-tabbar-wrap')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
-
-// ── 수동 설비 선택 ──
-const MANUAL_MACHINES = [
-  // Group A
-  {machine:'A07',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'A08',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'A09',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'A10',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'A11',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'A12',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  // Group B
-  {machine:'B13',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B14',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B15',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B16',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B17',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B18',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B19',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B20',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B21',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B22',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B23',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'B24',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  // Group C
-  {machine:'C25',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'C26',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'C27',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'C28',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'C29',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-  {machine:'C30',sap:'',desc:'',material:'',mold:'',customer:'',status:''},
-];
-
-function manualSelect(){
-  planMachines = MANUAL_MACHINES.map(m=>({...m}));
-  selectedPlanIdx = new Set();
+function clearPlan(){
+  if(productionRequest) productionRequest.abort();
+  productionRequest = null;
+  productionPhase = 'idle';
+  planMachines = [];
+  selectedPlanIdx.clear();
+  document.getElementById('planClearBtn').style.display = 'none';
+  document.getElementById('planSelector').classList.remove('show');
+  document.getElementById('productionLogin').hidden = true;
+  document.getElementById('productionPassword').value = '';
   renderMachGrid();
-  document.getElementById('planSelector').classList.add('show');
-  document.getElementById('planFileName').textContent = tr('manualModeActive');
-  document.getElementById('planClearBtn').style.display = '';
-  // 수동선택 / 파일선택 버튼 숨기기
-  const mb = document.getElementById('manualSelectBtn');
-  const eb = document.getElementById('excelSelectBtn');
-  if(mb) mb.style.display='none';
-  if(eb) eb.style.display='none';
+  renderProductionStatus();
 }
 
 function applySetup(){
   collectCommon();
   // plan 모드이면 machineCount는 hidden select 값 사용
-  const mcVal = parseInt(document.getElementById('machineCount').value,10)||state.machineCount||1;
+  const mcVal = state.machineCount;
   state.machineCount = mcVal;
   state.roundCount   = parseInt(document.getElementById('roundCount').value,10);
   ensureMachineInfo();
-  if(state.currentMachine >= state.machineCount) state.currentMachine = state.machineCount-1;
+  if(state.currentMachine >= state.machineCount) state.currentMachine = Math.max(0,state.machineCount-1);
   save();
   renderAll();
   const msg = document.getElementById('setupSyncMsg');
@@ -906,17 +979,12 @@ const I18N = {
     doneOf:'입력 완료',
     ltcRound:'Round', descPH:'SAP PN 입력 시 자동채움', sapPH:'예: 17B05001001LE',
     machTabEmpty:'설비를 선택하면 여기에 탭이 생성됩니다',
-    planFileLabel:'📂 생산계획 Excel', planFileHint:'파일을 선택하세요 (production_plan.xlsx)',
-    planFileBtn:'📂 파일 선택', planClearKey:'✕ 초기화',
-    manualSelectBtn:'🔧 수동 선택', manualModeActive:'수동 선택 모드',
     planSelectorTitle:'🏭 검사할 설비를 클릭하여 선택하세요',
     planSelectAll:'전체 선택', planDeselectAll:'전체 해제',
-    planHint:'선택 후 버튼을 누르면 탭이 생성됩니다',
     planSelCount:'대 선택', planApplyN:'대로 검사 시작',
     planSelectNone:'설비를 선택하세요',
     planAlertMin:'설비를 1대 이상 선택하세요.',
     planLoaded:'대 설비가 로드되었습니다!',
-    planExcelError:'Excel 파일 읽기 실패',
     s5title:'6. 파트 번호 추가 등록 (Part Number Manager)',
     pnHint:'🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.',
     pnNewSection:'➕ 신규 파트 등록', pnSapLabel:'SAP PN', pnDescLabel:'Description',
@@ -935,6 +1003,29 @@ const I18N = {
     hMeasureSection:'📐 측정값', hClearHistConfirm:'이번 기기의 제출 기록을 모두 삭제하시겠습니까?\n(서버 데이터는 삭제되지 않습니다)',
     hNoFbId:'⚠️ 서버 ID가 없어 서버 수정이 불가합니다.', hNoFbIdAlert:'서버 ID가 없어 저장할 수 없습니다.',
     hSaving:'💾 서버에 저장 중...', hSaveOk:'✅ 서버에 성공적으로 저장되었습니다!', hSaveFail:'❌ 저장 실패: ',
+    productionBackup:"이전 입력 백업(JSON)",
+    productionBackupFailed:"이전 입력을 백업하지 못했습니다. 기기 저장 공간을 확인한 뒤 다시 시도하세요.",
+    productionReplaceConfirm:"생산 정보가 바뀌었거나 선택에서 제외된 설비의 기존 입력값은 새 검사에 가져오지 않습니다. 이전 입력은 이 기기에 JSON 백업으로 보관됩니다. 계속하시겠습니까?",
+    productionLabel:"🏭 생산 현황",
+    equipmentSelectBtn:"🔧 설비 선택",
+    planClose:"닫기",
+    planDone:"완료",
+    productionHint:"설비 선택을 누르면 가동 중인 설비를 불러옵니다.",
+    productionLoading:"생산 현황을 불러오는 중…",
+    productionReady:"가동 설비",
+    productionRunning:"가동 중",
+    productionEmpty:"현재 가동 중인 설비가 없습니다.",
+    productionError:"생산 현황을 불러오지 못했습니다. 연결을 확인하고 설비 선택을 눌러 다시 시도하세요.",
+    productionLoginHint:"생산 현황과 동일한 계정으로 로그인하면 가동 설비를 불러옵니다.",
+    productionLoginError:"로그인하지 못했습니다. 아이디·비밀번호와 연결 상태를 확인하세요.",
+    productionUsername:"아이디",
+    productionPassword:"비밀번호",
+    productionLoginBtn:"로그인 후 불러오기",
+    productionManualHint:"빈 항목은 직접 입력하세요. 가져온 정보도 수정할 수 있습니다.",
+    productionAuto:"자동 입력",
+    productionManual:"직접 입력",
+    planHint:"선택 후 완료를 누르면 설비 정보가 자동 입력됩니다",
+
   },
   en:{
     srchTitle:'5. Server Data Search / Excel Export',
@@ -998,17 +1089,12 @@ const I18N = {
     doneOf:'Completed',
     ltcRound:'Round', descPH:'Auto-fill from SAP PN', sapPH:'e.g. 17B05001001LE',
     machTabEmpty:'Select machines above to create tabs here',
-    planFileLabel:'📂 Production Plan Excel', planFileHint:'Select a file (production_plan.xlsx)',
-    planFileBtn:'📂 Select File', planClearKey:'✕ Clear',
-    manualSelectBtn:'🔧 Manual Select', manualModeActive:'Manual Selection Mode',
     planSelectorTitle:'🏭 Click machines to select for inspection',
     planSelectAll:'Select All', planDeselectAll:'Deselect All',
-    planHint:'After selecting, click Apply to create tabs',
     planSelCount:' selected', planApplyN:'machines – Start',
     planSelectNone:'Select machines first',
     planAlertMin:'Please select at least 1 machine.',
     planLoaded:'machines loaded!',
-    planExcelError:'Excel read failed',
     s5title:'6. Part Number Manager',
     pnHint:'🔍 Base DB: 861 SAP PNs · Auto-fill on SAP PN input · Add unregistered PNs below.',
     pnNewSection:'➕ Register New Part', pnSapLabel:'SAP PN', pnDescLabel:'Description',
@@ -1027,6 +1113,29 @@ const I18N = {
     hMeasureSection:'📐 Measurements', hClearHistConfirm:'Delete all submission records on this device?\n(Server data will NOT be deleted)',
     hNoFbId:'⚠️ No server ID — cannot edit on server.', hNoFbIdAlert:'No server ID. Cannot save.',
     hSaving:'💾 Saving to server...', hSaveOk:'✅ Saved to server!', hSaveFail:'❌ Save failed: ',
+    productionBackup:"Previous entry backup (JSON)",
+    productionBackupFailed:"Could not back up previous entries. Check device storage and try again.",
+    productionReplaceConfirm:"Entries for changed production or removed machines will not be copied to this inspection. A JSON backup will be kept on this device. Continue?",
+    productionLabel:"🏭 Production status",
+    equipmentSelectBtn:"🔧 Select equipment",
+    planClose:"Close",
+    planDone:"Done",
+    productionHint:"Select equipment to load currently running machines.",
+    productionLoading:"Loading production status…",
+    productionReady:"Running machines",
+    productionRunning:"Running",
+    productionEmpty:"No machines are currently running.",
+    productionError:"Could not load production status. Check your connection and select equipment to retry.",
+    productionLoginHint:"Sign in with your production account to load running machines.",
+    productionLoginError:"Sign-in failed. Check your username, password and connection.",
+    productionUsername:"Username",
+    productionPassword:"Password",
+    productionLoginBtn:"Sign in and load",
+    productionManualHint:"Enter missing fields manually. Imported information can also be edited.",
+    productionAuto:"Imported",
+    productionManual:"Enter manually",
+    planHint:"Select machines and click Done to fill their information.",
+
   },
   zh:{
     srchTitle:'5. 伺服器資料查詢 / Excel 匯出',
@@ -1090,17 +1199,12 @@ const I18N = {
     doneOf:'已完成',
     ltcRound:'Round', descPH:'輸入SAP PN自動填入', sapPH:'例：17B05001001LE',
     machTabEmpty:'選擇設備後將在此顯示標籤',
-    planFileLabel:'📂 生產計劃 Excel', planFileHint:'請選擇檔案 (production_plan.xlsx)',
-    planFileBtn:'📂 選擇檔案', planClearKey:'✕ 清除',
-    manualSelectBtn:'🔧 手動選擇', manualModeActive:'手動選擇模式',
     planSelectorTitle:'🏭 點擊選擇要檢驗的設備',
     planSelectAll:'全選', planDeselectAll:'全不選',
-    planHint:'選擇後按套用按鈕建立標籤',
     planSelCount:'台已選', planApplyN:'台開始檢驗',
     planSelectNone:'請選擇設備',
     planAlertMin:'請至少選擇1台設備。',
     planLoaded:'台設備已載入！',
-    planExcelError:'Excel讀取失敗',
     s5title:'6. 零件號碼追加登録 (Part Number Manager)',
     pnHint:'🔍 基本DB：861個SAP PN · 輸入SAP PN自動填入Description · 未登録零件請在此追加。',
     pnNewSection:'➕ 新增零件', pnSapLabel:'SAP PN', pnDescLabel:'Description',
@@ -1119,6 +1223,29 @@ const I18N = {
     hMeasureSection:'📐 量測值', hClearHistConfirm:'確定刪除此裝置所有提交記錄？\n（伺服器資料不會刪除）',
     hNoFbId:'⚠️ 無伺服器ID，無法修改。', hNoFbIdAlert:'無伺服器ID，無法儲存。',
     hSaving:'💾 儲存中...', hSaveOk:'✅ 儲存成功！', hSaveFail:'❌ 儲存失敗: ',
+    productionBackup:"先前輸入備份(JSON)",
+    productionBackupFailed:"無法備份先前輸入。請確認裝置儲存空間後重試。",
+    productionReplaceConfirm:"生產資料變更或未選取設備的既有輸入不會帶入新檢驗。先前輸入將以 JSON 備份保留在此裝置。是否繼續？",
+    productionLabel:"🏭 生產現況",
+    equipmentSelectBtn:"🔧 選擇設備",
+    planClose:"關閉",
+    planDone:"完成",
+    productionHint:"點選選擇設備以載入運轉中的設備。",
+    productionLoading:"正在載入生產現況…",
+    productionReady:"運轉設備",
+    productionRunning:"運轉中",
+    productionEmpty:"目前沒有運轉中的設備。",
+    productionError:"無法載入生產現況。請確認連線後點選選擇設備重試。",
+    productionLoginHint:"使用生產現況的相同帳號登入以載入運轉設備。",
+    productionLoginError:"登入失敗。請確認帳號、密碼與連線。",
+    productionUsername:"帳號",
+    productionPassword:"密碼",
+    productionLoginBtn:"登入並載入",
+    productionManualHint:"空白欄位請手動輸入。匯入的資料也可修改。",
+    productionAuto:"自動帶入",
+    productionManual:"手動輸入",
+    planHint:"選取設備後點選完成，將自動帶入設備資料。",
+
   },
   vi:{
     srchTitle:'5. Tìm kiếm dữ liệu máy chủ / Xuất Excel',
@@ -1182,17 +1309,12 @@ const I18N = {
     doneOf:'Đã xong',
     ltcRound:'Lần', descPH:'Tự động điền từ SAP PN', sapPH:'VD: 17B05001001LE',
     machTabEmpty:'Chọn máy ở trên để tạo tab tại đây',
-    planFileLabel:'📂 Kế hoạch sản xuất Excel', planFileHint:'Chọn tệp (production_plan.xlsx)',
-    planFileBtn:'📂 Chọn tệp', planClearKey:'✕ Xóa',
-    manualSelectBtn:'🔧 Chọn thủ công', manualModeActive:'Chế độ chọn thủ công',
     planSelectorTitle:'🏭 Nhấp để chọn máy cần kiểm tra',
     planSelectAll:'Chọn tất cả', planDeselectAll:'Bỏ chọn tất cả',
-    planHint:'Sau khi chọn, nhấn Áp dụng để tạo tab',
     planSelCount:' máy đã chọn', planApplyN:'máy – Bắt đầu',
     planSelectNone:'Chọn máy trước',
     planAlertMin:'Vui lòng chọn ít nhất 1 máy.',
     planLoaded:'máy đã tải!',
-    planExcelError:'Lỗi đọc Excel',
     s5title:'6. Quản lý số bộ phận (Part Number Manager)',
     pnHint:'🔍 DB cơ bản: 861 SAP PN · Tự động điền khi nhập SAP PN · Thêm PN chưa đăng ký bên dưới.',
     pnNewSection:'➕ Đăng ký bộ phận mới', pnSapLabel:'SAP PN', pnDescLabel:'Description',
@@ -1211,6 +1333,29 @@ const I18N = {
     hMeasureSection:'📐 Giá trị đo', hClearHistConfirm:'Xóa tất cả hồ sơ nộp trên thiết bị này?\n(Dữ liệu server sẽ KHÔNG bị xóa)',
     hNoFbId:'⚠️ Không có ID server — không thể chỉnh sửa.', hNoFbIdAlert:'Không có ID server. Không thể lưu.',
     hSaving:'💾 Đang lưu...', hSaveOk:'✅ Đã lưu!', hSaveFail:'❌ Lỗi lưu: ',
+    productionBackup:"Bản sao dữ liệu trước (JSON)",
+    productionBackupFailed:"Không thể sao lưu. Kiểm tra bộ nhớ thiết bị và thử lại.",
+    productionReplaceConfirm:"Dữ liệu của máy bị bỏ chọn hoặc sản xuất đã thay đổi sẽ không được chuyển sang lần kiểm tra này. Bản sao JSON sẽ được giữ trên thiết bị. Tiếp tục?",
+    productionLabel:"🏭 Tình trạng sản xuất",
+    equipmentSelectBtn:"🔧 Chọn thiết bị",
+    planClose:"Đóng",
+    planDone:"Hoàn tất",
+    productionHint:"Chọn thiết bị để tải danh sách máy đang chạy.",
+    productionLoading:"Đang tải tình trạng sản xuất…",
+    productionReady:"Máy đang chạy",
+    productionRunning:"Đang chạy",
+    productionEmpty:"Hiện không có máy đang chạy.",
+    productionError:"Không thể tải dữ liệu. Kiểm tra kết nối và chọn thiết bị để thử lại.",
+    productionLoginHint:"Đăng nhập bằng tài khoản sản xuất để tải máy đang chạy.",
+    productionLoginError:"Đăng nhập thất bại. Kiểm tra tài khoản, mật khẩu và kết nối.",
+    productionUsername:"Tài khoản",
+    productionPassword:"Mật khẩu",
+    productionLoginBtn:"Đăng nhập và tải",
+    productionManualHint:"Nhập thủ công các mục còn trống. Có thể sửa thông tin đã nhập tự động.",
+    productionAuto:"Tự động",
+    productionManual:"Nhập thủ công",
+    planHint:"Chọn máy và nhấn Hoàn tất để tự động điền thông tin.",
+
   },
   id:{
     srchTitle:'5. Pencarian Data Server / Ekspor Excel',
@@ -1274,17 +1419,12 @@ const I18N = {
     doneOf:'Selesai',
     ltcRound:'Ronde', descPH:'Isi otomatis dari SAP PN', sapPH:'mis: 17B05001001LE',
     machTabEmpty:'Pilih mesin di atas untuk membuat tab di sini',
-    planFileLabel:'📂 Rencana Produksi Excel', planFileHint:'Pilih file (production_plan.xlsx)',
-    planFileBtn:'📂 Pilih File', planClearKey:'✕ Reset',
-    manualSelectBtn:'🔧 Pilih Manual', manualModeActive:'Mode Pemilihan Manual',
     planSelectorTitle:'🏭 Klik untuk memilih mesin yang akan diperiksa',
     planSelectAll:'Pilih Semua', planDeselectAll:'Batal Pilih Semua',
-    planHint:'Setelah memilih, klik Terapkan untuk membuat tab',
     planSelCount:' mesin dipilih', planApplyN:'mesin – Mulai',
     planSelectNone:'Pilih mesin dahulu',
     planAlertMin:'Pilih minimal 1 mesin.',
     planLoaded:'mesin berhasil dimuat!',
-    planExcelError:'Gagal membaca Excel',
     s5title:'6. Manajemen Nomor Part (Part Number Manager)',
     pnHint:'🔍 DB Dasar: 861 SAP PN · Auto-isi saat input SAP PN · Tambahkan PN baru di bawah.',
     pnNewSection:'➕ Daftarkan Part Baru', pnSapLabel:'SAP PN', pnDescLabel:'Description',
@@ -1303,6 +1443,29 @@ const I18N = {
     hMeasureSection:'📐 Nilai Ukur', hClearHistConfirm:'Hapus semua riwayat pengiriman di perangkat ini?\n(Data server TIDAK akan dihapus)',
     hNoFbId:'⚠️ Tidak ada ID server — tidak dapat mengedit.', hNoFbIdAlert:'Tidak ada ID server. Tidak dapat menyimpan.',
     hSaving:'💾 Menyimpan...', hSaveOk:'✅ Tersimpan!', hSaveFail:'❌ Gagal menyimpan: ',
+    productionBackup:"Cadangan isian sebelumnya (JSON)",
+    productionBackupFailed:"Tidak dapat mencadangkan isian. Periksa penyimpanan perangkat dan coba lagi.",
+    productionReplaceConfirm:"Isian mesin yang dihapus dari pilihan atau produksinya berubah tidak akan disalin ke pemeriksaan ini. Cadangan JSON disimpan di perangkat ini. Lanjutkan?",
+    productionLabel:"🏭 Status produksi",
+    equipmentSelectBtn:"🔧 Pilih peralatan",
+    planClose:"Tutup",
+    planDone:"Selesai",
+    productionHint:"Pilih peralatan untuk memuat mesin yang sedang berjalan.",
+    productionLoading:"Memuat status produksi…",
+    productionReady:"Mesin berjalan",
+    productionRunning:"Berjalan",
+    productionEmpty:"Tidak ada mesin yang sedang berjalan.",
+    productionError:"Status produksi tidak dapat dimuat. Periksa koneksi dan pilih peralatan untuk mencoba lagi.",
+    productionLoginHint:"Masuk dengan akun produksi untuk memuat mesin yang berjalan.",
+    productionLoginError:"Gagal masuk. Periksa nama pengguna, kata sandi, dan koneksi.",
+    productionUsername:"Nama pengguna",
+    productionPassword:"Kata sandi",
+    productionLoginBtn:"Masuk dan muat",
+    productionManualHint:"Isi kolom kosong secara manual. Informasi yang diimpor juga dapat diedit.",
+    productionAuto:"Otomatis",
+    productionManual:"Isi manual",
+    planHint:"Pilih mesin dan klik Selesai untuk mengisi informasi otomatis.",
+
   }
 };
 function tr(k){ return (I18N[state?.lang||'ko']||I18N.ko)[k] || I18N.ko[k] || k; }
@@ -1319,12 +1482,8 @@ function applyLanguage(){
   // 동적 UI 재렌더링
   renderPnSection();
   updateSelCount();
-  // 파일 미선택 상태이면 planFileName 힌트 갱신
-  const clearBtn = document.getElementById('planClearBtn');
-  if(clearBtn && clearBtn.style.display==='none'){
-    const pfn = document.getElementById('planFileName');
-    if(pfn) pfn.textContent = tr('planFileHint');
-  }
+  renderProductionStatus();
+  renderMachGrid();
   initIpqcTrend();
   if(ipqcTrendSelection) drawIpqcTrend();
   if(bakeMatchedRows.length) renderBakeResults();
@@ -1341,8 +1500,8 @@ function rebuildCountOptions(){
   // machineCount hidden select 동기화
   const mc=document.getElementById('machineCount');
   if(mc && (mc.options.length===0 || !mc.querySelector(`option[value="${state.machineCount}"]`))){
-    mc.innerHTML=`<option value="${state.machineCount||1}">${state.machineCount||1}</option>`;
-    mc.value = state.machineCount||1;
+    mc.innerHTML=`<option value="${state.machineCount||0}">${state.machineCount||0}</option>`;
+    mc.value = state.machineCount||0;
   }
 }
 
@@ -1416,6 +1575,7 @@ function ensureMachineInfo(){
 }
 function collectCurrentMachineInfo(){
   const m = state.currentMachine;
+  if(!state.machineCount || m<0 || m>=state.machineCount) return;
   if(!state.machineInfo[m]) state.machineInfo[m] = emptyMachineInfo();
   const info = state.machineInfo[m];
   const nameEl = document.getElementById(`mname_${m}`);
@@ -1467,7 +1627,7 @@ function renderMachineTabBar(){
   const bar = document.getElementById('machTabBar');
   bar.innerHTML = '';
   if(state.machineCount === 0){
-    bar.innerHTML = '<div style="padding:10px 14px;color:#9ca3af;font-size:13px">📂 생산계획 Excel을 업로드하고 설비를 선택하세요</div>';
+    bar.innerHTML = `<div style="padding:10px 14px;color:#9ca3af;font-size:13px">${tr('productionHint')}</div>`;
     document.getElementById('machContents').innerHTML =
       `<div style="text-align:center;padding:30px 0;color:#9ca3af;font-size:14px">${tr('machTabEmpty')}</div>`;
     return;
@@ -1508,6 +1668,12 @@ function renderMachineContents(){
   }
 }
 
+function productionFieldInput(m,field,label,placeholder=''){
+  const info = state.machineInfo[m]||emptyMachineInfo();
+  const imported = info.productionFields?.[field] && info[field]===info.productionFields[field];
+  const missing = info.productionKey && !info[field];
+  return `<div><label>${tr(label)}${imported?`<span class="production-badge">${tr('productionAuto')}</span>`:''}</label><input id="mi_${m}_${field}" value="${esc(info[field]||'')}" class="${missing?'production-manual':''}" placeholder="${esc(missing?tr('productionManual'):placeholder)}" oninput="${field==='sap'?`onSapPnInput(this,${m})`:'saveDebounced()'}"></div>`;
+}
 function buildMachineContent(m){
   const info = state.machineInfo[m]||emptyMachineInfo();
   const {done, total, pct} = getMachinePct(m);
@@ -1552,27 +1718,28 @@ function buildMachineContent(m){
   })()}
 
   <!-- 설비 정보 -->
+  ${info.productionKey?`<div class="production-note">${tr('productionManualHint')}</div>`:''}
   <div class="info-section-title">${tr('infoTitle')}</div>
   <div class="info-grid">
-    <div><label>${tr('descLabel')}</label><input id="mi_${m}_desc" value="${esc(info.desc||'')}" oninput="saveDebounced()" placeholder="${tr('descPH')}"></div>
-    <div><label>${tr('sapLabel')}</label><input id="mi_${m}_sap" value="${esc(info.sap||'')}" oninput="onSapPnInput(this,${m})" placeholder="${tr('sapPH')}"></div>
-    <div><label>${tr('customerLabel')}</label><input id="mi_${m}_customer" value="${esc(info.customer||'')}" oninput="saveDebounced()"></div>
-    <div><label>${tr('moldLabel')}</label><input id="mi_${m}_mold" value="${esc(info.mold||'')}" oninput="saveDebounced()"></div>
-    <div><label>${tr('datecodeLabel')}</label><input id="mi_${m}_datecode" value="${esc(info.datecode||'')}" oninput="saveDebounced()"></div>
+    ${productionFieldInput(m,'desc','descLabel')}
+    ${productionFieldInput(m,'sap','sapLabel')}
+    ${productionFieldInput(m,'customer','customerLabel')}
+    ${productionFieldInput(m,'mold','moldLabel')}
+    <div><label>${tr('datecodeLabel')}</label><input id="mi_${m}_datecode" placeholder="${tr('productionManual')}" value="${esc(info.datecode||'')}" oninput="saveDebounced()"></div>
     <div><label>${tr('visualLabel')}</label>
       <select id="mi_${m}_visual" onchange="saveDebounced()">
         ${sel('visual',['OK','NG','N/A','Waive'],info.visual||'OK')}
       </select>
     </div>
-    <div><label>${tr('materialLabel')}</label><input id="mi_${m}_material" value="${esc(info.material||'')}" oninput="saveDebounced()"></div>
-    <div><label>${tr('ratioLabel')}</label><input id="mi_${m}_ratio" value="${esc(info.ratio||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
-    <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
+    ${productionFieldInput(m,'material','materialLabel')}
+    <div><label>${tr('ratioLabel')}</label><input id="mi_${m}_ratio" placeholder="${tr('productionManual')}" value="${esc(info.ratio||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
+    <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" placeholder="${tr('productionManual')}" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
     <div><label>${tr('resultLabel')}</label>
       <select id="mi_${m}_result" onchange="saveDebounced()">
         ${sel('result',['PASS','FAIL','HOLD','N/A','Waive'],info.result||'PASS')}
       </select>
     </div>
-    <div><label>${tr('approvalLabel')}</label><input id="mi_${m}_approval" value="${esc(info.approval||'')}" oninput="saveDebounced()"></div>
+    <div><label>${tr('approvalLabel')}</label><input id="mi_${m}_approval" placeholder="${tr('productionManual')}" value="${esc(info.approval||'')}" oninput="saveDebounced()"></div>
   </div>
 
   `;
@@ -1799,6 +1966,7 @@ function renderAll(){
 function resetAll(){
   if(!confirm(tr('confirmReset'))) return;
   localStorage.removeItem(LSKEY);
+  localStorage.removeItem(LSKEY+'_equipment_backup');
   location.reload();
 }
 
@@ -2510,7 +2678,24 @@ function exportJson(){
 function importJson(e){
   const f=e.target.files[0]; if(!f) return;
   const rd=new FileReader();
-  rd.onload=()=>{ try{ state=JSON.parse(rd.result); save(); applyCommonToForm(); renderAll(); alert(tr('importOk')); }catch(err){ alert(tr('importFail')); } };
+  rd.onload=()=>{
+    try{
+      const imported = JSON.parse(rd.result);
+      if(!imported || !Array.isArray(imported.machineInfo) || !imported.common || !imported.values ||
+        !Number.isInteger(imported.machineCount) || imported.machineCount<0 ||
+        imported.machineCount>imported.machineInfo.length || !Number.isInteger(imported.roundCount) ||
+        imported.roundCount<1 || imported.roundCount>5) throw new Error('Invalid inspection backup');
+      clearTimeout(saveTimer);
+      state = imported;
+      state.currentMachine = Math.max(0,Math.min(state.currentMachine||0,state.machineCount-1));
+      applyCommonToForm();
+      renderAll();
+      save();
+      clearPlan();
+      applyLanguage();
+      alert(tr('importOk'));
+    }catch(err){ alert(tr('importFail')); }
+  };
   rd.readAsText(f);
 }
 
@@ -2810,17 +2995,25 @@ function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 function init(){
   load();
 
-  // ▶ 생산계획 방식: 앱 시작 시 설비 목록은 항상 초기화
-  //   (localStorage에 이전 세션의 A01 등 기본 설비가 남아있는 것 방지)
-  //   측정값(state.values)은 유지하여 실수로 새로고침해도 복구 가능
-  state.machineCount   = 0;
-  state.machineInfo    = [];
-  state.currentMachine = 0;
+  // 설비와 측정값을 함께 복구해야 새로고침 후 다른 설비에 값이 연결되지 않습니다.
+  const savedCount = Number.isInteger(state.machineCount) && state.machineCount>0 ? state.machineCount : 0;
+  const validDraft = savedCount>0 && state.machineInfo.length>=savedCount &&
+    state.machineInfo.slice(0,savedCount).every(info=>info && productionText(info.name));
+  if(validDraft){
+    state.machineInfo = state.machineInfo.slice(0,savedCount);
+  }else{
+    // 구버전의 이름 없는 측정값은 다른 설비에 배정하지 않고 원본 백업으로 보관합니다.
+    if(Object.values(state.values).some(Boolean) && !backupEquipmentDraft()) return;
+    state.machineCount = 0;
+    state.machineInfo = [];
+    state.values = {};
+  }
+  state.currentMachine = Math.max(0,Math.min(state.currentMachine,state.machineCount-1));
 
   // 대만 기준시(UTC+8)
   const tw = new Date(Date.now() + 8 * 3600000);
-  state.common.date = tw.getUTCFullYear()+'-'+String(tw.getUTCMonth()+1).padStart(2,'0')+'-'+String(tw.getUTCDate()).padStart(2,'0');
-  state.common.time = String(tw.getUTCHours()).padStart(2,'0')+':'+String(tw.getUTCMinutes()).padStart(2,'0');
+  if(!validDraft || !state.common.date) state.common.date = tw.getUTCFullYear()+'-'+String(tw.getUTCMonth()+1).padStart(2,'0')+'-'+String(tw.getUTCDate()).padStart(2,'0');
+  if(!validDraft || !state.common.time) state.common.time = String(tw.getUTCHours()).padStart(2,'0')+':'+String(tw.getUTCMinutes()).padStart(2,'0');
   rebuildCountOptions();
   document.getElementById('roundCount').value=state.roundCount;
   document.getElementById('lang').value=state.lang||'ko';
