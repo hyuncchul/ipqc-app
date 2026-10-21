@@ -114,6 +114,9 @@
 .evidence-drive-link{font-size:11px;color:#167e81;text-decoration:underline;line-height:1.4;align-self:flex-start}
 
 .team-access{margin:16px 0;padding:14px 16px;border:1px solid #d8e2ed;border-radius:14px;background:#f5f9fc;color:#20364b}
+.registration-prompt{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.registration-prompt .button{white-space:normal}
+@media(max-width:580px){.sidebar nav{grid-template-columns:repeat(auto-fit,minmax(44px,1fr))}}
 .team-access [hidden]{display:none!important}
 .team-access-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .team-access-identity-group{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;min-width:0}
@@ -159,6 +162,7 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
       <button type="button" class="nav-item" data-view="quality"><span aria-hidden="true">◎</span> <span data-i18n="품질 재검사">품질 재검사</span> <span id="navQualityCount" class="nav-count">0</span></button>
       <button type="button" class="nav-item" data-view="completed"><span aria-hidden="true">✓</span> <span data-i18n="처리 완료">처리 완료</span> <span id="navCompletedCount" class="nav-count">0</span></button>
       <button type="button" class="nav-item" data-view="parts"><span aria-hidden="true">▤</span> <span data-i18n="품번 관리">품번 관리</span></button>
+      <button type="button" class="nav-item" id="registrationNav" data-view="registration"><span aria-hidden="true">⚙</span> <span data-i18n="등록">등록</span></button>
     </nav>
     <div class="side-bottom"><div class="local-label"><span data-i18n="이 브라우저에 저장">이 브라우저에 저장</span></div><p><span data-i18n="작업을 마친 뒤 백업 파일을">작업을 마친 뒤 백업 파일을</span><br><span data-i18n="보관해 주세요.">보관해 주세요.</span></p><button class="side-backup" id="backupSide" type="button"><span data-i18n="이력 백업 다운로드">이력 백업 다운로드</span></button></div>
   </aside>
@@ -168,6 +172,7 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
       <div id="storageError" class="notice error" role="alert" hidden></div>
       <div id="partsError" class="notice error" role="alert" hidden></div>
       <div id="partsSetup" class="notice" role="status" hidden></div>
+      <div id="registrationPrompt" class="notice registration-prompt" role="status" hidden><span data-i18n="등록 탭에서 Google 로그인해 주세요.">등록 탭에서 Google 로그인해 주세요.</span><button type="button" class="button secondary" data-view="registration" data-i18n="등록 탭 열기">등록 탭 열기</button></div>
       <section id="recordSummary" class="record-summary" aria-labelledby="summaryHeading">
         <div class="summary-heading"><h2 id="summaryHeading"><span data-i18n="전체 처리 현황">전체 처리 현황</span></h2><span id="summaryScope"><span data-i18n="전체 기간 · 등록 건 기준">전체 기간 · 등록 건 기준</span></span></div>
         <dl class="summary-cards" aria-live="polite" aria-atomic="true">
@@ -175,6 +180,11 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
           <div class="summary-card summary-completed"><dt><span data-i18n="처리 완료">처리 완료</span></dt><dd><strong id="completedRecordCount">0</strong><span><span data-i18n="건">건</span></span></dd></div>
           <div class="summary-card summary-pending"><dt><span data-i18n="미처리">미처리</span></dt><dd><strong id="pendingRecordCount">0</strong><span><span data-i18n="건">건</span></span></dd></div>
         </dl>
+      </section>
+      <section id="registrationView" aria-labelledby="registrationHeading" hidden>
+        <div class="page-heading"><div><h1 id="registrationHeading" data-i18n="계정·팀 등록">계정·팀 등록</h1><p data-i18n="Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.">Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.</p></div></div>
+        <div id="teamAccessMount"></div>
+        <div id="teamPhotoAccessMount"></div>
       </section>
       <section id="registerView">
         <div class="page-heading"><div><div class="eyebrow"><span data-i18n="PROCESS INSPECTION">PROCESS INSPECTION</span></div><h1><span data-i18n="공정 불량 등록">공정 불량 등록</span></h1><p><span data-i18n="품질에서 불량을 등록하면 등록 이력에서 생산팀이 검사 방법을 선택하고 결과를 입력합니다.">품질에서 불량을 등록하면 등록 이력에서 생산팀이 검사 방법을 선택하고 결과를 입력합니다.</span></p></div><button type="button" class="master-badge" data-view="parts"><span class="master-mark" aria-hidden="true">✓</span><span><span data-i18n="품번 관리">품번 관리</span><span id="masterCount"><span data-i18n="품번 데이터 준비 중">품번 데이터 준비 중</span></span></span></button></div>
@@ -2032,6 +2042,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 (function (global) {
   'use strict';
   const rows = [
+    ["등록", "Registration", "註冊", "Đăng ký", "Pendaftaran"],
+    ["계정·팀 등록", "Account and team registration", "帳戶與團隊註冊", "Đăng ký tài khoản và nhóm", "Pendaftaran akun dan tim"],
+    ["Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.", "Manage Google sign-in, member permissions, and the shared photo folder.", "管理 Google 登入、成員權限及共用照片資料夾。", "Quản lý đăng nhập Google, quyền thành viên và thư mục ảnh dùng chung.", "Kelola login Google, izin anggota, dan folder foto bersama."],
+    ["등록 탭에서 Google 로그인해 주세요.", "Sign in with Google in the Registration tab.", "請在「註冊」分頁使用 Google 登入。", "Vui lòng đăng nhập bằng Google trong thẻ Đăng ký.", "Silakan login dengan Google di tab Pendaftaran."],
+    ["등록 탭 열기", "Open Registration tab", "開啟註冊分頁", "Mở thẻ Đăng ký", "Buka tab Pendaftaran"],
     ['완료일', 'Completion date', '完成日期', 'Ngày hoàn thành', 'Tanggal selesai'],
     ['기존 기록 {count}건을 가져왔습니다. 이미 있는 {skipped}건은 변경하지 않았습니다.', 'Imported {count} records. Left {skipped} existing records unchanged.', '已匯入 {count} 筆紀錄；保留 {skipped} 筆既有紀錄不變。', 'Đã nhập {count} bản ghi. Giữ nguyên {skipped} bản ghi đã có.', 'Mengimpor {count} catatan. {skipped} catatan yang sudah ada tidak diubah.'],
     ['생산팀 모니터링', 'Production monitoring', '生產進度追蹤', 'Theo dõi sản xuất', 'Pemantauan produksi'],
@@ -7055,14 +7070,19 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   }
   function showView(view) {
     currentView = view;
-    $('recordSummary').hidden = view === 'parts';
+    $('recordSummary').hidden = view === 'parts' || view === 'registration';
+    $('registrationView').hidden = view !== 'registration';
     $('registerView').hidden = view !== 'register'; $('historyView').hidden = view !== 'history'; $('partsView').hidden = view !== 'parts'; $('completedView').hidden = view !== 'completed'; $('qualityView').hidden = view !== 'quality';
-    document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === view));
-    $('pageCrumb').textContent = view === 'quality' ? t('품질 재검사') : view === 'history' ? t('등록 이력') : view === 'parts' ? t('품번 관리') : view === 'completed' ? t('처리 완료') : t('공정검사');
+    document.querySelectorAll('.nav-item').forEach((el) => { el.classList.toggle('active', el.dataset.view === view); if (el.dataset.view === view) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); });
+    $('pageCrumb').textContent = view === 'registration' ? t('등록') : view === 'quality' ? t('품질 재검사') : view === 'history' ? t('등록 이력') : view === 'parts' ? t('품번 관리') : view === 'completed' ? t('처리 완료') : t('공정검사');
+    renderRegistrationPrompt();
     if (view === 'history') renderHistory();
     if (view === 'completed') renderCompleted();
     if (view === 'quality') renderQuality();
     window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  function renderRegistrationPrompt() {
+    $('registrationPrompt').hidden = !sharedRecords || !sharedStatus.ready || sharedStatus.signedIn || currentView === 'registration';
   }
   document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => {
     if (button.dataset.historyState) $('filterState').value = button.dataset.historyState;
@@ -7552,15 +7572,14 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   }
   function initializeTeamRecords() {
     const settings = window.PEAK_INSPECTION_CONFIG?.teamRecords;
-    if (!settings?.enabled) return;
+    if (!settings?.enabled) { $('registrationNav').hidden = true; return; }
     sharedRecords = window.SharedRecords.create({config: settings.firebase, validateRecord: validRecord});
     window.TeamPhotos = window.DrivePhotos.createTeam({service:sharedRecords, picker:window.PEAK_INSPECTION_CONFIG.drivePicker, clientId:window.PEAK_INSPECTION_CONFIG.driveClientId});
-    const photoAccess = document.createElement('div'); photoAccess.id = 'teamPhotoAccessMount'; $('recordSummary').before(photoAccess);
+    const photoAccess = $('teamPhotoAccessMount');
     window.TeamPhotos.mount(photoAccess);
     records = [];
-    const container = document.createElement('div'); container.id = 'teamAccessMount'; $('recordSummary').before(container);
+    const container = $('teamAccessMount');
     window.TeamAccessUI.mount({service:sharedRecords, container, onImportLocal:importLocalRecords});
-    container.after(photoAccess);
     let previousIdentity = '';
     sharedRecords.onStatus(status => {
       const identity = !status.signedIn ? '' : status.ready ? `${status.email}:${status.role}` : previousIdentity.startsWith(`${status.email}:`) ? previousIdentity : `${status.email}:`;
@@ -7572,6 +7591,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         resetEntry(false);
       }
       sharedStatus = status;
+      renderRegistrationPrompt();
       notice('storageError', status.error ? t('공유 이력 연결을 확인해 주세요. {error}', {error:status.error.message}) : '');
       renderRecords(); updateSaveButton();
       beforeUploader?.setDisabled(saving || !canQuality());
@@ -7597,7 +7617,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   parts = window.PartsManager.create({ embedded: master, container: $('partsView'), transport: sharedPartsTransport, onChange: masterChanged, onToast: toast });
   initializePhotos();
   document.addEventListener('languagechange', () => {
-    $('pageCrumb').textContent = t(({ register: '공정검사', history: '등록 이력', completed: '처리 완료', parts: '품번 관리', quality: '품질 재검사' })[currentView]);
+    $('pageCrumb').textContent = t(({ registration: '등록', register: '공정검사', history: '등록 이력', completed: '처리 완료', parts: '품번 관리', quality: '품질 재검사' })[currentView]);
     $('masterCount').textContent = t('SAP PN {count}개 · 추가 / 업데이트', { count: parts.size.toLocaleString() });
     renderCard(); updateToday();
     for (const [id, message] of activeMessages) if (!$(id).hidden) $(id).textContent = retranslate(message);
