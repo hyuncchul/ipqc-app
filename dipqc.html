@@ -4721,7 +4721,7 @@ self.onmessage = async function(event) {
   global.IdentityScanner=Object.freeze({start,scanImage,filterResults,stop:()=>active?.stop()});
 })(typeof window!=='undefined'?window:globalThis);
 </script>
-  <script>window.PEAK_INSPECTION_CONFIG = Object.freeze({"driveClientId":"1055231474432-i1e48hp7mak4hfekg629iorde3965dl6.apps.googleusercontent.com","sharedParts":{"apiKey":"AIzaSyDLWS1ondgxY8bHnJOe-uq-pnT6d0RRa2w","authDomain":"peak-inspection-parts.firebaseapp.com","projectId":"peak-inspection-parts","storageBucket":"peak-inspection-parts.firebasestorage.app","messagingSenderId":"35985365252","appId":"1:35985365252:web:bedd9660e37130990e9851"},"teamRecords":{"enabled":false,"photosEnabled":false,"firebase":{"apiKey":"AIzaSyDLWS1ondgxY8bHnJOe-uq-pnT6d0RRa2w","authDomain":"peak-inspection-parts.firebaseapp.com","projectId":"peak-inspection-parts","storageBucket":"peak-inspection-parts.firebasestorage.app","messagingSenderId":"35985365252","appId":"1:35985365252:web:bedd9660e37130990e9851"}}});
+  <script>window.PEAK_INSPECTION_CONFIG = Object.freeze({"driveClientId":"1055231474432-i1e48hp7mak4hfekg629iorde3965dl6.apps.googleusercontent.com","drivePicker":{"apiKey":"AIzaSyC7hcVSeGOE0fkFObUEowlxSKo3LWHHEFY","appId":"1055231474432"},"sharedParts":{"apiKey":"AIzaSyDLWS1ondgxY8bHnJOe-uq-pnT6d0RRa2w","authDomain":"peak-inspection-parts.firebaseapp.com","projectId":"peak-inspection-parts","storageBucket":"peak-inspection-parts.firebasestorage.app","messagingSenderId":"35985365252","appId":"1:35985365252:web:bedd9660e37130990e9851"},"teamRecords":{"enabled":true,"photosEnabled":true,"photoProvider":"drive","firebase":{"apiKey":"AIzaSyDLWS1ondgxY8bHnJOe-uq-pnT6d0RRa2w","authDomain":"peak-inspection-parts.firebaseapp.com","projectId":"peak-inspection-parts","storageBucket":"peak-inspection-parts.firebasestorage.app","messagingSenderId":"35985365252","appId":"1:35985365252:web:bedd9660e37130990e9851"}}});
 window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-TW":"隱私權政策","vi":"Chính sách quyền riêng tư","id":"Kebijakan privasi"},"이용약관":{"en":"Terms of use","zh-TW":"使用條款","vi":"Điều khoản sử dụng","id":"Ketentuan penggunaan"}});
 /* Private team inspection records. Every acknowledged change has an immutable audit event. */
 (function(root,factory){'use strict';const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.SharedRecords=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
@@ -4743,7 +4743,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if(!object(config)||Object.keys(config).some(key=>!allowed.includes(key))||['apiKey','authDomain','projectId','appId'].some(key=>typeof config[key]!=='string'||!config[key])||typeof validateRecord!=='function')throw fail('configuration','공유 검사 기록 연결 설정을 확인해 주세요.');
     const settings={...config};let environment,initialization,authGeneration=0,memberUnsubscribe,signInPromise;
     let status=Object.freeze({ready:false,signedIn:false,role:'',canQuality:false,canProduction:false,displayName:'',email:'',online:false});
-    const statusListeners=new Set(),recordListeners=new Set(),requestListeners=new Set();
+    const statusListeners=new Set(),recordListeners=new Set(),requestListeners=new Set(),photoSettingsListeners=new Set();
     function report(patch){status=Object.freeze({...status,...patch});for(const listener of statusListeners){try{listener(status);}catch(_){}}}
     function validate(value){let accepted=false;try{accepted=validateRecord(value)===true;}catch(_){}if(!accepted||!object(value)||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||new TextEncoder().encode(JSON.stringify(value)).length>MAX_RECORD_BYTES)throw fail('invalid-data','공유할 불량 기록 형식 또는 크기를 확인해 주세요.');return clone(value);}
     function checkServer(snapshot){if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)throw fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.');}
@@ -4753,12 +4753,12 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     function memberRef(env,address){return env.sdk.doc(env.db,'inspectionAccess',address);}
     function roleFrom(snapshot,address){if(!snapshot.exists())return '';const value=snapshot.data();if(value.email!==address||!ROLES.includes(value.role))throw fail('permission-denied','검사 기록 사용 권한을 확인해 주세요.');return value.role;}
     async function authorize(env,permission){const user=await verifiedUser(env);const snap=await env.sdk.getDocFromServer(memberRef(env,email(user.email)));sameUser(env,user);checkServer(snap);const role=roleFrom(snap,email(user.email));if(!role||(permission==='quality'&&!['quality','admin'].includes(role))||(permission==='production'&&!['production','admin'].includes(role))||(permission==='admin'&&role!=='admin'))throw fail('permission-denied','관리자가 승인한 담당 업무 권한이 필요합니다.');return {user,role};}
-    function stopDataSubscriptions(){for(const holder of [...recordListeners,...requestListeners]){holder.unsubscribe?.();holder.unsubscribe=null;holder.generation++;}}
-    function restartDataSubscriptions(){for(const holder of recordListeners)startRecordListener(holder);for(const holder of requestListeners)startRequestListener(holder);}
+    function stopDataSubscriptions(){for(const holder of [...recordListeners,...requestListeners,...photoSettingsListeners]){holder.unsubscribe?.();holder.unsubscribe=null;holder.generation++;}}
+    function restartDataSubscriptions(){for(const holder of recordListeners)startRecordListener(holder);for(const holder of requestListeners)startRequestListener(holder);for(const holder of photoSettingsListeners)startPhotoSettingsListener(holder);}
     async function authChanged(user){const generation=++authGeneration;memberUnsubscribe?.();memberUnsubscribe=null;stopDataSubscriptions();report({ready:false,signedIn:!!user,role:'',canQuality:false,canProduction:false,displayName:user?.displayName||'',email:email(user?.email),online:false,error:null});
-      if(!user){report({ready:true});for(const holder of recordListeners)holder.next([]);return;}
+      if(!user){report({ready:true});for(const holder of recordListeners)holder.next([]);for(const holder of photoSettingsListeners)holder.next(null);return;}
       try{await verifiedUser(environment);if(generation!==authGeneration)return;
-        memberUnsubscribe=environment.sdk.onSnapshot(memberRef(environment,email(user.email)),{includeMetadataChanges:true},snapshot=>{if(generation!==authGeneration)return;if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites){report({online:false});stopDataSubscriptions();return;}try{const role=roleFrom(snapshot,email(user.email));const changed=role!==status.role;report({ready:true,signedIn:true,role,canQuality:['quality','admin'].includes(role),canProduction:['production','admin'].includes(role),online:true,error:null});if(changed||[...recordListeners,...requestListeners].some(h=>!h.unsubscribe))restartDataSubscriptions();if(!role){for(const holder of recordListeners)holder.next([]);}}catch(cause){report({ready:true,online:false,error:cause});stopDataSubscriptions();}},cause=>{if(generation===authGeneration){report({ready:true,online:false,error:cause});stopDataSubscriptions();}});
+        memberUnsubscribe=environment.sdk.onSnapshot(memberRef(environment,email(user.email)),{includeMetadataChanges:true},snapshot=>{if(generation!==authGeneration)return;if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites){report({online:false});stopDataSubscriptions();return;}try{const role=roleFrom(snapshot,email(user.email));const changed=role!==status.role;report({ready:true,signedIn:true,role,canQuality:['quality','admin'].includes(role),canProduction:['production','admin'].includes(role),online:true,error:null});if(changed||[...recordListeners,...requestListeners,...photoSettingsListeners].some(h=>!h.unsubscribe))restartDataSubscriptions();if(!role){for(const holder of recordListeners)holder.next([]);for(const holder of photoSettingsListeners)holder.next(null);}}catch(cause){report({ready:true,online:false,error:cause});stopDataSubscriptions();}},cause=>{if(generation===authGeneration){report({ready:true,online:false,error:cause});stopDataSubscriptions();}});
       }catch(cause){if(generation===authGeneration)report({ready:true,online:false,error:cause});}}
     function init(){if(!initialization)initialization=(async()=>{const sdk=await loadSDK(),name=`peak-inspection-parts-${settings.projectId}`;const app=sdk.getApps().find(app=>app.name===name)||sdk.initializeApp(settings,name);if(app.options?.projectId!==settings.projectId)throw fail('configuration','공유 검사 기록 연결 설정을 확인해 주세요.');environment={sdk,app,db:sdk.getFirestore(app),auth:sdk.getAuth(app)};sdk.onIdTokenChanged(environment.auth,authChanged,cause=>report({ready:true,online:false,error:cause}));return environment;})().catch(cause=>{initialization=null;report({ready:true,online:false,error:cause});throw cause;});return initialization;}
     function onStatus(callback){statusListeners.add(callback);queueMicrotask(()=>{if(statusListeners.has(callback))callback(status);});init().catch(()=>{});return()=>statusListeners.delete(callback);}
@@ -4799,9 +4799,44 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     function startRequestListener(holder){holder.unsubscribe?.();holder.unsubscribe=null;const generation=++holder.generation;if(holder.closed||status.role!=='admin'||!status.online||!environment)return;const {sdk,db}=environment;holder.unsubscribe=sdk.onSnapshot(sdk.collection(db,'inspectionAccessRequests'),{includeMetadataChanges:true},snapshot=>{if(holder.closed||holder.generation!==generation||snapshot.metadata?.hasPendingWrites)return;if(snapshot.metadata?.fromCache){holder.error(fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.'));return;}holder.next(snapshot.docs.map(doc=>({...doc.data(),id:doc.id})));},holder.error);}
     function subscribeAccessRequests(next,error=()=>{}){const holder={next,error,closed:false,generation:0,unsubscribe:null};requestListeners.add(holder);init().then(()=>startRequestListener(holder),error);return()=>{holder.closed=true;holder.generation++;holder.unsubscribe?.();requestListeners.delete(holder);};}
     async function approve(address,role){address=email(address);if(!validEmail(address)||!ROLES.includes(role))throw fail('invalid-data','승인할 이메일과 담당 업무를 확인해 주세요.');const env=await init(),{user}=await authorize(env,'admin'),{sdk,db}=env;const requests=await sdk.getDocsFromServer(sdk.query(sdk.collection(db,'inspectionAccessRequests'),sdk.where('email','==',address)));checkServer(requests);await sdk.runTransaction(db,async tx=>{const ref=memberRef(env,address);await tx.get(ref);const pending=await Promise.all(requests.docs.map(doc=>tx.get(sdk.doc(db,'inspectionAccessRequests',doc.id))));sameUser(env,user);if(address===email(user.email)&&role!=='admin')throw fail('permission-denied','본인의 관리자 권한은 제거할 수 없습니다.');const stamp=sdk.serverTimestamp();tx.set(ref,{email:address,role,approvedBy:user.uid,approvedAt:stamp});pending.forEach(snapshot=>{if(snapshot.exists())tx.set(sdk.doc(db,'inspectionAccessRequests',snapshot.id),{...snapshot.data(),status:'approved',approvedBy:user.uid,approvedAt:stamp});});});return true;}
-    function signIn(){if(signInPromise)return signInPromise;const launch=env=>{const provider=new env.sdk.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});return env.sdk.signInWithPopup(env.auth,provider);};let attempt;try{attempt=environment?launch(environment):init().then(launch);}catch(cause){return Promise.reject(cause);}signInPromise=Promise.resolve(attempt).then(()=>status).finally(()=>{signInPromise=null;});return signInPromise;}
+    function photoSettingsValue(value){
+      if(!object(value)||Object.keys(value).sort().join(',')!=='folderId,folderName,provider,updatedAt,updatedBy'||value.provider!=='drive'||!/^[-A-Za-z0-9_]{10,200}$/.test(value.folderId)||typeof value.folderName!=='string'||!value.folderName.trim()||value.folderName.length>120||typeof value.updatedBy!=='string'||!value.updatedBy||typeof value.updatedAt?.toMillis!=='function')throw fail('invalid-data','공통 사진 폴더 설정을 확인해 주세요.');
+      return Object.freeze({provider:'drive',folderId:value.folderId,folderName:value.folderName,updatedBy:value.updatedBy,updatedAt:value.updatedAt.toMillis()});
+    }
+    function startPhotoSettingsListener(holder){
+      holder.unsubscribe?.();holder.unsubscribe=null;const generation=++holder.generation;
+      if(holder.closed||!status.role||!status.online||!environment)return;
+      const {sdk,db}=environment;
+      holder.unsubscribe=sdk.onSnapshot(sdk.doc(db,'inspectionSettings','photos'),{includeMetadataChanges:true},snapshot=>{
+        if(holder.closed||holder.generation!==generation||snapshot.metadata?.hasPendingWrites)return;
+        if(snapshot.metadata?.fromCache){holder.error(fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.'));return;}
+        try{holder.next(snapshot.exists()?photoSettingsValue(snapshot.data()):null);}catch(cause){holder.next(null);holder.error(cause);}
+      },cause=>{if(!holder.closed&&holder.generation===generation){holder.next(null);holder.error(cause);}});
+    }
+    function subscribePhotoSettings(next,error=()=>{}){
+      const holder={next,error,closed:false,generation:0,unsubscribe:null};photoSettingsListeners.add(holder);
+      init().then(()=>startPhotoSettingsListener(holder),error);
+      return()=>{holder.closed=true;holder.generation++;holder.unsubscribe?.();photoSettingsListeners.delete(holder);};
+    }
+    async function savePhotoSettings(input){
+      if(!object(input)||Object.keys(input).sort().join(',')!=='folderId,folderName,provider'||input.provider!=='drive'||!/^[-A-Za-z0-9_]{10,200}$/.test(input.folderId)||typeof input.folderName!=='string'||!input.folderName.trim()||input.folderName.length>120)throw fail('invalid-data','공통 사진 폴더 설정을 확인해 주세요.');
+      const env=await init(),{user}=await authorize(env,'admin'),{sdk,db}=env,ref=sdk.doc(db,'inspectionSettings','photos');
+      await sdk.runTransaction(db,async tx=>{
+        const current=await tx.get(ref);sameUser(env,user);
+        if(current.exists()&&current.data().folderId!==input.folderId)throw fail('conflict','기존 공통 사진 폴더가 있습니다. 기존 폴더를 선택해 주세요.');
+        tx.set(ref,{provider:'drive',folderId:input.folderId,folderName:input.folderName.trim(),updatedBy:user.uid,updatedAt:sdk.serverTimestamp()});
+      });return {provider:'drive',folderId:input.folderId,folderName:input.folderName.trim()};
+    }
+    function signIn(){
+      if(signInPromise)return signInPromise;
+      const launch=env=>{const provider=new env.sdk.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});return env.sdk.signInWithPopup(env.auth,provider);};
+      let attempt,timer;try{attempt=environment?launch(environment):init().then(launch);}catch(cause){return Promise.reject(cause);}
+      const timeout=new Promise((_,reject)=>{timer=root.setTimeout(()=>reject(fail('auth-timeout','Google 로그인 응답이 없습니다. Chrome 또는 Safari에서 팝업을 허용한 후 연결 버튼을 다시 눌러 주세요.')),60000);});
+      const pending=Promise.race([Promise.resolve(attempt).then(()=>status),timeout]).finally(()=>{root.clearTimeout(timer);if(signInPromise===pending)signInPromise=null;});
+      signInPromise=pending;return pending;
+    }
     async function signOut(){const env=await init();await env.sdk.signOut(env.auth);}
-    return Object.freeze({read,subscribe,onStatus,getStatus:()=>status,createRecord,importRecord,updateRecord,requestAccess,subscribeAccessRequests,approve,signIn,signOut});
+    return Object.freeze({read,subscribe,onStatus,getStatus:()=>status,createRecord,importRecord,updateRecord,requestAccess,subscribeAccessRequests,approve,subscribePhotoSettings,savePhotoSettings,signIn,signOut});
   }
   return Object.freeze({create,SDK_VERSION,COLLECTION,MAX_RECORD_BYTES,ROLES});
 });
@@ -4994,67 +5029,6 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     } });
   }
   return Object.freeze({ mount });
-});
-
-(function(root,factory){'use strict';const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.TeamPhotoStorage=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
-  'use strict';
-  const SDK_VERSION='12.19.0', MAX_BYTES=1024*1024;
-  const UUID='[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
-  const PATH=new RegExp(`^inspection-evidence/${UUID}\\.jpg$`);
-  const BUCKET=/^[a-z0-9][a-z0-9._-]{1,220}[a-z0-9]$/;
-  const fail=(code,message)=>Object.assign(new Error(root.I18n?.t(message)||message),{code:`team-photos/${code}`});
-  let sdkPromise;
-  function loadDefault(){if(!sdkPromise)sdkPromise=Promise.all(['app','auth','storage'].map(name=>import(`https://www.gstatic.com/firebasejs/12.19.0/firebase-${name}.js`))).then(modules=>Object.assign({},...modules)).catch(cause=>{sdkPromise=null;throw cause;});return sdkPromise;}
-  function validReference(value){return !!value&&typeof value.storagePath==='string'&&PATH.test(value.storagePath)&&value.storagePath===`inspection-evidence/${value.id}.jpg`&&typeof value.storageBucket==='string'&&BUCKET.test(value.storageBucket)&&!['driveFileId','driveFolderId','driveWebViewLink'].some(key=>value[key]!==undefined);}
-  function create({config,enabled=false,getStatus=()=>({}),loadSDK=loadDefault}={}){
-    const settings={...config};let initialization,authVersion=0;
-    if(enabled&&(!settings.projectId||!settings.appId||!settings.apiKey||!BUCKET.test(settings.storageBucket||'')))throw fail('configuration','공통 사진 저장소 연결 설정을 확인해 주세요.');
-    function requireConnected(){
-      if(!enabled)throw fail('not-configured','공통 사진 저장소 설정이 완료되지 않았습니다. 관리자에게 문의해 주세요.');
-      const state=getStatus();
-      if(!state?.ready||!state.signedIn)throw fail('auth-required','Google 계정으로 로그인해 주세요.');
-      if(!['admin','quality','production'].includes(state.role))throw fail('permission-denied','관리자가 승인한 담당 업무 권한이 필요합니다.');
-      if(state.online!==true||root.navigator?.onLine===false)throw fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.');
-      return state;
-    }
-    function init(){if(!initialization)initialization=(async()=>{const sdk=await loadSDK(),name=`peak-inspection-parts-${settings.projectId}`;const app=sdk.getApps().find(item=>item.name===name)||sdk.initializeApp(settings,name);if(app.options?.projectId!==settings.projectId)throw fail('configuration','공통 사진 저장소 연결 설정을 확인해 주세요.');const auth=sdk.getAuth(app);if(typeof sdk.onAuthStateChanged==='function')sdk.onAuthStateChanged(auth,()=>{authVersion+=1;});return {sdk,auth,storage:sdk.getStorage(app,`gs://${settings.storageBucket}`)};})().catch(cause=>{initialization=null;throw cause;});return initialization;}
-    function checkIdentity(session){
-      const state=requireConnected();
-      if(authVersion!==session.version||session.auth.currentUser!==session.user||session.auth.currentUser?.uid!==session.uid||
-        String(session.auth.currentUser?.email||'').toLowerCase()!==session.email||String(state.email||'').toLowerCase()!==session.email)
-        throw fail('auth-required','Google 계정으로 로그인해 주세요.');
-      return state;
-    }
-    async function authorized(){
-      requireConnected();const env=await init();if(typeof env.auth.authStateReady==='function')await env.auth.authStateReady();
-      const state=requireConnected(),user=env.auth.currentUser;
-      if(!user||String(user.email||'').toLowerCase()!==String(state.email||'').toLowerCase())throw fail('auth-required','Google 계정으로 로그인해 주세요.');
-      const session={...env,user,uid:user.uid,email:String(user.email||'').toLowerCase(),version:authVersion};
-      const token=await env.sdk.getIdTokenResult(user);checkIdentity(session);
-      if(token.claims?.email_verified!==true||token.claims?.firebase?.sign_in_provider!=='google.com')throw fail('auth-required','이메일이 확인된 Google 계정으로 로그인해 주세요.');
-      return session;
-    }
-    function validMetadata(metadata,blob){return root.EvidencePhotos?.validatePhoto(metadata)===true&&blob instanceof root.Blob&&blob.type==='image/jpeg'&&blob.size>0&&blob.size<=MAX_BYTES&&blob.size===metadata.size;}
-    async function upload(metadata,blob){
-      if(!validMetadata(metadata,blob)||['storagePath','storageBucket','driveFileId','driveFolderId','driveWebViewLink'].some(key=>metadata[key]!==undefined))throw fail('invalid-photo','사진 정보가 올바르지 않습니다.');
-      const session=await authorized(),{sdk,storage,user}=session,path=`inspection-evidence/${metadata.id}.jpg`;checkIdentity(session);
-      if(!PATH.test(path))throw fail('invalid-photo','사진 정보가 올바르지 않습니다.');
-      const result=await sdk.uploadBytes(sdk.ref(storage,path),blob,{contentType:'image/jpeg',cacheControl:'private, max-age=0, no-store',customMetadata:{uploadedBy:user.uid,photoId:metadata.id}});
-      checkIdentity(session);
-      if(result.metadata?.fullPath!==path||result.metadata?.bucket!==settings.storageBucket||result.metadata?.size!==metadata.size||result.metadata?.contentType!=='image/jpeg')throw fail('invalid-response','공통 사진 업로드 결과를 확인할 수 없습니다. 다시 시도해 주세요.');
-      return {...metadata,storagePath:path,storageBucket:settings.storageBucket};
-    }
-    async function fetchPhoto(metadata){
-      if(!root.EvidencePhotos?.validatePhoto(metadata)||!validReference(metadata)||metadata.storageBucket!==settings.storageBucket)throw fail('invalid-photo','사진 정보가 올바르지 않습니다.');
-      const session=await authorized(),{sdk,storage}=session;checkIdentity(session);
-      const blob=await sdk.getBlob(sdk.ref(storage,metadata.storagePath),MAX_BYTES);
-      checkIdentity(session);
-      if(!validMetadata(metadata,blob))throw fail('invalid-photo','사진 정보가 올바르지 않습니다.');
-      return blob;
-    }
-    return Object.freeze({isEnabled:()=>enabled===true,requireConnected,upload,fetchPhoto});
-  }
-  return Object.freeze({create,validReference,SDK_VERSION,MAX_BYTES});
 });
 
 (function (root, factory) {
@@ -5323,6 +5297,457 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   'use strict';
   const api = factory(root);
   if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root.DrivePhotos) root.DrivePhotos.createTeam = api.create;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  'use strict';
+  const translations = [
+    ['팀 폴더 설정을 확인하고 있습니다. 잠시 후 다시 시도해 주세요.', 'Checking the team folder settings. Try again shortly.', '正在確認團隊資料夾設定，請稍後再試。', 'Đang kiểm tra thiết lập thư mục nhóm. Hãy thử lại sau ít phút.', 'Sedang memeriksa pengaturan folder tim. Coba lagi sebentar.'],
+  [
+    "Google 폴더 선택기를 불러오지 못했습니다. 새로고침해 주세요.",
+    "Could not load the Google folder picker. Refresh the page.",
+    "無法載入 Google 資料夾選擇器，請重新整理。",
+    "Không tải được bộ chọn thư mục Google. Hãy tải lại trang.",
+    "Pemilih folder Google gagal dimuat. Muat ulang halaman."
+  ],
+  [
+    "사진 권한 연결을 눌러 본인 Google 계정으로 연결해 주세요.",
+    "Select Connect photo access and sign in with your own Google account.",
+    "請按連結照片權限，使用自己的 Google 帳戶登入。",
+    "Chọn Kết nối quyền ảnh và đăng nhập bằng tài khoản Google của bạn.",
+    "Pilih Hubungkan akses foto dan masuk dengan akun Google Anda sendiri."
+  ],
+  [
+    "관리자가 팀 사진 폴더를 먼저 설정해야 합니다.",
+    "An administrator must configure the team photo folder first.",
+    "請先由管理員設定團隊照片資料夾。",
+    "Quản trị viên cần thiết lập thư mục ảnh nhóm trước.",
+    "Administrator harus mengatur folder foto tim terlebih dahulu."
+  ],
+  [
+    "팀 폴더 선택·허용을 눌러 같은 공유 폴더를 선택해 주세요.",
+    "Select Choose and authorize team folder, then choose the shared folder.",
+    "請按選擇並授權團隊資料夾，選取相同的共用資料夾。",
+    "Chọn Chọn và cấp quyền thư mục nhóm, rồi chọn đúng thư mục chung.",
+    "Pilih Pilih dan izinkan folder tim, lalu pilih folder bersama yang sama."
+  ],
+  [
+    "로그인 또는 폴더가 변경되었습니다. 다시 시도해 주세요.",
+    "The account or folder changed. Try again.",
+    "帳戶或資料夾已變更，請重試。",
+    "Tài khoản hoặc thư mục đã thay đổi. Hãy thử lại.",
+    "Akun atau folder berubah. Coba lagi."
+  ],
+  [
+    "사진 접근 허용을 눌러 해당 사진을 선택해 주세요.",
+    "Select Allow photo access and choose this photo.",
+    "請按允許存取照片，並選取此照片。",
+    "Chọn Cho phép truy cập ảnh và chọn ảnh này.",
+    "Pilih Izinkan akses foto dan pilih foto ini."
+  ],
+  [
+    "공유 폴더의 편집자 초대와 앱 접근 권한을 확인해 주세요.",
+    "Check your editor invitation to the shared folder and the app's access permission.",
+    "請確認共用資料夾的編輯者邀請及應用程式存取權限。",
+    "Kiểm tra lời mời làm người chỉnh sửa thư mục chung và quyền truy cập của ứng dụng.",
+    "Periksa undangan editor folder bersama dan izin akses aplikasi."
+  ],
+  [
+    "검사 앱에 로그인한 Google 계정과 같은 계정을 선택해 주세요.",
+    "Choose the same Google account used to sign in to this inspection app.",
+    "請選擇與檢驗應用程式登入相同的 Google 帳戶。",
+    "Chọn cùng tài khoản Google đang đăng nhập ứng dụng kiểm tra.",
+    "Pilih akun Google yang sama dengan akun masuk aplikasi pemeriksaan."
+  ],
+  [
+    "관리자가 Google 폴더 선택기 설정을 확인해야 합니다.",
+    "An administrator must check the Google folder picker configuration.",
+    "請管理員確認 Google 資料夾選擇器設定。",
+    "Quản trị viên cần kiểm tra cấu hình bộ chọn thư mục Google.",
+    "Administrator harus memeriksa konfigurasi pemilih folder Google."
+  ],
+  [
+    "열린 Google 선택창을 먼저 완료해 주세요.",
+    "Finish the open Google selection dialog first.",
+    "請先完成目前開啟的 Google 選擇視窗。",
+    "Hoàn tất hộp thoại chọn Google đang mở trước.",
+    "Selesaikan dialog pemilihan Google yang terbuka terlebih dahulu."
+  ],
+  [
+    "선택을 취소했습니다.",
+    "Selection cancelled.",
+    "已取消選擇。",
+    "Đã hủy lựa chọn.",
+    "Pemilihan dibatalkan."
+  ],
+  [
+    "이 불량 기록에 연결된 사진을 선택해 주세요.",
+    "Choose the photo linked to this defect record.",
+    "請選擇此不良紀錄連結的照片。",
+    "Chọn ảnh được liên kết với bản ghi lỗi này.",
+    "Pilih foto yang terhubung dengan catatan cacat ini."
+  ],
+  [
+    "관리자가 지정한 팀 공유 폴더를 선택해 주세요.",
+    "Choose the team shared folder configured by the administrator.",
+    "請選擇管理員指定的團隊共用資料夾。",
+    "Chọn thư mục chung của nhóm do quản trị viên chỉ định.",
+    "Pilih folder bersama tim yang ditentukan administrator."
+  ],
+  [
+    "팀 사진 폴더가 연결되었습니다.",
+    "Team photo folder connected.",
+    "已連結團隊照片資料夾。",
+    "Đã kết nối thư mục ảnh nhóm.",
+    "Folder foto tim terhubung."
+  ],
+  [
+    "관리자만 팀 사진 폴더를 설정할 수 있습니다.",
+    "Only administrators can configure the team photo folder.",
+    "僅管理員可設定團隊照片資料夾。",
+    "Chỉ quản trị viên có thể thiết lập thư mục ảnh nhóm.",
+    "Hanya administrator yang dapat mengatur folder foto tim."
+  ],
+  [
+    "팀 사진 폴더가 이미 설정되어 있습니다.",
+    "The team photo folder is already configured.",
+    "團隊照片資料夾已設定。",
+    "Thư mục ảnh nhóm đã được thiết lập.",
+    "Folder foto tim sudah diatur."
+  ],
+  [
+    "팀 사진 폴더를 만들었습니다. Drive에서 담당자들을 편집자로 초대해 주세요.",
+    "Team photo folder created. Invite team members as editors in Drive.",
+    "已建立團隊照片資料夾。請在 Drive 中邀請成員為編輯者。",
+    "Đã tạo thư mục ảnh nhóm. Mời thành viên làm người chỉnh sửa trong Drive.",
+    "Folder foto tim dibuat. Undang anggota tim sebagai editor di Drive."
+  ],
+  [
+    "팀 사진 폴더에 속한 사진인지 확인해 주세요.",
+    "Check that this photo belongs to the team photo folder.",
+    "請確認此照片屬於團隊照片資料夾。",
+    "Kiểm tra ảnh này thuộc thư mục ảnh nhóm.",
+    "Pastikan foto ini berada dalam folder foto tim."
+  ],
+  [
+    "사진 권한 연결",
+    "Connect photo access",
+    "連結照片權限",
+    "Kết nối quyền ảnh",
+    "Hubungkan akses foto"
+  ],
+  [
+    "사진 접근 허용",
+    "Allow photo access",
+    "允許存取照片",
+    "Cho phép truy cập ảnh",
+    "Izinkan akses foto"
+  ],
+  [
+    "팀 폴더 선택·허용",
+    "Choose and authorize team folder",
+    "選擇並授權團隊資料夾",
+    "Chọn và cấp quyền thư mục nhóm",
+    "Pilih dan izinkan folder tim"
+  ],
+  [
+    "팀 사진 폴더 만들기",
+    "Create team photo folder",
+    "建立團隊照片資料夾",
+    "Tạo thư mục ảnh nhóm",
+    "Buat folder foto tim"
+  ],
+  [
+    "팀 Google Drive 사진",
+    "Team Google Drive photos",
+    "團隊 Google Drive 照片",
+    "Ảnh Google Drive của nhóm",
+    "Foto Google Drive tim"
+  ],
+  [
+    "팀 사진 폴더 설정 대기",
+    "Team photo folder not configured",
+    "待設定團隊照片資料夾",
+    "Chưa thiết lập thư mục ảnh nhóm",
+    "Folder foto tim belum diatur"
+  ],
+  [
+    "사진 계정 연결됨",
+    "Photo account connected",
+    "照片帳戶已連結",
+    "Đã kết nối tài khoản ảnh",
+    "Akun foto terhubung"
+  ],
+  [
+    "Drive에서 폴더 공유 관리",
+    "Manage folder sharing in Drive",
+    "在 Drive 管理資料夾共用",
+    "Quản lý chia sẻ thư mục trong Drive",
+    "Kelola berbagi folder di Drive"
+  ],
+  [
+    "Drive에서 팀 폴더 열기",
+    "Open team folder in Drive",
+    "在 Drive 開啟團隊資料夾",
+    "Mở thư mục nhóm trong Drive",
+    "Buka folder tim di Drive"
+  ],
+  [
+    "각자 Google 계정으로 연결하세요. 앱 담당자 승인과 Drive 폴더 편집자 초대는 각각 필요합니다.",
+    "Use your own Google account. App role approval and a Drive folder editor invitation are both required.",
+    "請使用自己的 Google 帳戶。須分別取得應用程式角色核准及 Drive 資料夾編輯者邀請。",
+    "Dùng tài khoản Google riêng. Cần cả phê duyệt vai trò ứng dụng và lời mời chỉnh sửa thư mục Drive.",
+    "Gunakan akun Google masing-masing. Diperlukan persetujuan peran aplikasi serta undangan editor folder Drive."
+  ],
+  [
+    "사진은 팀 공유 Drive 폴더에 저장됩니다. 각자 Google 계정의 사진 권한 연결이 필요합니다.",
+    "Photos are stored in the team's shared Drive folder. Connect photo access using your own Google account.",
+    "照片儲存於團隊共用 Drive 資料夾。請使用自己的 Google 帳戶連結照片權限。",
+    "Ảnh lưu trong thư mục Drive chung của nhóm. Kết nối quyền ảnh bằng tài khoản Google riêng.",
+    "Foto disimpan di folder Drive bersama tim. Hubungkan akses foto menggunakan akun Google Anda sendiri."
+  ]
+];
+  root.I18n?.addMessages?.(Object.fromEntries(translations.map(([key,en,zhTW,vi,id]) => [key,{en,'zh-TW':zhTW,vi,id}])));
+  const API = 'https://www.googleapis.com/drive/v3', SCOPE = 'https://www.googleapis.com/auth/drive.file';
+  const ID = /^[A-Za-z0-9_-]{10,200}$/, CLIENT = /^\d+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/;
+  const plain = value => JSON.parse(JSON.stringify(value));
+  const t = (key, params = {}) => root.I18n?.t(key, params) || key.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? `{${key}}`));
+  const fail = (code, message) => Object.assign(new Error(t(message)), { code: `team-drive/${code}` });
+  let librariesPromise;
+  function loadLibraries() {
+    if (root.google?.accounts?.oauth2 && root.google?.picker) return Promise.resolve();
+    if (!librariesPromise) librariesPromise = Promise.all([
+      root.DrivePhotos.loadGoogle(),
+      new Promise((resolve, reject) => {
+        let settled = false;
+        const timer = root.setTimeout(() => done(fail('picker-load', 'Google 폴더 선택기를 불러오지 못했습니다. 새로고침해 주세요.')), 15000);
+        function done(error) { if (settled) return; settled = true; root.clearTimeout(timer); error ? reject(error) : resolve(); }
+        const loadPicker = () => root.gapi.load('picker', { callback: () => done(), onerror: () => done(fail('picker-load', 'Google 폴더 선택기를 불러오지 못했습니다. 새로고침해 주세요.')), timeout: 15000, ontimeout: () => done(fail('picker-load', 'Google 폴더 선택기를 불러오지 못했습니다. 새로고침해 주세요.')) });
+        if (root.google?.picker) { done(); return; }
+        if (root.gapi?.load) { loadPicker(); return; }
+        const script = root.document.createElement('script'); script.src = 'https://apis.google.com/js/api.js'; script.async = true;
+        script.onload = loadPicker; script.onerror = () => { script.remove(); done(fail('picker-load', 'Google 폴더 선택기를 불러오지 못했습니다. 새로고침해 주세요.')); };
+        root.document.head.append(script);
+      })
+    ]).catch(error => { librariesPromise = null; throw error; });
+    return librariesPromise;
+  }
+  function create({ service, picker = {}, clientId = '' } = {}) {
+    if (!service?.getStatus || !service.onStatus || !service.subscribePhotoSettings || !service.savePhotoSettings) throw new Error('Shared inspection service is required.');
+    let token = '', expiresAt = 0, tokenEmail = '', epoch = 0, folderSettings = null, authorizedFolder = '', settingsReady = false;
+    let connectPending = null, cancelConnect = null, activePicker = null, pickerCancel = null, notice = '', destroyed = false, picking = false;
+    const views = new Set();
+    const notify = () => { for (const render of views) render(); root.document?.dispatchEvent?.(new root.CustomEvent('driveconnectionchange')); };
+    const currentEmail = () => String(service.getStatus().email || '').trim().toLowerCase();
+    function requireUser() {
+      const state = service.getStatus();
+      if (!state?.ready || !state.signedIn || !currentEmail()) throw fail('auth-required', 'Google 계정으로 로그인해 주세요.');
+      if (!['quality', 'production', 'admin'].includes(state.role)) throw fail('permission-denied', '관리자가 승인한 담당 업무 권한이 필요합니다.');
+      if (!state.online || root.navigator?.onLine === false) throw fail('offline', '서버 연결을 확인한 후 다시 시도해 주세요.');
+      return state;
+    }
+    function connected() { return Boolean(token && Date.now() < expiresAt && tokenEmail === currentEmail()); }
+    function disconnect() {
+      epoch++; cancelConnect?.(); cancelConnect = null; connectPending = null;
+      pickerCancel?.(); pickerCancel = null; activePicker?.dispose?.(); activePicker = null;
+      token = ''; expiresAt = 0; tokenEmail = ''; authorizedFolder = ''; notify();
+    }
+    function requireToken() {
+      const state = requireUser();
+      if (!connected()) throw fail('connect-required', '사진 권한 연결을 눌러 본인 Google 계정으로 연결해 주세요.');
+      return state;
+    }
+    function requireConnected() {
+      const state = requireToken();
+      if (!folderSettings) throw fail('folder-required', '관리자가 팀 사진 폴더를 먼저 설정해야 합니다.');
+      if (authorizedFolder !== folderSettings.folderId) throw fail('folder-access', '팀 폴더 선택·허용을 눌러 같은 공유 폴더를 선택해 주세요.');
+      return state;
+    }
+    function session(needFolder = true) {
+      needFolder ? requireConnected() : requireToken();
+      return { epoch, email: tokenEmail, token, folderId: folderSettings?.folderId || '' };
+    }
+    function unchanged(saved) {
+      requireUser();
+      if (destroyed || saved.epoch !== epoch || saved.email !== currentEmail() || saved.token !== token || !connected()) throw fail('session-changed', '로그인 또는 폴더가 변경되었습니다. 다시 시도해 주세요.');
+    }
+    async function request(saved, url, options = {}, purpose = '') {
+      unchanged(saved);
+      let response;
+      try { response = await root.fetch(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${saved.token}` } }); }
+      catch { unchanged(saved); throw fail('network', 'Drive에 연결할 수 없습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.'); }
+      unchanged(saved);
+      if (!response.ok) {
+        if (response.status === 401) { disconnect(); throw fail('expired', 'Drive 연결이 만료되었습니다. 연결 버튼으로 다시 로그인해 주세요.'); }
+        if ([403, 404].includes(response.status)) throw fail(purpose === 'photo' ? 'photo-access' : 'folder-access', purpose === 'photo' ? '사진 접근 허용을 눌러 해당 사진을 선택해 주세요.' : '공유 폴더의 편집자 초대와 앱 접근 권한을 확인해 주세요.');
+        throw fail('request', 'Drive 요청이 거부되었습니다. Drive API 사용 설정과 계정 권한을 확인해 주세요.');
+      }
+      return response;
+    }
+    async function json(saved, url, options, purpose) { const response = await request(saved, url, options, purpose); const value = await response.json(); unchanged(saved); return value; }
+    async function checkFolder(saved, id) {
+      const value = await json(saved, `${API}/files/${encodeURIComponent(id)}?supportsAllDrives=true&fields=id,name,mimeType,trashed,capabilities(canAddChildren)`, {}, 'folder');
+      if (value.id !== id || value.mimeType !== 'application/vnd.google-apps.folder' || value.trashed || !value.capabilities?.canAddChildren) throw fail('folder-access', '공유 폴더의 편집자 초대와 앱 접근 권한을 확인해 주세요.');
+      return { folderId: value.id, folderName: String(value.name || 'PEAK Inspection Team Photos').slice(0, 120) };
+    }
+    function connect() {
+      try { requireUser(); } catch (error) { return Promise.reject(error); }
+      if (connected()) return Promise.resolve(service.getStatus());
+      if (!CLIENT.test(clientId)) return Promise.reject(fail('configuration', 'Drive 설정에 올바른 OAuth 클라이언트 ID를 입력해 주세요.'));
+      if (!root.google?.accounts?.oauth2) { void loadLibraries().catch(error => { notice = error.message; notify(); }); return Promise.reject(fail('loading', 'Google 로그인을 준비하고 있습니다. 잠시 후 연결 버튼을 다시 눌러 주세요.')); }
+      if (connectPending) return connectPending;
+      const version = epoch, email = currentEmail();
+      const pending = new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (error, value) => { if (settled) return; settled = true; root.clearTimeout(timer); if (cancelConnect === cancel) cancelConnect = null; error ? reject(error) : resolve(value); };
+        const cancel = () => finish(fail('session-changed', '로그인 또는 폴더가 변경되었습니다. 다시 시도해 주세요.'));
+        const timer = root.setTimeout(() => { if (version === epoch) { token = ''; tokenEmail = ''; } finish(fail('timeout', 'Google 로그인 응답이 없습니다. Chrome 또는 Safari에서 팝업을 허용한 후 연결 버튼을 다시 눌러 주세요.')); }, 60000);
+        cancelConnect = cancel;
+        const receive = async response => {
+          if (settled) return;
+          if (version !== epoch || email !== currentEmail()) { cancel(); return; }
+          if (response?.error || !response.access_token || !(root.google.accounts.oauth2.hasGrantedAllScopes?.(response, SCOPE) ?? String(response.scope || '').split(' ').includes(SCOPE))) { finish(fail('scope', 'Drive 사진 저장 권한이 승인되지 않았습니다.')); return; }
+          token = response.access_token; tokenEmail = email; expiresAt = Date.now() + Math.max(0, Number(response.expires_in || 3600) - 30) * 1000;
+          try {
+            const saved = session(false), info = await json(saved, `${API}/about?fields=user(emailAddress)`);
+            if (String(info.user?.emailAddress || '').toLowerCase() !== email) throw fail('wrong-account', '검사 앱에 로그인한 Google 계정과 같은 계정을 선택해 주세요.');
+            if (folderSettings) {
+              try { await checkFolder(saved, folderSettings.folderId); authorizedFolder = folderSettings.folderId; }
+              catch (error) { if (error.code !== 'team-drive/folder-access') throw error; notice = error.message; }
+            }
+            unchanged(saved); finish(null, service.getStatus()); notify();
+          } catch (error) { if (version === epoch) { token = ''; tokenEmail = ''; expiresAt = 0; } finish(error); notify(); }
+        };
+        try {
+          const oauth = root.google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: SCOPE, include_granted_scopes: false, hint: email, callback: receive, error_callback: () => finish(fail('popup', 'Google 로그인 창을 열지 못했거나 닫았습니다. 연결 버튼을 다시 눌러 주세요.')) });
+          oauth.requestAccessToken({ prompt: 'select_account', hint: email });
+        } catch (error) { finish(fail('popup', 'Google 로그인 창을 열지 못했거나 닫았습니다. 연결 버튼을 다시 눌러 주세요.')); }
+      });
+      const attempt = pending.finally(() => { if (connectPending === attempt) connectPending = null; }); connectPending = attempt; return attempt;
+    }
+    async function choose({ fileId = '', folderOnly = false } = {}) {
+      const saved = session(false); await loadLibraries(); unchanged(saved);
+      if (!/^AIza[A-Za-z0-9_-]+$/.test(picker.apiKey || '') || !/^\d+$/.test(String(picker.appId || '')) || !clientId.startsWith(`${picker.appId}-`)) throw fail('configuration', '관리자가 Google 폴더 선택기 설정을 확인해야 합니다.');
+      if (activePicker) throw fail('picker-open', '열린 Google 선택창을 먼저 완료해 주세요.');
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const suspendedDialogs = [...(root.document?.querySelectorAll?.('dialog[open]') || [])];
+        picking = true; suspendedDialogs.forEach(dialog => {
+          // Native close events are queued. Consume this one event even if Picker
+          // fails synchronously and the dialog is reopened before it dispatches.
+          dialog.addEventListener?.('close', event => event.stopImmediatePropagation(), {capture:true,once:true});
+          dialog.close();
+        });
+        const finish = (error, value) => { if (settled) return; settled = true; pickerCancel = null; activePicker?.dispose?.(); activePicker = null; picking = false; if (saved.epoch === epoch && saved.email === currentEmail()) suspendedDialogs.forEach(dialog => { if (dialog.isConnected && !dialog.open) dialog.showModal(); }); error ? reject(error) : resolve(value); };
+        pickerCancel = () => finish(fail('session-changed', '로그인 또는 폴더가 변경되었습니다. 다시 시도해 주세요.'));
+        try {
+        const view = new root.google.picker.DocsView(root.google.picker.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(folderOnly);
+        if (folderOnly) view.setMimeTypes('application/vnd.google-apps.folder');
+        else { view.setMimeTypes('image/jpeg'); if (saved.folderId) view.setParent(saved.folderId); }
+        const builder = new root.google.picker.PickerBuilder().setDeveloperKey(picker.apiKey).setAppId(String(picker.appId)).setOAuthToken(saved.token).setOrigin(root.location.origin).addView(view).setCallback(data => {
+          try {
+            unchanged(saved);
+            if (data.action === root.google.picker.Action.CANCEL) { finish(fail('cancelled', '선택을 취소했습니다.')); return; }
+            if (data.action !== root.google.picker.Action.PICKED) return;
+            const picked = data.docs?.[0];
+            if (!ID.test(picked?.id || '') || (fileId && picked.id !== fileId)) throw fail('wrong-file', '이 불량 기록에 연결된 사진을 선택해 주세요.');
+            finish(null, picked.id);
+          } catch (error) { finish(error); }
+        });
+        activePicker = builder.build(); activePicker.setVisible(true);
+        } catch (error) { finish(error); }
+      });
+    }
+    async function selectFolder() {
+      const state = requireToken(), isAdmin = state.role === 'admin';
+      if (!settingsReady) throw fail('settings-loading', '팀 폴더 설정을 확인하고 있습니다. 잠시 후 다시 시도해 주세요.');
+      const selected = await choose({ folderOnly: true }), saved = session(false);
+      if (folderSettings && selected !== folderSettings.folderId) throw fail('wrong-folder', '관리자가 지정한 팀 공유 폴더를 선택해 주세요.');
+      if (!isAdmin && selected !== folderSettings?.folderId) throw fail('wrong-folder', '관리자가 지정한 팀 공유 폴더를 선택해 주세요.');
+      const checked = await checkFolder(saved, selected); unchanged(saved);
+      if (isAdmin && selected !== folderSettings?.folderId) await service.savePhotoSettings({ provider: 'drive', ...checked });
+      // Saving shared settings can advance the epoch; retain authorization only if the account is unchanged.
+      if (saved.email !== currentEmail() || !connected()) throw fail('session-changed', '로그인 또는 폴더가 변경되었습니다. 다시 시도해 주세요.');
+      folderSettings = {provider:'drive', ...checked}; authorizedFolder = selected; notice = t('팀 사진 폴더가 연결되었습니다.'); notify(); return checked;
+    }
+    async function createFolder() {
+      if (requireToken().role !== 'admin') throw fail('permission-denied', '관리자만 팀 사진 폴더를 설정할 수 있습니다.');
+      if (!settingsReady) throw fail('settings-loading', '팀 폴더 설정을 확인하고 있습니다. 잠시 후 다시 시도해 주세요.');
+      if (folderSettings) throw fail('folder-exists', '팀 사진 폴더가 이미 설정되어 있습니다.');
+      const saved = session(false), value = await json(saved, `${API}/files?fields=id,name,mimeType`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'PEAK Inspection Team Photos', mimeType: 'application/vnd.google-apps.folder', appProperties: { peakInspectionTeam: 'v1' } }) });
+      if (!ID.test(value.id || '') || value.mimeType !== 'application/vnd.google-apps.folder') throw fail('response', 'Drive 응답을 확인할 수 없습니다. 다시 시도해 주세요.');
+      const checked = await checkFolder(saved, value.id); unchanged(saved);
+      await service.savePhotoSettings({ provider: 'drive', ...checked });
+      if (saved.email !== currentEmail() || !connected()) throw fail('session-changed', '로그인 또는 폴더가 변경되었습니다. 다시 시도해 주세요.');
+      folderSettings = {provider:'drive', ...checked}; authorizedFolder = checked.folderId; notice = t('팀 사진 폴더를 만들었습니다. Drive에서 담당자들을 편집자로 초대해 주세요.'); notify(); return checked;
+    }
+    async function verifyPhoto(metadata, saved = session()) {
+      if (!root.EvidencePhotos.validatePhoto(metadata) || !metadata.driveFileId || metadata.driveFolderId !== saved.folderId || metadata.storagePath) throw fail('photo-metadata', '팀 사진 폴더에 속한 사진인지 확인해 주세요.');
+      const value = await json(saved, `${API}/files/${encodeURIComponent(metadata.driveFileId)}?supportsAllDrives=true&fields=id,parents,mimeType,size,trashed,appProperties`, {}, 'photo');
+      if (value.id !== metadata.driveFileId || value.trashed || value.mimeType !== 'image/jpeg' || Number(value.size) !== metadata.size || !value.parents?.includes(saved.folderId) || value.appProperties?.inspectionEvidenceId !== metadata.id) throw fail('photo-metadata', 'Drive 사진 데이터가 원래 사진 정보와 일치하지 않습니다.');
+      return saved;
+    }
+    async function upload(metadata, blob) {
+      const saved = session();
+      if (!root.EvidencePhotos.validatePhoto(metadata) || !(blob instanceof root.Blob) || blob.type !== 'image/jpeg' || blob.size !== metadata.size || ['driveFileId','driveFolderId','driveWebViewLink','storagePath','storageBucket'].some(key => metadata[key] !== undefined)) throw fail('photo-metadata', '사진 정보가 올바르지 않습니다.');
+      await checkFolder(saved, saved.folderId); unchanged(saved);
+      const file = { name: `${metadata.createdAt.slice(0,10)}_${metadata.id}.jpg`, mimeType: 'image/jpeg', parents: [saved.folderId], appProperties: { inspectionEvidenceId: metadata.id } };
+      const boundary = `peak_${root.crypto.randomUUID().replace(/-/g, '')}`;
+      const body = new root.Blob([`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(file)}\r\n--${boundary}\r\nContent-Type: image/jpeg\r\n\r\n`, blob, `\r\n--${boundary}--`], { type: `multipart/related; boundary=${boundary}` });
+      const value = await json(saved, 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,parents,mimeType,size', { method: 'POST', headers: { 'Content-Type': body.type }, body });
+      if (!ID.test(value.id || '') || value.mimeType !== 'image/jpeg' || Number(value.size) !== metadata.size || !value.parents?.includes(saved.folderId)) throw fail('response', 'Drive 응답을 확인할 수 없습니다. 다시 시도해 주세요.');
+      return { ...metadata, driveFileId: value.id, driveFolderId: saved.folderId, driveWebViewLink: `https://drive.google.com/file/d/${value.id}/view` };
+    }
+    async function fetchPhoto(metadata) {
+      const saved = await verifyPhoto(metadata), response = await request(saved, `${API}/files/${encodeURIComponent(metadata.driveFileId)}?alt=media&supportsAllDrives=true`, {}, 'photo');
+      const blob = await response.blob(); unchanged(saved);
+      if (blob.type !== 'image/jpeg' || blob.size !== metadata.size) throw fail('photo-metadata', 'Drive 사진 데이터가 원래 사진 정보와 일치하지 않습니다.');
+      return blob;
+    }
+    async function authorizePhoto(metadata) {
+      requireConnected(); await choose({ fileId: metadata.driveFileId }); await verifyPhoto(metadata); notify(); return true;
+    }
+    function mount(container) {
+      const doc = container.ownerDocument || root.document, panel = doc.createElement('section'); panel.className = 'team-access team-drive-access';
+      const title = doc.createElement('strong'), status = doc.createElement('p'), hint = doc.createElement('p'), issue = doc.createElement('p'), actions = doc.createElement('div'); actions.className = 'team-access-actions'; issue.setAttribute('role','status');
+      const makeButton = (label, action) => { const button = doc.createElement('button'); button.type = 'button'; button.className = 'button secondary'; button.dataset.label = label; button.onclick = () => { if (busy) return; busy = true; notice = ''; render(); let operation; try { operation = action(); } catch (error) { operation = Promise.reject(error); } Promise.resolve(operation).catch(error => { notice = error.message; }).finally(() => { busy = false; render(); }); }; actions.append(button); return button; };
+      let busy = false;
+      const connectButton = makeButton('사진 권한 연결', connect), selectButton = makeButton('팀 폴더 선택·허용', selectFolder), createButton = makeButton('팀 사진 폴더 만들기', createFolder);
+      const open = doc.createElement('a'); open.className = 'button secondary'; open.target = '_blank'; open.rel = 'noopener noreferrer'; actions.append(open);
+      panel.append(title,status,actions,hint,issue); container.append(panel);
+      function render() {
+        const state = service.getStatus(), approved = state.ready && state.signedIn && state.online && ['admin','quality','production'].includes(state.role), selected = connected() && authorizedFolder === folderSettings?.folderId;
+        title.textContent = t('팀 Google Drive 사진'); status.textContent = `${approved && folderSettings?.folderName || t('팀 사진 폴더 설정 대기')} · ${t(selected ? 'Drive 연결됨' : 'Drive 연결 안 됨')}`;
+        connectButton.textContent = t(connected() ? '사진 계정 연결됨' : connectButton.dataset.label); connectButton.disabled = busy || !approved || connected();
+        selectButton.textContent = t(selectButton.dataset.label); selectButton.disabled = busy || !approved || !settingsReady || !connected() || (!folderSettings && state.role !== 'admin');
+        createButton.textContent = t(createButton.dataset.label); createButton.hidden = state.role !== 'admin' || Boolean(folderSettings); createButton.disabled = busy || !approved || !settingsReady || !connected();
+        open.textContent = t(state.role === 'admin' ? 'Drive에서 폴더 공유 관리' : 'Drive에서 팀 폴더 열기'); open.hidden = !approved || !folderSettings; if (folderSettings) open.href = `https://drive.google.com/drive/folders/${folderSettings.folderId}`;
+        hint.textContent = t('각자 Google 계정으로 연결하세요. 앱 담당자 승인과 Drive 폴더 편집자 초대는 각각 필요합니다.'); issue.textContent = root.I18n?.retranslate?.(notice) || notice;
+      }
+      views.add(render); doc.addEventListener('languagechange',render); render();
+      if (CLIENT.test(clientId)) void loadLibraries().catch(error => { notice = error.message; render(); });
+      return { destroy() { views.delete(render); doc.removeEventListener('languagechange',render); panel.remove(); } };
+    }
+    let previousIdentity = '';
+    const unsubscribeStatus = service.onStatus(state => {
+      const identity = state.signedIn && state.role ? `${String(state.email || '').toLowerCase()}:${state.role}` : '';
+      if (identity !== previousIdentity) { previousIdentity = identity; settingsReady = false; folderSettings = null; disconnect(); }
+      notify();
+    });
+    const unsubscribeSettings = service.subscribePhotoSettings(value => {
+      settingsReady = true;
+      const next = value?.provider === 'drive' && ID.test(value.folderId || '') && typeof value.folderName === 'string' ? { provider:'drive',folderId:value.folderId,folderName:value.folderName } : null;
+      if ((next?.folderId || '') !== (folderSettings?.folderId || '')) { epoch++; authorizedFolder = ''; }
+      folderSettings = next; notify();
+    }, error => { settingsReady = false; folderSettings = null; authorizedFolder = ''; epoch++; notice = error.message; notify(); });
+    return Object.freeze({ provider:'drive', isEnabled:()=>true, isConnected:()=>connected() && authorizedFolder === folderSettings?.folderId, getSettings:()=>folderSettings ? plain(folderSettings) : null, isPicking:()=>picking, requireConnected, connect, disconnect, createFolder, selectFolder, upload, fetchPhoto, verifyPhoto, authorizePhoto, mount, destroy(){ destroyed=true; unsubscribeStatus?.(); unsubscribeSettings?.(); disconnect(); views.clear(); } });
+  }
+  return Object.freeze({create,SCOPE});
+});
+
+(function (root, factory) {
+  'use strict';
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.EvidencePhotos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   'use strict';
@@ -5443,7 +5868,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   async function getPhoto(id, metadata) {
     let accessEmail;
     const checkAccess = () => {
-      if (!metadata?.storagePath) return;
+      if (!metadata?.storagePath && !(metadata?.driveFileId && root.TeamPhotos?.provider === 'drive')) return;
       const state = root.TeamPhotos.requireConnected();
       if (accessEmail !== undefined && state.email !== accessEmail) throw fail('Google 계정으로 로그인해 주세요.');
       accessEmail = state.email;
@@ -5451,6 +5876,9 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (metadata?.storagePath) {
       if (!root.TeamPhotos) throw fail('공통 사진 저장소 설정이 완료되지 않았습니다. 관리자에게 문의해 주세요.');
       checkAccess();
+    }
+    if (metadata?.driveFileId && root.TeamPhotos?.provider === 'drive') {
+      checkAccess(); await root.TeamPhotos.verifyPhoto(metadata); checkAccess();
     }
     const entry = await getEntry(id);
     checkAccess();
@@ -5466,8 +5894,9 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       return blob;
     }
     if (metadata?.id === id && metadata.driveFileId && validatePhoto(metadata) && root.DrivePhotos) {
-      const blob = await root.DrivePhotos.fetchPhoto(metadata);
-      await putPhoto(metadata, blob);
+      const provider = root.TeamPhotos?.provider === 'drive' ? root.TeamPhotos : root.DrivePhotos;
+      const blob = await provider.fetchPhoto(metadata); checkAccess();
+      await putPhoto(metadata, blob); checkAccess();
       return blob;
     }
     return null;
@@ -5553,14 +5982,21 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     return [...found.values()];
   }
   async function migrateToTeam(record) {
+    const originals = collectPhotos([record]);
+    if (!originals.length) return JSON.parse(JSON.stringify(record));
     if (!root.TeamPhotos) throw fail('공통 사진 저장소 설정이 완료되지 않았습니다. 관리자에게 문의해 주세요.');
     root.TeamPhotos.requireConnected();
-    const originals = collectPhotos([record]), replacements = new Map(), prepared = [];
+    const replacements = new Map(), prepared = [];
     // Read every legacy image before writing any new object; missing evidence never disappears silently.
     for (const metadata of originals) {
-      if (metadata.storagePath) continue;
+      if (root.TeamPhotos.provider === 'drive' ? metadata.driveFolderId === root.TeamPhotos.getSettings()?.folderId : metadata.storagePath) { await getPhoto(metadata.id, metadata); continue; }
       let blob;
-      try { blob = await getPhoto(metadata.id, metadata); } catch (cause) {
+      try {
+        if (root.TeamPhotos.provider === 'drive') {
+          const cached = await getEntry(metadata.id);
+          if (cached?.blob && sameMetadata(cached.metadata, metadata) && cached.blob.size === metadata.size && cached.blob.type === metadata.type) blob = cached.blob;
+        } else blob = await getPhoto(metadata.id, metadata);
+      } catch (cause) {
         throw fail('기존 사진을 가져오지 못했습니다. 이전 Drive 계정에 연결하거나 사진이 포함된 백업을 복원한 후 다시 시도해 주세요.');
       }
       if (!blob) throw fail('기존 사진을 가져오지 못했습니다. 이전 Drive 계정에 연결하거나 사진이 포함된 백업을 복원한 후 다시 시도해 주세요.');
@@ -5570,7 +6006,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     }
     for (const photo of prepared) {
       const uploaded = await root.TeamPhotos.upload(photo.metadata, photo.blob);
-      if (!validatePhoto(uploaded) || !uploaded.storagePath) throw fail('사진 정보가 올바르지 않습니다.');
+      if (!validatePhoto(uploaded) || (root.TeamPhotos.provider === 'drive' ? !uploaded.driveFileId : !uploaded.storagePath)) throw fail('사진 정보가 올바르지 않습니다.');
       await putPhoto(uploaded, photo.blob); replacements.set(photo.oldId, uploaded);
     }
     const migrated = JSON.parse(JSON.stringify(record));
@@ -5672,10 +6108,10 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         cloud().requireConnected(); continueButton.hidden = true; pendingPicker = null; picker.click();
       } catch (cause) {
         lastError = cause.message; error.textContent = t(lastError);
-        if (!root.TeamPhotos && root.DrivePhotos?.connect) {
+        if (cloud()?.connect && (!root.TeamPhotos || cause.code === 'team-drive/connect-required')) {
           // Start OAuth directly in the click gesture; iOS needs a second gesture for the file picker.
           setBusy(true);
-          root.DrivePhotos.connect().then(() => {
+          cloud().connect().then(() => {
             if (destroyed) return;
             pendingPicker = picker; continueButton.hidden = false;
             lastError = ''; error.textContent = ''; status.textContent = t('사진을 계속 추가하려면 아래 버튼을 눌러 주세요.');
@@ -5705,7 +6141,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       const generation = ++rendering; cleanupURLs(); grid.replaceChildren();
       choose.textContent = t('사진 선택'); take.textContent = t('사진 촬영'); continueButton.textContent = t('사진 선택 계속');
       hint.textContent = t('최대 4장 · JPEG / PNG / WebP · 사진당 15 MB 이하');
-      localHint.textContent = t(root.TeamPhotos ? (root.TeamPhotos.isEnabled() ? '사진은 승인된 팀원만 볼 수 있는 공통 저장소에 저장됩니다. 별도 Drive 연결은 필요하지 않습니다.' : '공통 사진 저장소 설정 대기 중입니다.') : '사진은 Google Drive에 업로드되며 이 브라우저에도 미리보기로 저장됩니다.');
+      localHint.textContent = t(root.TeamPhotos?.provider === 'drive' ? '사진은 팀 공유 Drive 폴더에 저장됩니다. 각자 Google 계정의 사진 권한 연결이 필요합니다.' : root.TeamPhotos ? (root.TeamPhotos.isEnabled() ? '사진은 승인된 팀원만 볼 수 있는 공통 저장소에 저장됩니다. 별도 Drive 연결은 필요하지 않습니다.' : '공통 사진 저장소 설정 대기 중입니다.') : '사진은 Google Drive에 업로드되며 이 브라우저에도 미리보기로 저장됩니다.');
       error.textContent = lastError ? t(lastError) : ''; counter.textContent = `${photos.length} / ${MAX_PHOTOS}`;
       status.textContent = busy ? t('사진을 처리하고 있습니다…') : '';
       choose.disabled = busy || disabled || photos.length >= MAX_PHOTOS; take.disabled = choose.disabled;
@@ -5730,7 +6166,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
           const url = root.URL.createObjectURL(blob); urls.add(url);
           const img = element('img'); img.src = url; img.alt = photo.name; img.loading = 'lazy';
           preview.append(img); preview.disabled = false; preview.onclick = () => showViewer(url, photo.name, options.t);
-        } catch (cause) { if (!destroyed && generation === rendering) preview.textContent = t(cause.message || '사진을 불러올 수 없습니다. 사진이 포함된 백업을 복원해 주세요.'); }
+        } catch (cause) { if (!destroyed && generation === rendering) { preview.textContent = t(cause.message || '사진을 불러올 수 없습니다. 사진이 포함된 백업을 복원해 주세요.'); addAccessRetry(card, cause, photo, render, () => !destroyed && generation === rendering, t); } }
       }
     }
     async function acceptFiles(files) {
@@ -5750,7 +6186,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         for (const photo of prepared) {
           photo.metadata = await provider.upload(photo.metadata, photo.blob);
           if (destroyed || generation !== revision) return;
-          if (!validatePhoto(photo.metadata) || (root.TeamPhotos ? !photo.metadata.storagePath : !photo.metadata.driveFileId)) throw fail('사진 정보가 올바르지 않습니다.');
+          if (!validatePhoto(photo.metadata) || (root.TeamPhotos && root.TeamPhotos.provider !== 'drive' ? !photo.metadata.storagePath : !photo.metadata.driveFileId)) throw fail('사진 정보가 올바르지 않습니다.');
           await putPhoto(photo.metadata, photo.blob);
           if (destroyed || generation !== revision) return;
         }
@@ -5778,13 +6214,27 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       destroy: () => { destroyed = true; revision += 1; rendering += 1; cleanupURLs(); root.document.removeEventListener('languagechange', languageChanged); container.replaceChildren(); }
     };
   }
+  function addAccessRetry(card, cause, photo, retry, isCurrent, t) {
+    const provider = root.TeamPhotos;
+    const connect = cause.code === 'team-drive/connect-required';
+    if (provider?.provider !== 'drive' || (!connect && cause.code !== 'team-drive/photo-access')) return;
+    const button = element('button', 'button secondary evidence-authorize', t(connect ? '사진 권한 연결' : '사진 접근 허용'));
+    button.type = 'button';
+    button.onclick = () => {
+      button.disabled = true;
+      let action;
+      try { action = connect ? provider.connect() : provider.authorizePhoto(photo); } catch (error) { action = Promise.reject(error); }
+      Promise.resolve(action).then(() => { if (isCurrent()) return retry(); }).catch(error => { if (isCurrent()) button.textContent = t(error.message); }).finally(() => { if (isCurrent()) button.disabled = false; });
+    };
+    card.append(button);
+  }
   const comparisons = new WeakMap();
   async function renderComparison(container, options = {}) {
     comparisons.get(container)?.destroy();
     if (!validatePhotos(options.before) || !validatePhotos(options.after)) throw fail('사진 정보가 올바르지 않습니다.');
-    let destroyed = false;
+    let destroyed = false, replacement = null;
     const urls = new Set(), t = (text) => translate(text, options.t);
-    const control = { destroy() { destroyed = true; for (const url of urls) root.URL.revokeObjectURL(url); urls.clear(); } };
+    const control = { destroy() { destroyed = true; replacement?.destroy(); for (const url of urls) root.URL.revokeObjectURL(url); urls.clear(); } };
     comparisons.set(container, control); container.classList.add('evidence-comparison'); container.replaceChildren();
     for (const [label, photos] of [['불량 전', options.before || []], ['처리 후', options.after || []]]) {
       const section = element('section', 'evidence-comparison-column'), heading = element('h3', '', t(label));
@@ -5806,7 +6256,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
           const url = root.URL.createObjectURL(blob); urls.add(url);
           const img = element('img'); img.src = url; img.alt = photo.name; img.loading = 'lazy'; button.append(img);
           button.disabled = false; button.onclick = () => showViewer(url, photo.name, options.t);
-        } catch (cause) { if (!destroyed) button.textContent = t(cause.message || '사진을 불러올 수 없습니다. 사진이 포함된 백업을 복원해 주세요.'); }
+        } catch (cause) { if (!destroyed) { button.textContent = t(cause.message || '사진을 불러올 수 없습니다. 사진이 포함된 백업을 복원해 주세요.'); addAccessRetry(card, cause, photo, async () => { replacement = await renderComparison(container, options); }, () => !destroyed, t); } }
       }
     }
     return control;
@@ -6730,7 +7180,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   });
   ['closeResolution', 'cancelResolution'].forEach((id) => $(id).addEventListener('click', () => { if (!resolutionSaving) $('resolutionDialog').close(); }));
   $('resolutionDialog').addEventListener('cancel', (event) => { if (resolutionSaving) event.preventDefault(); });
-  $('resolutionDialog').addEventListener('close', () => { resolutionTarget = null; afterUploader?.reset(); resolutionPreviewVersion++; resolutionPreviewCleanup?.destroy(); resolutionPreviewCleanup = null; });
+  $('resolutionDialog').addEventListener('close', () => { if (window.TeamPhotos?.isPicking?.()) return; resolutionTarget = null; afterUploader?.reset(); resolutionPreviewVersion++; resolutionPreviewCleanup?.destroy(); resolutionPreviewCleanup = null; });
   $('resolutionForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     if (resolutionSaving || afterBusy || !resolutionTarget) return;
@@ -6779,7 +7229,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   }
   ['productionCancel', 'productionClose'].forEach(id => $(id).addEventListener('click', () => { if (!productionSaving && !productionBusy) $('productionDialog').close(); }));
   $('productionDialog').addEventListener('cancel', event => { if (productionSaving || productionBusy) event.preventDefault(); });
-  $('productionDialog').addEventListener('close', () => { productionTarget = null; productionUploader?.reset(); });
+  $('productionDialog').addEventListener('close', () => { if (window.TeamPhotos?.isPicking?.()) return; productionTarget = null; productionUploader?.reset(); });
   $('productionForm').addEventListener('submit', async event => {
     event.preventDefault(); if (!productionTarget || productionSaving || productionBusy) return;
     const before = productionTarget;
@@ -7070,7 +7520,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const info = document.createElement('p'); info.id = 'comparisonRecordInfo';
     const container = document.createElement('div'); container.id = 'comparisonPhotos';
     heading.append(title, close); dialog.append(heading, info, container); document.body.append(dialog);
-    dialog.addEventListener('close', () => { comparisonVersion++; comparisonRecordId = null; comparisonCleanup?.destroy(); comparisonCleanup = null; container.replaceChildren(); });
+    dialog.addEventListener('close', () => { if (window.TeamPhotos?.isPicking?.()) return; comparisonVersion++; comparisonRecordId = null; comparisonCleanup?.destroy(); comparisonCleanup = null; container.replaceChildren(); });
   }
   async function importLocalRecords() {
     if (sharedStatus.role !== 'admin' || !sharedStatus.online) throw new Error(t('관리자 권한과 인터넷 연결을 확인해 주세요.'));
@@ -7104,10 +7554,13 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const settings = window.PEAK_INSPECTION_CONFIG?.teamRecords;
     if (!settings?.enabled) return;
     sharedRecords = window.SharedRecords.create({config: settings.firebase, validateRecord: validRecord});
-    window.TeamPhotos = window.TeamPhotoStorage.create({config:settings.firebase, enabled:settings.photosEnabled === true, getStatus:() => sharedRecords.getStatus()});
+    window.TeamPhotos = window.DrivePhotos.createTeam({service:sharedRecords, picker:window.PEAK_INSPECTION_CONFIG.drivePicker, clientId:window.PEAK_INSPECTION_CONFIG.driveClientId});
+    const photoAccess = document.createElement('div'); photoAccess.id = 'teamPhotoAccessMount'; $('recordSummary').before(photoAccess);
+    window.TeamPhotos.mount(photoAccess);
     records = [];
     const container = document.createElement('div'); container.id = 'teamAccessMount'; $('recordSummary').before(container);
     window.TeamAccessUI.mount({service:sharedRecords, container, onImportLocal:importLocalRecords});
+    container.after(photoAccess);
     let previousIdentity = '';
     sharedRecords.onStatus(status => {
       const identity = !status.signedIn ? '' : status.ready ? `${status.email}:${status.role}` : previousIdentity.startsWith(`${status.email}:`) ? previousIdentity : `${status.email}:`;
@@ -7115,6 +7568,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         records = []; methodDrafts.clear(); previousIdentity = identity; memberGeneration++;
         // Remove private details and cached image URLs when the active member changes.
         ['resolutionDialog','productionDialog','reassignDialog','comparisonDialog','detailDialog'].forEach(id => { if ($(id)?.open) $(id).close(); });
+        document.querySelectorAll('.evidence-viewer[open]').forEach(dialog => dialog.close());
         resetEntry(false);
       }
       sharedStatus = status;
