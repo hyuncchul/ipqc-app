@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>IPQC 검사 입력</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
     onerror="document.write('<scr'+'ipt src=\'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js\'><\/scr'+'ipt>')"></script>
@@ -243,6 +243,8 @@
       .wrap{padding:8px}
     }
   </style>
+  <link rel="stylesheet" href="ipqc-theme.css?v=20261022">
+  <meta name="theme-color" content="#11273b">
 </head>
 <body>
 <!-- QR images are decoded locally; no camera frames or photos are uploaded. -->
@@ -326,13 +328,31 @@
   </div>
 </div>
 
-<!-- ══ 헤더 ══ -->
-<header>
-  <div class="header-inner">
-    <div class="header-title">
-      <h1 data-i18n="appTitle">IPQC 검사 입력</h1>
-      <div class="sub" data-i18n="appSub">설비별 개별 정보 입력 → 서버 저장</div>
-    </div>
+<!-- Shared PEAK quality-control layout, matching DIPQC. -->
+<aside class="ipqc-sidebar">
+  <a class="brand" href="#setupSection" aria-label="PEAK IPQC">
+    <img class="brand-symbol" src="ipqc-peak-logo.png" alt="" width="42" height="42">
+    <span>PEAK<span class="brand-sub">QUALITY CONTROL</span></span>
+  </a>
+  <div class="nav-label" data-i18n="navLabel">검사 관리</div>
+  <nav class="ipqc-nav" aria-label="IPQC">
+      <a class="nav-item" href="#setupSection" data-section-link="setupSection" aria-current="location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="8" cy="7" r="3"/><circle cx="16" cy="17" r="3"/></svg><span data-i18n="navSetup">공통 설정</span></a>
+      <a class="nav-item" href="#machineSection" data-section-link="machineSection"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 9h2M12 9h5M7 13h10"/></svg><span data-i18n="navMachines">설비 정보</span></a>
+      <a class="nav-item" href="#measurementSection" data-section-link="measurementSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h2M13 7h3M8 12h2M13 12h3M8 17h2M13 17h3"/></svg><span data-i18n="navMeasurements">측정값 입력</span></a>
+      <a class="nav-item" href="#saveSection" data-section-link="saveSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v6h16v-6"/></svg><span data-i18n="navSave">저장 / 내보내기</span></a>
+      <a class="nav-item" href="#searchSection" data-section-link="searchSection"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span data-i18n="navSearch">기록 검색</span></a>
+      <a class="nav-item" href="#partsSection" data-section-link="partsSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v18H4zM7 7h10M7 11h10M7 15h10M7 18h6"/></svg><span data-i18n="navParts">품번 관리</span></a>
+  </nav>
+  <div class="side-bottom">
+    <div class="local-label" data-i18n="draftLabel">검사 입력 임시 저장</div>
+    <p data-i18n="draftHint">입력값은 이 브라우저에 임시 저장됩니다. 검사를 마치면 서버에 저장해 주세요.</p>
+    <button class="side-backup" type="button" onclick="exportJson()" data-i18n="exportJsonBtn">JSON 백업</button>
+  </div>
+</aside>
+<div class="ipqc-workspace">
+<header class="ipqc-topbar">
+  <div><span class="breadcrumb" data-i18n="qualityLabel">품질 관리</span><span class="divider">/</span><span>IPQC</span></div>
+  <div class="topbar-tools">
     <div class="lang-top">
       <label for="lang" data-i18n="langLabel">언어</label>
       <select id="lang" onchange="setLang(this.value)">
@@ -343,16 +363,29 @@
         <option value="id">Bahasa Indonesia</option>
       </select>
     </div>
+    <time id="themeToday" class="top-date"></time>
   </div>
 </header>
-
-<div class="wrap">
+<main class="wrap">
+  <section class="inspection-overview" aria-labelledby="overviewTitle">
+    <div class="overview-heading"><h2 id="overviewTitle" data-i18n="overviewTitle">검사 입력 현황</h2><span data-i18n="overviewScope">현재 검사 기준</span></div>
+    <div class="summary">
+      <div class="kpi"><label data-i18n="kpiMachLabel">설비 수</label><b id="kpiMachines">0</b></div>
+      <div class="kpi"><label data-i18n="kpiRoundsLabel">검사 횟수</label><b id="kpiRounds">0</b></div>
+      <div class="kpi"><label data-i18n="kpiTotalLabel">총 입력칸</label><b id="kpiTotal">0</b></div>
+      <div class="kpi"><label data-i18n="kpiDoneLabel">완료</label><b id="kpiDone">0</b></div>
+    </div>
+  </section>
+  <div class="page-heading">
+    <div><div class="eyebrow">IN-PROCESS QUALITY CONTROL</div><h1 data-i18n="appTitle">IPQC 검사 입력</h1><p class="sub" data-i18n="appSub">설비별 개별 정보 입력 → 서버 저장</p></div>
+    <span class="inspection-badge">IPQC</span>
+  </div>
 
   <!-- ══ 섹션 1: 공통 기본 설정 ══ -->
-  <div class="card">
-    <div class="row" style="justify-content:space-between">
+  <div class="card" id="setupSection">
+    <div class="row panel-heading">
       <div>
-        <b data-i18n="s1title">1. 공통 기본 설정</b>
+        <h2 class="section-title" data-step="01" data-i18n="s1title">공통 기본 설정</h2>
         <div class="hint" data-i18n="s1hint">날짜 · 시간 · SHIFT · 검사원은 모든 설비 공통</div>
       </div>
       <div class="row">
@@ -410,10 +443,10 @@
   </div>
 
   <!-- ══ 섹션 2: 설비별 탭 입력 ══ -->
-  <div class="card">
-    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+  <div class="card" id="machineSection">
+    <div class="row panel-heading">
       <div>
-        <b data-i18n="s2title">2. 설비별 정보 및 측정값 입력</b>
+        <h2 class="section-title" data-step="02" data-i18n="s2title">설비별 정보 및 측정값 입력</h2>
         <div class="hint" data-i18n="s2hint">각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요</div>
       </div>
       <div class="row">
@@ -432,10 +465,10 @@
   </div>
 
   <!-- ══ 섹션 3: 항목별 측정값 (전체 설비) ══ -->
-  <div class="card">
-    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+  <div class="card" id="measurementSection">
+    <div class="row panel-heading">
       <div>
-        <b data-i18n="s3title">3. 항목별 측정값 입력</b>
+        <h2 class="section-title" data-step="03" data-i18n="s3title">항목별 측정값 입력</h2>
         <div class="hint" data-i18n="s3hint">항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다</div>
       </div>
       <div class="row">
@@ -456,14 +489,9 @@
   </div>
 
   <!-- ══ 섹션 4: 저장 ══ -->
-  <div class="card">
-    <b data-i18n="s4title">4. 저장 / 내보내기</b>
-    <div class="summary">
-      <div class="kpi"><label data-i18n="kpiMachLabel">설비 수</label><b id="kpiMachines">0</b></div>
-      <div class="kpi"><label data-i18n="kpiRoundsLabel">검사 횟수</label><b id="kpiRounds">0</b></div>
-      <div class="kpi"><label data-i18n="kpiTotalLabel">총 입력칸</label><b id="kpiTotal">0</b></div>
-      <div class="kpi"><label data-i18n="kpiDoneLabel">완료</label><b id="kpiDone">0</b></div>
-    </div>
+  <div class="card" id="saveSection">
+    <div class="panel-heading"><h2 class="section-title" data-step="04" data-i18n="s4title">저장 / 내보내기</h2></div>
+
     <div id="cloudStatus"></div>
     <div class="row" style="margin-top:12px">
       <button class="btn cloud" onclick="submitToServer()" data-i18n="submitBtn">☁️ Google Sheet 저장</button>
@@ -477,9 +505,9 @@
   </div>
 
   <!-- ══ 섹션 5: 서버 데이터 검색 ══ -->
-  <div class="card">
-    <b data-i18n="srchTitle">5. 서버 데이터 검색 / Excel 저장</b>
-    <div class="hint" data-i18n="srchHint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div>
+  <div class="card" id="searchSection">
+    <div class="panel-heading"><div><h2 class="section-title" data-step="05" data-i18n="srchTitle">서버 데이터 검색 / Excel 저장</h2>
+    <div class="hint" data-i18n="srchHint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div></div></div>
     <div class="search-grid">
       <div><label data-i18n="srchDate">특정 날짜</label><input id="searchDate" type="date"></div>
       <div><label data-i18n="srchDateFrom">시작 날짜</label><input id="searchDateFrom" type="date"></div>
@@ -524,24 +552,24 @@
   </div>
 
   <!-- ══ 섹션 6: 파트 번호 추가 등록 ══ -->
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <b data-i18n="s5title">6. 파트 번호 추가 등록 (Part Number Manager)</b>
+  <div class="card" id="partsSection">
+    <div class="panel-heading">
+      <h2 class="section-title" data-step="06" data-i18n="s5title">파트 번호 추가 등록 (Part Number Manager)</h2>
       <span id="pnCountBadge" style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:999px;font-weight:700">0개 추가</span>
     </div>
     <div class="hint" style="margin-bottom:10px" data-i18n="pnHint">🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.</div>
 
     <!-- 신규 추가 영역 -->
-    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:800;color:#15803d;margin-bottom:8px" data-i18n="pnNewSection">➕ 신규 파트 등록</div>
-      <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:8px;align-items:end">
+    <div class="pn-create">
+      <div data-i18n="pnNewSection">➕ 신규 파트 등록</div>
+      <div class="pn-form">
         <div>
-          <label style="font-size:11px;color:#166534;font-weight:700" data-i18n="pnSapLabel">SAP PN</label>
-          <input id="pnNewSap" type="text" placeholder="예: 17B05999001LE" style="font-family:monospace;font-size:13px;height:31px">
+          <label data-i18n="pnSapLabel">SAP PN</label>
+          <input id="pnNewSap" type="text" placeholder="예: 17B05999001LE">
         </div>
         <div>
-          <label style="font-size:11px;color:#166534;font-weight:700" data-i18n="pnDescLabel">Description</label>
-          <input id="pnNewDesc" type="text" placeholder="예: J/L MODULE 5.35X7.00 1.40T" style="font-size:13px;height:31px">
+          <label data-i18n="pnDescLabel">Description</label>
+          <input id="pnNewDesc" type="text" placeholder="예: J/L MODULE 5.35X7.00 1.40T">
         </div>
         <div>
           <button class="btn ok" onclick="addPnEntry()" style="white-space:nowrap" data-i18n="pnRegBtn">＋ 등록</button>
@@ -551,8 +579,8 @@
     </div>
 
     <!-- 사용자 추가 목록 -->
-    <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px" data-i18n="pnListTitle">📋 사용자 추가 파트 목록</div>
-    <div style="overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:220px;overflow-y:auto">
+    <div data-i18n="pnListTitle">📋 사용자 추가 파트 목록</div>
+    <div class="pn-list-wrap">
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr style="background:#f1f5f9;position:sticky;top:0">
           <th style="padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;min-width:160px" data-i18n="pnSapLabel">SAP PN</th>
@@ -566,22 +594,23 @@
 
     <!-- 내보내기 -->
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn sm" onclick="exportPnList()" style="background:#0ea5e9;color:white" data-i18n="pnExportBtn">📥 전체 PN 목록 Excel 저장</button>
+      <button class="btn sm pn-export-button" onclick="exportPnList()" data-i18n="pnExportBtn">📥 전체 PN 목록 Excel 저장</button>
       <span class="hint" style="line-height:24px" data-i18n="pnExportHint">기본 DB + 사용자 추가 전체 목록을 .xlsx 로 저장</span>
     </div>
   </div>
 
   <!-- ══ 히스토리 ══ -->
   <div class="card" id="historyCard" style="display:none">
-    <div class="row" style="justify-content:space-between;margin-bottom:10px">
-      <b data-i18n="histTitle">📋 이번 기기 제출 기록</b>
+    <div class="row panel-heading">
+      <h2 class="section-title" data-step="07" data-i18n="histTitle">이번 기기 제출 기록</h2>
       <button class="btn bad sm" onclick="clearAllHistory()" data-i18n="histClearBtn">🗑️ 전체 기록 삭제</button>
     </div>
     <div class="hint" style="margin-bottom:8px" data-i18n="histHint">항목을 탭하면 내용 확인 및 수정할 수 있습니다.</div>
     <div id="historyList"></div>
   </div>
 
-  <div class="footer-space"></div>
+  <footer class="ipqc-footer"><span>PEAK · QUALITY CONTROL</span><span>IPQC</span></footer>
+</main>
 </div>
 
 <script src="./jsQR-1.4.0.js"></script>
@@ -968,7 +997,7 @@ const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfASS
 // ══ i18n ══════════════════════════════════════════
 const I18N = {
   ko:{
-    srchTitle:'5. 서버 데이터 검색 / Excel 저장',
+    srchTitle:'서버 데이터 검색 / Excel 저장',
     srchHint:'Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.',
     srchDate:'특정 날짜', srchDateFrom:'시작 날짜', srchDateTo:'종료 날짜', srchMold:'Mold 번호',
     srchInspectorPH:'검사원', srchMachinePH:'예: A07 또는 A07,A08',
@@ -997,14 +1026,14 @@ const I18N = {
     importOk:'가져오기 완료.', importFail:'JSON 파일을 읽을 수 없습니다.',
     appTitle:'IPQC 검사 입력', appSub:'설비별 개별 정보 입력 → 서버 저장',
     langLabel:'언어',
-    s1title:'1. 공통 기본 설정', s1hint:'날짜 · 시간 · SHIFT · 검사원은 모든 설비 공통',
+    s1title:'공통 기본 설정', s1hint:'날짜 · 시간 · SHIFT · 검사원은 모든 설비 공통',
     applyBtn:'설정 적용', autoNameBtn:'설비명 자동',
     machineCountLabel:'설비 수', roundCountLabel:'검사 횟수',
     dateLabel:'날짜', timeLabel:'시간', shiftLabel:'SHIFT 班別',
     inspectorLabel:'QC 검사원', inspectorPH:'검사원 이름',
-    s2title:'2. 설비별 정보 및 측정값 입력', s2hint:'각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요',
+    s2title:'설비별 정보 및 측정값 입력', s2hint:'각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요',
     prevMach:'◀ 이전 설비', nextMach:'다음 설비 ▶',
-    s3title:'3. 항목별 측정값 입력', s3hint:'항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다',
+    s3title:'항목별 측정값 입력', s3hint:'항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다',
     measureSummaryBtn:'전체 입력값 보기', measureSummaryTitle:'📊 항목별 입력값 전체보기',
     measureSummaryClose:'닫기', measureSummaryEmpty:'표시할 설비가 없습니다.',
     measureSummaryMeta:'항목별 입력값',
@@ -1017,7 +1046,7 @@ const I18N = {
     approvalLabel:'Approval 승인자', materialLabel:'Remark / Material',
     ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
     mcHeader:'설비 / M/C',
-    s4title:'4. 저장 / 내보내기',
+    s4title:'저장 / 내보내기',
     kpiMachLabel:'설비 수', kpiRoundsLabel:'검사 횟수', kpiTotalLabel:'총 입력칸', kpiDoneLabel:'완료',
     submitBtn:'☁️ Google Sheet 저장', loadServerBtn:'🔄 서버에서 불러오기', csvBtn:'📥 Excel 저장 (.xlsx)',
     sheetUrlMissing:'Google Apps Script Web App URL을 먼저 설정하세요.',
@@ -1035,7 +1064,7 @@ const I18N = {
     planSelectNone:'설비를 선택하세요',
     planAlertMin:'설비를 1대 이상 선택하세요.',
     planLoaded:'대 설비가 로드되었습니다!',
-    s5title:'6. 파트 번호 추가 등록 (Part Number Manager)',
+    s5title:'파트 번호 추가 등록 (Part Number Manager)',
     pnHint:'🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.',
     pnNewSection:'➕ 신규 파트 등록', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ 등록', pnListTitle:'📋 사용자 추가 파트 목록',
@@ -1078,7 +1107,7 @@ const I18N = {
 
   },
   en:{
-    srchTitle:'5. Server Data Search / Excel Export',
+    srchTitle:'Server Data Search / Excel Export',
     srchHint:'Search data saved in Google Sheet by conditions. Click a result row to see details.',
     srchDate:'Exact Date', srchDateFrom:'Start Date', srchDateTo:'End Date', srchMold:'Mold No.',
     srchInspectorPH:'Inspector', srchMachinePH:'e.g. A07 or A07,A08',
@@ -1107,14 +1136,14 @@ const I18N = {
     importOk:'Import completed.', importFail:'Cannot read JSON file.',
     appTitle:'IPQC Inspection Input', appSub:'Per-machine entry → Server save',
     langLabel:'Language',
-    s1title:'1. Common Settings', s1hint:'Date · Time · SHIFT · Inspector shared by all machines',
+    s1title:'Common Settings', s1hint:'Date · Time · SHIFT · Inspector shared by all machines',
     applyBtn:'Apply', autoNameBtn:'Auto Names',
     machineCountLabel:'Machines', roundCountLabel:'Rounds',
     dateLabel:'Date', timeLabel:'Time', shiftLabel:'SHIFT',
     inspectorLabel:'QC Inspector', inspectorPH:'Inspector name',
-    s2title:'2. Per-Machine Info & Measurements', s2hint:'Select a machine tab to enter info and measurements',
+    s2title:'Per-Machine Info & Measurements', s2hint:'Select a machine tab to enter info and measurements',
     prevMach:'◀ Prev Machine', nextMach:'Next Machine ▶',
-    s3title:'3. Measurements by Item', s3hint:'Select an item to enter values for all machines at once',
+    s3title:'Measurements by Item', s3hint:'Select an item to enter values for all machines at once',
     measureSummaryBtn:'View All Values', measureSummaryTitle:'📊 All Measurement Values',
     measureSummaryClose:'Close', measureSummaryEmpty:'No machines to display.',
     measureSummaryMeta:'Measurement values by item',
@@ -1127,7 +1156,7 @@ const I18N = {
     approvalLabel:'Approval', materialLabel:'Remark / Material',
     ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
     mcHeader:'Machine / M/C',
-    s4title:'4. Save & Export',
+    s4title:'Save & Export',
     kpiMachLabel:'Machines', kpiRoundsLabel:'Rounds', kpiTotalLabel:'Total Cells', kpiDoneLabel:'Done',
     submitBtn:'☁️ Save to Google Sheet', loadServerBtn:'🔄 Load from Server', csvBtn:'📥 Save Excel (.xlsx)',
     sheetUrlMissing:'Please set the Google Apps Script Web App URL first.',
@@ -1145,7 +1174,7 @@ const I18N = {
     planSelectNone:'Select machines first',
     planAlertMin:'Please select at least 1 machine.',
     planLoaded:'machines loaded!',
-    s5title:'6. Part Number Manager',
+    s5title:'Part Number Manager',
     pnHint:'🔍 Base DB: 861 SAP PNs · Auto-fill on SAP PN input · Add unregistered PNs below.',
     pnNewSection:'➕ Register New Part', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ Add', pnListTitle:'📋 User-added Parts',
@@ -1188,7 +1217,7 @@ const I18N = {
 
   },
   zh:{
-    srchTitle:'5. 伺服器資料查詢 / Excel 匯出',
+    srchTitle:'伺服器資料查詢 / Excel 匯出',
     srchHint:'依條件查詢儲存在 Google Sheet 的資料，點擊結果列可查看詳細內容。',
     srchDate:'指定日期', srchDateFrom:'開始日期', srchDateTo:'結束日期', srchMold:'模號',
     srchInspectorPH:'檢驗員', srchMachinePH:'例：A07 或 A07,A08',
@@ -1217,14 +1246,14 @@ const I18N = {
     importOk:'匯入完成', importFail:'無法讀取JSON。',
     appTitle:'IPQC 檢驗輸入', appSub:'各設備分別輸入 → 伺服器儲存',
     langLabel:'語言',
-    s1title:'1. 共通基本設定', s1hint:'日期·時間·班別·檢驗員為所有設備共通',
+    s1title:'共通基本設定', s1hint:'日期·時間·班別·檢驗員為所有設備共通',
     applyBtn:'套用設定', autoNameBtn:'自動設備名',
     machineCountLabel:'設備數', roundCountLabel:'檢驗次數',
     dateLabel:'日期', timeLabel:'時間', shiftLabel:'班別',
     inspectorLabel:'QC 檢驗員', inspectorPH:'檢驗員姓名',
-    s2title:'2. 各設備資訊及量測值輸入', s2hint:'選擇設備標籤輸入設備資訊及量測值',
+    s2title:'各設備資訊及量測值輸入', s2hint:'選擇設備標籤輸入設備資訊及量測值',
     prevMach:'◀ 上一個', nextMach:'下一個 ▶',
-    s3title:'3. 各項目量測值輸入', s3hint:'選擇項目可同時輸入所有設備的量測值',
+    s3title:'各項目量測值輸入', s3hint:'選擇項目可同時輸入所有設備的量測值',
     measureSummaryBtn:'查看全部輸入值', measureSummaryTitle:'📊 各項目輸入值總覽',
     measureSummaryClose:'關閉', measureSummaryEmpty:'沒有可顯示的設備。',
     measureSummaryMeta:'各項目輸入值',
@@ -1237,7 +1266,7 @@ const I18N = {
     approvalLabel:'Approval 審核者', materialLabel:'備註 / Material',
     ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
     mcHeader:'設備 / M/C',
-    s4title:'4. 儲存及匯出',
+    s4title:'儲存及匯出',
     kpiMachLabel:'設備數', kpiRoundsLabel:'檢驗次數', kpiTotalLabel:'總輸入格', kpiDoneLabel:'完成',
     submitBtn:'☁️ 儲存到 Google Sheet', loadServerBtn:'🔄 從伺服器載入', csvBtn:'📥 Excel儲存 (.xlsx)',
     sheetUrlMissing:'請先設定 Google Apps Script Web App URL。',
@@ -1255,7 +1284,7 @@ const I18N = {
     planSelectNone:'請選擇設備',
     planAlertMin:'請至少選擇1台設備。',
     planLoaded:'台設備已載入！',
-    s5title:'6. 零件號碼追加登録 (Part Number Manager)',
+    s5title:'零件號碼追加登録 (Part Number Manager)',
     pnHint:'🔍 基本DB：861個SAP PN · 輸入SAP PN自動填入Description · 未登録零件請在此追加。',
     pnNewSection:'➕ 新增零件', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ 登録', pnListTitle:'📋 使用者追加零件',
@@ -1298,7 +1327,7 @@ const I18N = {
 
   },
   vi:{
-    srchTitle:'5. Tìm kiếm dữ liệu máy chủ / Xuất Excel',
+    srchTitle:'Tìm kiếm dữ liệu máy chủ / Xuất Excel',
     srchHint:'Tìm kiếm dữ liệu đã lưu trong Google Sheet theo điều kiện. Nhấp vào hàng kết quả để xem chi tiết.',
     srchDate:'Ngày cụ thể', srchDateFrom:'Ngày bắt đầu', srchDateTo:'Ngày kết thúc', srchMold:'Số Mold',
     srchInspectorPH:'Kiểm tra viên', srchMachinePH:'VD: A07 hoặc A07,A08',
@@ -1327,14 +1356,14 @@ const I18N = {
     importOk:'Xong.', importFail:'Lỗi JSON.',
     appTitle:'Nhập kiểm tra IPQC', appSub:'Nhập theo máy → Lưu server',
     langLabel:'Ngôn ngữ',
-    s1title:'1. Cài đặt chung', s1hint:'Ngày · Giờ · Ca · Nhân viên dùng chung cho tất cả',
+    s1title:'Cài đặt chung', s1hint:'Ngày · Giờ · Ca · Nhân viên dùng chung cho tất cả',
     applyBtn:'Áp dụng', autoNameBtn:'Tên tự động',
     machineCountLabel:'Số máy', roundCountLabel:'Số lần đo',
     dateLabel:'Ngày', timeLabel:'Giờ', shiftLabel:'Ca',
     inspectorLabel:'Nhân viên QC', inspectorPH:'Tên nhân viên',
-    s2title:'2. Thông tin & đo theo máy', s2hint:'Chọn tab máy để nhập thông tin và giá trị đo',
+    s2title:'Thông tin & đo theo máy', s2hint:'Chọn tab máy để nhập thông tin và giá trị đo',
     prevMach:'◀ Máy trước', nextMach:'Máy sau ▶',
-    s3title:'3. Giá trị đo theo hạng mục', s3hint:'Chọn hạng mục để nhập tất cả máy cùng lúc',
+    s3title:'Giá trị đo theo hạng mục', s3hint:'Chọn hạng mục để nhập tất cả máy cùng lúc',
     measureSummaryBtn:'Xem tất cả giá trị', measureSummaryTitle:'📊 Toàn bộ giá trị đo',
     measureSummaryClose:'Đóng', measureSummaryEmpty:'Không có máy để hiển thị.',
     measureSummaryMeta:'Giá trị đo theo hạng mục',
@@ -1347,7 +1376,7 @@ const I18N = {
     approvalLabel:'Approval', materialLabel:'Ghi chú / Material',
     ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
     mcHeader:'Máy / M/C',
-    s4title:'4. Lưu & Xuất',
+    s4title:'Lưu & Xuất',
     kpiMachLabel:'Số máy', kpiRoundsLabel:'Số lần', kpiTotalLabel:'Tổng ô', kpiDoneLabel:'Xong',
     submitBtn:'☁️ Lưu vào Google Sheet', loadServerBtn:'🔄 Tải từ server', csvBtn:'📥 Lưu Excel (.xlsx)',
     sheetUrlMissing:'Vui lòng thiết lập URL Web App của Google Apps Script trước.',
@@ -1365,7 +1394,7 @@ const I18N = {
     planSelectNone:'Chọn máy trước',
     planAlertMin:'Vui lòng chọn ít nhất 1 máy.',
     planLoaded:'máy đã tải!',
-    s5title:'6. Quản lý số bộ phận (Part Number Manager)',
+    s5title:'Quản lý số bộ phận (Part Number Manager)',
     pnHint:'🔍 DB cơ bản: 861 SAP PN · Tự động điền khi nhập SAP PN · Thêm PN chưa đăng ký bên dưới.',
     pnNewSection:'➕ Đăng ký bộ phận mới', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ Đăng ký', pnListTitle:'📋 Bộ phận người dùng thêm',
@@ -1408,7 +1437,7 @@ const I18N = {
 
   },
   id:{
-    srchTitle:'5. Pencarian Data Server / Ekspor Excel',
+    srchTitle:'Pencarian Data Server / Ekspor Excel',
     srchHint:'Cari data yang tersimpan di Google Sheet berdasarkan kondisi. Klik baris hasil untuk melihat detail.',
     srchDate:'Tanggal Tertentu', srchDateFrom:'Tanggal Mulai', srchDateTo:'Tanggal Selesai', srchMold:'No. Mold',
     srchInspectorPH:'Inspektur', srchMachinePH:'cth: A07 atau A07,A08',
@@ -1437,14 +1466,14 @@ const I18N = {
     importOk:'Selesai.', importFail:'Gagal baca JSON.',
     appTitle:'Input Inspeksi IPQC', appSub:'Entri per mesin → Simpan server',
     langLabel:'Bahasa',
-    s1title:'1. Pengaturan Dasar', s1hint:'Tanggal · Waktu · Shift · Inspektor berlaku untuk semua',
+    s1title:'Pengaturan Dasar', s1hint:'Tanggal · Waktu · Shift · Inspektor berlaku untuk semua',
     applyBtn:'Terapkan', autoNameBtn:'Nama Otomatis',
     machineCountLabel:'Jumlah Mesin', roundCountLabel:'Putaran',
     dateLabel:'Tanggal', timeLabel:'Waktu', shiftLabel:'Shift',
     inspectorLabel:'Inspektor QC', inspectorPH:'Nama inspektor',
-    s2title:'2. Info & Pengukuran per Mesin', s2hint:'Pilih tab mesin untuk memasukkan info dan pengukuran',
+    s2title:'Info & Pengukuran per Mesin', s2hint:'Pilih tab mesin untuk memasukkan info dan pengukuran',
     prevMach:'◀ Mesin Sebelumnya', nextMach:'Mesin Berikutnya ▶',
-    s3title:'3. Nilai Ukur per Item', s3hint:'Pilih item untuk memasukkan semua mesin sekaligus',
+    s3title:'Nilai Ukur per Item', s3hint:'Pilih item untuk memasukkan semua mesin sekaligus',
     measureSummaryBtn:'Lihat Semua Nilai', measureSummaryTitle:'📊 Semua Nilai Pengukuran',
     measureSummaryClose:'Tutup', measureSummaryEmpty:'Tidak ada mesin untuk ditampilkan.',
     measureSummaryMeta:'Nilai pengukuran per item',
@@ -1457,7 +1486,7 @@ const I18N = {
     approvalLabel:'Approval', materialLabel:'Keterangan / Material',
     ratioLabel:'Material Ratio（%）', sessLabel:'SESS SR Trek 152-1 100V',
     mcHeader:'Mesin / M/C',
-    s4title:'4. Simpan & Ekspor',
+    s4title:'Simpan & Ekspor',
     kpiMachLabel:'Mesin', kpiRoundsLabel:'Putaran', kpiTotalLabel:'Total Sel', kpiDoneLabel:'Selesai',
     submitBtn:'☁️ Simpan ke Google Sheet', loadServerBtn:'🔄 Muat dari Server', csvBtn:'📥 Simpan Excel (.xlsx)',
     sheetUrlMissing:'Atur URL Web App Google Apps Script terlebih dahulu.',
@@ -1475,7 +1504,7 @@ const I18N = {
     planSelectNone:'Pilih mesin dahulu',
     planAlertMin:'Pilih minimal 1 mesin.',
     planLoaded:'mesin berhasil dimuat!',
-    s5title:'6. Manajemen Nomor Part (Part Number Manager)',
+    s5title:'Manajemen Nomor Part (Part Number Manager)',
     pnHint:'🔍 DB Dasar: 861 SAP PN · Auto-isi saat input SAP PN · Tambahkan PN baru di bawah.',
     pnNewSection:'➕ Daftarkan Part Baru', pnSapLabel:'SAP PN', pnDescLabel:'Description',
     pnRegBtn:'＋ Daftar', pnListTitle:'📋 Part Tambahan Pengguna',
@@ -1601,6 +1630,14 @@ const QR_MESSAGES = {
   }
 };
 Object.entries(QR_MESSAGES).forEach(([lang,messages])=>Object.assign(I18N[lang],messages));
+const THEME_MESSAGES = {
+  ko:{navLabel:'검사 관리',navSetup:'공통 설정',navMachines:'설비 정보',navMeasurements:'측정값 입력',navSave:'저장 / 내보내기',navSearch:'기록 검색',navParts:'품번 관리',qualityLabel:'품질 관리',overviewTitle:'검사 입력 현황',overviewScope:'현재 검사 기준',draftLabel:'검사 입력 임시 저장',draftHint:'입력값은 이 브라우저에 임시 저장됩니다. 검사를 마치면 서버에 저장해 주세요.'},
+  en:{navLabel:'INSPECTION',navSetup:'Common settings',navMachines:'Equipment',navMeasurements:'Measurements',navSave:'Save / Export',navSearch:'Search records',navParts:'Part numbers',qualityLabel:'Quality control',overviewTitle:'Inspection overview',overviewScope:'Current inspection',draftLabel:'Inspection draft',draftHint:'Entries are saved temporarily in this browser. Save to the server when the inspection is complete.'},
+  zh:{navLabel:'檢驗管理',navSetup:'共同設定',navMachines:'機台資訊',navMeasurements:'量測輸入',navSave:'儲存 / 匯出',navSearch:'紀錄查詢',navParts:'料號管理',qualityLabel:'品質管理',overviewTitle:'檢驗輸入狀態',overviewScope:'目前檢驗',draftLabel:'檢驗草稿',draftHint:'輸入資料會暫存在此瀏覽器。完成檢驗後，請儲存至伺服器。'},
+  vi:{navLabel:'QUẢN LÝ KIỂM TRA',navSetup:'Cài đặt chung',navMachines:'Thông tin máy',navMeasurements:'Nhập số đo',navSave:'Lưu / Xuất',navSearch:'Tra cứu',navParts:'Mã sản phẩm',qualityLabel:'Quản lý chất lượng',overviewTitle:'Tình trạng nhập kiểm tra',overviewScope:'Lần kiểm tra hiện tại',draftLabel:'Bản nháp kiểm tra',draftHint:'Dữ liệu được lưu tạm trong trình duyệt này. Hãy lưu lên máy chủ khi hoàn tất kiểm tra.'},
+  id:{navLabel:'MANAJEMEN INSPEKSI',navSetup:'Pengaturan umum',navMachines:'Informasi mesin',navMeasurements:'Pengukuran',navSave:'Simpan / Ekspor',navSearch:'Cari catatan',navParts:'Nomor komponen',qualityLabel:'Kontrol kualitas',overviewTitle:'Ringkasan inspeksi',overviewScope:'Inspeksi saat ini',draftLabel:'Draf inspeksi',draftHint:'Isian disimpan sementara di browser ini. Simpan ke server setelah inspeksi selesai.'}
+};
+Object.entries(THEME_MESSAGES).forEach(([lang,messages])=>Object.assign(I18N[lang],messages));
 function tr(k){ return (I18N[state?.lang||'ko']||I18N.ko)[k] || I18N.ko[k] || k; }
 function setLang(v){ state.lang=v; save(); applyLanguage(); }
 function applyLanguage(){
@@ -1611,6 +1648,7 @@ function applyLanguage(){
   // 정적 data-i18n 요소 업데이트
   document.querySelectorAll('[data-i18n]').forEach(e=>{ e.textContent=tr(e.dataset.i18n); });
   document.querySelectorAll('[data-i18n-ph]').forEach(e=>{ e.placeholder=tr(e.dataset.i18nPh); });
+  updateThemeDate();
   rebuildCountOptions();
   // 동적 UI 재렌더링
   renderPnSection();
@@ -1906,8 +1944,14 @@ function renderMeasurementSection(){
       btn.onclick = ()=>switchItem(idx);
       tabBar.appendChild(btn);
     });
-    // 활성 탭 스크롤
-    setTimeout(()=>{ const a=document.getElementById(`itab_${i}`); if(a) a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); },50);
+    // Center the active tab horizontally without moving the page away from its current section.
+    setTimeout(()=>{
+      const active=document.getElementById(`itab_${i}`);
+      if(active && typeof tabBar.scrollTo==='function'){
+        const offset=active.getBoundingClientRect().left-tabBar.getBoundingClientRect().left;
+        tabBar.scrollTo({left:tabBar.scrollLeft+offset-(tabBar.clientWidth-active.offsetWidth)/2,behavior:'smooth'});
+      }
+    },50);
   }
 
   // ── 항목 제목 ──
@@ -3320,7 +3364,27 @@ document.addEventListener('input', e=>{
   if(['date','time','shift','inspector'].includes(id)) saveDebounced();
 });
 
-window.addEventListener('resize',()=>{ if(ipqcTrendSelection) drawIpqcTrend(); });
+function updateThemeDate(){
+  const el=document.getElementById('themeToday');
+  if(!el) return;
+  const locale={ko:'ko-KR',en:'en-GB',zh:'zh-TW',vi:'vi-VN',id:'id-ID'}[state.lang]||'ko-KR';
+  el.textContent=new Intl.DateTimeFormat(locale,{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}).format(new Date());
+}
+function updateThemeNavigation(){
+  const links=Array.from(document.querySelectorAll('[data-section-link]'));
+  let current=links[0];
+  links.forEach(link=>{
+    const section=document.getElementById(link.dataset.sectionLink);
+    if(section && section.getBoundingClientRect().top<=120) current=link;
+  });
+  if(window.scrollY>0 && window.scrollY+window.innerHeight>=document.documentElement.scrollHeight-2) current=links[links.length-1];
+  links.forEach(link=>{
+    if(link===current) link.setAttribute('aria-current','location');
+    else link.removeAttribute('aria-current');
+  });
+}
+window.addEventListener('scroll',updateThemeNavigation,{passive:true});
+window.addEventListener('resize',()=>{ updateThemeNavigation(); if(ipqcTrendSelection) drawIpqcTrend(); });
 
 init();
 </script>
