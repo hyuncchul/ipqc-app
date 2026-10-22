@@ -150,6 +150,19 @@
 .team-access-notice{font-size:13px;line-height:1.6;margin:10px 0 0;color:#146751;overflow-wrap:anywhere}
 .team-access-notice.error{color:#ac2b34}
 @media(max-width:600px){.team-access{padding:12px}.team-access-bar{align-items:flex-start}.team-access-identity-group{flex-basis:100%}.team-access-actions{width:100%}.team-access-actions button{flex:1}.team-access input,.team-access select{font-size:16px}.team-access-request-form,.team-access-direct-fields{grid-template-columns:1fr}.team-access-request-form>button{justify-self:stretch}.team-access-request-row{grid-template-columns:1fr 110px}.team-access-request-person{grid-column:1/-1}.team-access-request-row>select{min-width:0}.team-access-direct-fields>button,.team-access-import>button{width:100%}}
+
+.daily-filters{display:grid;grid-template-columns:minmax(210px,1.3fr) repeat(3,minmax(120px,1fr));gap:16px;padding:20px;margin-bottom:20px}
+.daily-filters>div{min-width:0}.daily-filters label{display:block;margin-bottom:7px}.daily-filters input,.daily-filters select{width:100%;min-width:0;height:44px;box-sizing:border-box}
+.daily-date-control{display:flex;gap:8px;align-items:center}.daily-date-control .button{flex-shrink:0;min-height:44px}.daily-search{grid-column:1/-1}
+.daily-scope{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:#687e91}.daily-scope strong{color:#284962;font-size:15px}
+.daily-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 18px}.daily-stats>div{background:#fff;border:1px solid #dae3eb;border-radius:10px;padding:16px;min-width:0}.daily-stats dt{color:#62798c;font-size:12px}.daily-stats dd{font-size:25px;font-weight:700;color:#173a53;margin-top:8px;line-height:1.2;overflow-wrap:anywhere}.daily-stats>div:nth-child(4) dd{color:#168063}.daily-stats>div:nth-child(5) dd{color:#b37924}
+.daily-equipment{margin:20px 0;overflow:hidden}.daily-equipment-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#eaf2f8;padding:18px 22px;border-bottom:1px solid #d7e3ee}.daily-equipment-heading h2{font-size:19px;margin:0;overflow-wrap:anywhere}.daily-equipment-heading>span{font-size:13px;text-align:right;flex-shrink:0;color:#48667e}
+.daily-record{padding:22px;min-width:0}.daily-record+.daily-record{border-top:2px solid #e8eef4}.daily-record-title{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.daily-record-title>div{min-width:0}.daily-record-title h3{margin:0;font-size:18px;font-family:ui-monospace,Consolas,monospace;overflow-wrap:anywhere}.daily-record-title p{font-size:13px;color:#637b90;margin:7px 0 0;overflow-wrap:anywhere}.daily-record-title .result-tag{flex-shrink:0;white-space:normal;max-width:45%}
+.daily-record-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 20px;margin:20px 0}.daily-record-meta>div{min-width:0}.daily-record-meta dt{font-size:11px;color:#718598}.daily-record-meta dd{font-size:13px;margin-top:5px;color:#24445c}
+.daily-defect{background:#fff8f0;border-left:3px solid #d69443;padding:13px 16px;border-radius:0 8px 8px 0}.daily-record h4{font-size:12px;margin:0 0 7px;color:#5c6d7b}.daily-defect p,.daily-work p{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;margin:0}.daily-work{padding:14px 0;border-bottom:1px solid #edf1f5}.daily-work>span{display:block;font-size:12px;color:#6c7e8e;margin-bottom:7px}
+.daily-record-actions{display:flex;gap:8px;margin-top:16px}.daily-record-actions .button{min-height:44px;font-size:12px;padding:8px 16px}.daily-photos{font-size:13px;color:#6c7e8e;margin-top:18px;min-height:60px}.daily-photos .evidence-grid{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}.daily-photos .evidence-card{max-width:260px}.daily-photos .evidence-preview{max-height:200px}
+@media(max-width:1050px){.daily-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.daily-stats{gap:8px}.daily-stats>div{padding:12px}.daily-stats dd{font-size:21px}}
+@media(max-width:580px){.sidebar nav{grid-template-columns:repeat(4,minmax(0,1fr))}.sidebar .nav-item{min-height:54px}.daily-filters{padding:16px;gap:14px}.daily-filters>div:first-child,.daily-search{grid-column:1/-1}.daily-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.daily-stats dd{font-size:20px}.daily-equipment-heading{padding:15px;align-items:flex-start}.daily-equipment-heading h2{font-size:17px}.daily-equipment-heading>span{font-size:12px}.daily-record{padding:16px}.daily-record-title{flex-direction:column;gap:12px}.daily-record-title .result-tag{max-width:100%}.daily-record-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.daily-photos .evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.daily-scope{gap:7px}}
 footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px}.public-links a{color:#527294;overflow-wrap:anywhere}</style>
 </head>
 <body>
@@ -161,6 +174,7 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
       <button type="button" class="nav-item" data-view="history"><span aria-hidden="true">≡</span> <span data-i18n="등록 이력">등록 이력</span> <span id="navCount" class="nav-count">0</span></button>
       <button type="button" class="nav-item" data-view="quality"><span aria-hidden="true">◎</span> <span data-i18n="품질 재검사">품질 재검사</span> <span id="navQualityCount" class="nav-count">0</span></button>
       <button type="button" class="nav-item" data-view="completed"><span aria-hidden="true">✓</span> <span data-i18n="처리 완료">처리 완료</span> <span id="navCompletedCount" class="nav-count">0</span></button>
+      <button type="button" class="nav-item" data-view="daily"><span aria-hidden="true">▣</span> <span data-i18n="데일리 보고서">데일리 보고서</span></button>
       <button type="button" class="nav-item" data-view="parts"><span aria-hidden="true">▤</span> <span data-i18n="품번 관리">품번 관리</span></button>
       <button type="button" class="nav-item" id="registrationNav" data-view="registration"><span aria-hidden="true">⚙</span> <span data-i18n="등록">등록</span></button>
     </nav>
@@ -180,6 +194,23 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
           <div class="summary-card summary-completed"><dt><span data-i18n="처리 완료">처리 완료</span></dt><dd><strong id="completedRecordCount">0</strong><span><span data-i18n="건">건</span></span></dd></div>
           <div class="summary-card summary-pending"><dt><span data-i18n="미처리">미처리</span></dt><dd><strong id="pendingRecordCount">0</strong><span><span data-i18n="건">건</span></span></dd></div>
         </dl>
+      </section>
+      <section id="dailyView" aria-labelledby="dailyHeading" hidden>
+        <div class="page-heading"><div><h1 id="dailyHeading" data-i18n="데일리 보고서">데일리 보고서</h1><p data-i18n="선택한 등록일의 불량을 설비 번호 순으로 표시합니다. 처리 상태는 현재 기준입니다.">선택한 등록일의 불량을 설비 번호 순으로 표시합니다. 처리 상태는 현재 기준입니다.</p></div><button id="exportDailyXLSX" class="button secondary" type="button" disabled data-i18n="목록 Excel 다운로드">목록 Excel 다운로드</button></div>
+        <section class="panel daily-filters" aria-label="조회 조건" data-i18n-aria-label="조회 조건">
+          <div><label for="dailyDate" data-i18n="보고서 날짜">보고서 날짜</label><div class="daily-date-control"><input id="dailyDate" type="date" required><button id="dailyToday" type="button" class="button secondary" data-i18n="오늘">오늘</button></div></div>
+          <div><label for="dailyEquipment" data-i18n="설비 번호">설비 번호</label><select id="dailyEquipment"><option value="" data-i18n="전체 설비">전체 설비</option></select></div>
+          <div><label for="dailyProcess" data-i18n="공정">공정</label><select id="dailyProcess"><option value="" data-i18n="전체 공정">전체 공정</option><option>FOL</option><option>EOL</option><option>OQC</option></select></div>
+          <div><label for="dailyState" data-i18n="처리 상태">처리 상태</label><select id="dailyState"><option value="" data-i18n="전체 상태">전체 상태</option><option value="pending" data-i18n="미처리">미처리</option><option value="production_pending" data-i18n="생산팀 처리 대기">생산팀 처리 대기</option><option value="quality_review" data-i18n="품질 재검사 대기">품질 재검사 대기</option><option value="completed" data-i18n="처리 완료">처리 완료</option></select></div>
+          <div class="daily-search"><label for="dailySearch" data-i18n="검색">검색</label><input id="dailySearch" type="search" placeholder="설비, 품번, 로트 카드, 불량 내용" data-i18n-placeholder="설비, 품번, 로트 카드, 불량 내용"></div>
+        </section>
+        <div class="daily-scope"><strong id="dailyScope"></strong><span data-i18n="현재 조회 목록의 등록 건수와 불량 수량입니다.">현재 조회 목록의 등록 건수와 불량 수량입니다.</span></div>
+        <dl class="daily-stats" aria-label="조회 결과" data-i18n-aria-label="조회 결과" aria-live="polite">
+          <div><dt data-i18n="설비 수">설비 수</dt><dd id="dailyEquipmentCount">0</dd></div><div><dt data-i18n="불량 등록">불량 등록</dt><dd id="dailyRecordCount">0</dd></div><div><dt data-i18n="불량 수량">불량 수량</dt><dd id="dailyQuantity">0 PCS</dd></div><div><dt data-i18n="처리 완료">처리 완료</dt><dd id="dailyCompletedCount">0</dd></div><div><dt data-i18n="미처리">미처리</dt><dd id="dailyPendingCount">0</dd></div>
+        </dl>
+        <p class="help" data-i18n="사진을 누르면 확대하고, 전후 사진에서 회차별 결과를 확인할 수 있습니다.">사진을 누르면 확대하고, 전후 사진에서 회차별 결과를 확인할 수 있습니다.</p>
+        <div id="dailyNotice" class="notice" role="status" hidden></div>
+        <div id="dailyGroups" aria-label="설비별 불량 리뷰" data-i18n-aria-label="설비별 불량 리뷰"></div>
       </section>
       <section id="registrationView" aria-labelledby="registrationHeading" hidden>
         <div class="page-heading"><div><h1 id="registrationHeading" data-i18n="계정·팀 등록">계정·팀 등록</h1><p data-i18n="Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.">Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.</p></div></div>
@@ -2367,6 +2398,37 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     ['설비 현황 서버의 응답 형식을 확인해 주세요.', 'Check the response format from the equipment status server.', '請確認設備現況伺服器的回應格式。', 'Vui lòng kiểm tra định dạng phản hồi của máy chủ tình trạng thiết bị.', 'Periksa format respons dari server status peralatan.'],
     ['설비 정보 요청이 취소되었습니다.', 'The equipment data request was cancelled.', '設備資料請求已取消。', 'Yêu cầu dữ liệu thiết bị đã bị hủy.', 'Permintaan data peralatan dibatalkan.'],
     ['입력 내용이 변경되었습니다. 확인 후 설비를 다시 선택해 주세요.', 'The entries have changed. Check them and select the equipment again.', '輸入內容已變更。請確認後重新選擇設備。', 'Nội dung nhập đã thay đổi. Hãy kiểm tra rồi chọn lại thiết bị.', 'Isian telah berubah. Periksa lalu pilih kembali peralatan.']
+  ];
+  global.I18n.addMessages(Object.fromEntries(rows.map(([source, en, zhTW, vi, id]) => [source, { en, 'zh-TW': zhTW, vi, id }])));
+})(typeof window !== 'undefined' ? window : globalThis);
+
+(function (global) {
+  'use strict';
+  const rows = [
+    ['조회 조건', 'Filters', '篩選條件', 'Điều kiện lọc', 'Filter'],
+    ['데일리 보고서', 'Daily report', '每日報告', 'Báo cáo hằng ngày', 'Laporan harian'],
+    ['선택한 등록일의 불량을 설비 번호 순으로 표시합니다. 처리 상태는 현재 기준입니다.', 'Defects registered on the selected date are shown in equipment number order. Treatment statuses reflect the current state.', '依設備編號順序顯示所選登錄日期的不良紀錄。處理狀態以目前為準。', 'Hiển thị lỗi được ghi nhận vào ngày đã chọn theo thứ tự mã thiết bị. Trạng thái xử lý là trạng thái hiện tại.', 'Cacat yang dicatat pada tanggal terpilih ditampilkan berdasarkan urutan nomor mesin. Status penanganan menunjukkan kondisi saat ini.'],
+    ['보고서 날짜', 'Report date', '報告日期', 'Ngày báo cáo', 'Tanggal laporan'],
+    ['오늘', 'Today', '今天', 'Hôm nay', 'Hari ini'],
+    ['전체 설비', 'All equipment', '全部設備', 'Tất cả thiết bị', 'Semua mesin'],
+    ['설비 미지정', 'Equipment unspecified', '未指定設備', 'Chưa chỉ định thiết bị', 'Mesin belum ditentukan'],
+    ['전체 상태', 'All statuses', '全部狀態', 'Tất cả trạng thái', 'Semua status'],
+    ['설비 수', 'Equipment count', '設備數', 'Số thiết bị', 'Jumlah mesin'],
+    ['설비별 불량 리뷰', 'Defect review by equipment', '各設備不良檢視', 'Xem xét lỗi theo thiết bị', 'Tinjauan cacat per mesin'],
+    ['날짜를 선택해 주세요.', 'Select a date.', '請選擇日期。', 'Vui lòng chọn ngày.', 'Pilih tanggal.'],
+    ['선택한 날짜와 조건에 맞는 불량이 없습니다.', 'No defects match the selected date and filters.', '沒有符合所選日期及篩選條件的不良紀錄。', 'Không có lỗi phù hợp với ngày và điều kiện đã chọn.', 'Tidak ada cacat yang sesuai dengan tanggal dan filter yang dipilih.'],
+    ['공통 검사 기록을 불러오는 중입니다.', 'Loading shared inspection records.', '正在載入共用檢驗紀錄。', 'Đang tải hồ sơ kiểm tra dùng chung.', 'Memuat catatan inspeksi bersama.'],
+    ['등록 탭에서 로그인하고 담당자 승인을 받으면 보고서를 볼 수 있습니다.', 'Sign in in the Registration tab and obtain member approval to view the report.', '請在「註冊」分頁登入，並取得成員使用核准後即可查看報告。', 'Đăng nhập trong thẻ Đăng ký và được phê duyệt quyền thành viên để xem báo cáo.', 'Login di tab Pendaftaran dan dapatkan persetujuan keanggotaan untuk melihat laporan.'],
+    ['{count}개 설비', '{count} equipment units', '{count} 台設備', '{count} thiết bị', '{count} mesin'],
+    ['{count}건 · {quantity} PCS', '{count} records · {quantity} PCS', '{count} 筆 · {quantity} PCS', '{count} bản ghi · {quantity} PCS', '{count} catatan · {quantity} PCS'],
+    ['사진을 누르면 확대하고, 전후 사진에서 회차별 결과를 확인할 수 있습니다.', 'Select a photo to enlarge it. Open before-and-after photos to review the results for each treatment cycle.', '點選照片可放大；開啟處理前後照片可查看各輪處理結果。', 'Nhấn vào ảnh để phóng to. Mở ảnh trước và sau để xem kết quả của từng vòng xử lý.', 'Pilih foto untuk memperbesarnya. Buka foto sebelum dan sesudah untuk meninjau hasil setiap siklus penanganan.'],
+    ['사진 불러오는 중…', 'Loading photos…', '正在載入照片…', 'Đang tải ảnh…', 'Memuat foto…'],
+    ['데일리_보고서', 'Daily_Report', '每日報告', 'Bao_cao_hang_ngay', 'Laporan_Harian'],
+    ['현재 조회 목록의 등록 건수와 불량 수량입니다.', 'Record counts and defect quantities for the current filtered list.', '目前篩選清單的登錄筆數及不良數量。', 'Số bản ghi và số lượng lỗi trong danh sách đang hiển thị.', 'Jumlah catatan dan jumlah cacat untuk daftar yang sedang ditampilkan.'],
+    ['조회 결과', 'Results', '查詢結果', 'Kết quả tra cứu', 'Hasil pencarian'],
+    ['설비, 품번, 로트 카드, 불량 내용', 'Equipment, part number, lot card, defect details', '設備、品號、批次卡、不良內容', 'Thiết bị, mã linh kiện, thẻ lô, nội dung lỗi', 'Mesin, nomor komponen, kartu lot, rincian cacat'],
+    ['최근 생산 작업', 'Latest production work', '最近生產作業', 'Công việc sản xuất gần nhất', 'Pekerjaan produksi terbaru'],
+    ['최근 품질 판정', 'Latest quality decision', '最近品質判定', 'Phán định chất lượng gần nhất', 'Keputusan kualitas terbaru']
   ];
   global.I18n.addMessages(Object.fromEntries(rows.map(([source, en, zhTW, vi, id]) => [source, { en, 'zh-TW': zhTW, vi, id }])));
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -6250,6 +6312,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     let destroyed = false, replacement = null;
     const urls = new Set(), t = (text) => translate(text, options.t);
     const control = { destroy() { destroyed = true; replacement?.destroy(); for (const url of urls) root.URL.revokeObjectURL(url); urls.clear(); } };
+    // Report pages can release already loaded photos while another download is pending.
+    options.onControl?.(control);
     comparisons.set(container, control); container.classList.add('evidence-comparison'); container.replaceChildren();
     for (const [label, photos] of [['불량 전', options.before || []], ['처리 후', options.after || []]]) {
       const section = element('section', 'evidence-comparison-column'), heading = element('h3', '', t(label));
@@ -6472,6 +6536,195 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   return Object.freeze({ create, API_BASE, STORAGE_KEY, MESSAGES, MAX_MACHINES });
 });
 
+(function (root, factory) {
+  'use strict';
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root) root.DailyReportCore = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+  const UNASSIGNED = '__unassigned__';
+  const naturalOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+  const text = value => typeof value === 'string' ? value.trim() : '';
+  const equipmentId = record => text(record.equipmentId);
+  const usableRecords = records => Array.isArray(records) ? records.filter(record => record && typeof record === 'object' && !Array.isArray(record)) : [];
+
+  function compareEquipment(a, b) {
+    if (!a || a === UNASSIGNED) return !b || b === UNASSIGNED ? 0 : 1;
+    if (!b || b === UNASSIGNED) return -1;
+    return naturalOrder.compare(a, b) || (a < b ? -1 : a > b ? 1 : 0);
+  }
+
+  function timestamp(value) {
+    const parsed = typeof value === 'string' && value ? Date.parse(value) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function compareRecords(a, b) {
+    const first = timestamp(a.scannedAt) ?? timestamp(a.createdAt) ?? Infinity;
+    const second = timestamp(b.scannedAt) ?? timestamp(b.createdAt) ?? Infinity;
+    if (first !== second) return first < second ? -1 : 1;
+    const createdA = timestamp(a.createdAt) ?? Infinity;
+    const createdB = timestamp(b.createdAt) ?? Infinity;
+    if (createdA !== createdB) return createdA < createdB ? -1 : 1;
+    const idA = String(a.id ?? ''), idB = String(b.id ?? '');
+    return idA < idB ? -1 : idA > idB ? 1 : 0;
+  }
+
+  function defaultStatus(record) {
+    if (record.workflow && typeof record.workflow.status === 'string') return record.workflow.status;
+    return record.resolution?.result ? 'completed' : 'registered';
+  }
+
+  function defaultSearch(record, query) {
+    return [record.equipmentId, ...Object.values(record.equipmentSnapshot || {}), record.sapPN, record.description,
+      record.lotCardNo, record.materialName, record.planOrder, record.moldNo, record.process, record.defect, record.inspector,
+      record.resolution?.result, record.resolution?.notes, record.resolution?.inspector, record.workflow?.finalResult,
+      ...(Array.isArray(record.workflow?.cycles) ? record.workflow.cycles.flatMap(cycle => [cycle?.notes, cycle?.disposition,
+        cycle?.production?.method, cycle?.production?.customMethod, cycle?.production?.operator, cycle?.production?.notes,
+        cycle?.quality?.result, cycle?.quality?.inspector, cycle?.quality?.notes]) : [])].join(' ').toLowerCase().includes(query);
+  }
+
+  function equipmentOptions(records, date) {
+    const ids = new Set();
+    for (const record of usableRecords(records)) {
+      // scanDate is the registration date captured by the scanner, not a date
+      // derived from the viewer's current browser time zone.
+      if (date && record.scanDate !== date) continue;
+      ids.add(equipmentId(record) || UNASSIGNED);
+    }
+    return Array.from(ids).sort(compareEquipment);
+  }
+
+  function build(records, filters = {}, callbacks = {}) {
+    const { date = '', equipment = '', process = '', state = '', query = '' } = filters || {};
+    const getStatus = typeof callbacks.status === 'function' ? callbacks.status : defaultStatus;
+    const isCompleted = typeof callbacks.isCompleted === 'function' ? callbacks.isCompleted : record => getStatus(record) === 'completed';
+    const search = typeof callbacks.search === 'function' ? callbacks.search : defaultSearch;
+    const needle = String(query ?? '').trim().toLowerCase();
+    const selectedEquipment = text(equipment);
+    const groups = new Map();
+
+    for (const record of usableRecords(records)) {
+      if (date && record.scanDate !== date) continue;
+      const machine = equipmentId(record);
+      if (selectedEquipment && (selectedEquipment === UNASSIGNED ? Boolean(machine) : machine !== selectedEquipment)) continue;
+      if (process && record.process !== process) continue;
+      const completed = Boolean(isCompleted(record));
+      if (state === 'completed' && !completed) continue;
+      if (state === 'pending' && completed) continue;
+      if (state === 'production_pending' && !['registered', 'production_pending'].includes(getStatus(record))) continue;
+      if (state && !['completed', 'pending', 'production_pending'].includes(state) && getStatus(record) !== state) continue;
+      if (needle && !search(record, needle)) continue;
+
+      if (!groups.has(machine)) groups.set(machine, { equipmentId: machine, records: [], count: 0, quantity: 0, completed: 0, pending: 0 });
+      const group = groups.get(machine);
+      group.records.push(record);
+      group.count += 1;
+      const quantity = Number(record.quantity);
+      group.quantity += Number.isFinite(quantity) && quantity > 0 ? quantity : 0;
+      group[completed ? 'completed' : 'pending'] += 1;
+    }
+
+    const result = { groups: Array.from(groups.values()).sort((a, b) => compareEquipment(a.equipmentId, b.equipmentId)),
+      records: [], count: 0, quantity: 0, completed: 0, pending: 0, equipmentCount: 0 };
+    for (const group of result.groups) {
+      group.records.sort(compareRecords);
+      result.records.push(...group.records);
+      for (const key of ['count', 'quantity', 'completed', 'pending']) result[key] += group[key];
+      if (group.equipmentId) result.equipmentCount += 1;
+    }
+    return result;
+  }
+
+  return Object.freeze({ UNASSIGNED, equipmentOptions, build });
+});
+
+(function (root) {
+  'use strict';
+  const element = (tag, className = '', text) => {
+    const node = document.createElement(tag); node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  function create(options) {
+    const { container, t, photos, workflow, statusLabel, methodLabel, onDetails, onComparison } = options;
+    let signature = '', generation = 0, observer = null;
+    const controls = new Set();
+    function clear() {
+      generation++; observer?.disconnect(); observer = null;
+      for (const control of controls) control.destroy();
+      controls.clear(); container.replaceChildren(); signature = '';
+    }
+    function render(report) {
+      const nextSignature = JSON.stringify([root.I18n.locale, report.groups]);
+      if (signature === nextSignature) return;
+      clear(); signature = nextSignature;
+      const version = generation;
+      const pending = new WeakMap();
+      async function load(mount) {
+        const values = pending.get(mount); if (!values || version !== generation) return;
+        pending.delete(mount); observer?.unobserve(mount);
+        try {
+          const control = await photos.renderComparison(mount, { ...values, t, onControl: handle => {
+            if (version !== generation) handle.destroy(); else controls.add(handle);
+          } });
+          if (version !== generation) control?.destroy(); else if (control) controls.add(control);
+        } catch (error) { if (version === generation) mount.textContent = error.message; }
+      }
+      if (root.IntersectionObserver) observer = new root.IntersectionObserver(entries => {
+        for (const entry of entries) if (entry.isIntersecting) load(entry.target);
+      }, { rootMargin: '150px' });
+      for (const group of report.groups) {
+        const section = element('section', 'panel daily-equipment'); section.dataset.equipment = group.equipmentId;
+        const header = element('div', 'daily-equipment-heading');
+        header.append(element('h2', '', group.equipmentId || t('설비 미지정')),
+          element('span', '', t('{count}건 · {quantity} PCS', { count: group.count.toLocaleString(), quantity: group.quantity.toLocaleString() })));
+        section.append(header);
+        for (const record of group.records) {
+          const summary = workflow.summary(record), cycle = workflow.currentCycle(record);
+          const card = element('article', 'daily-record'); card.dataset.recordId = record.id;
+          const title = element('div', 'daily-record-title');
+          const product = element('div'); product.append(element('h3', '', record.sapPN), element('p', '', record.description));
+          const badge = element('span', 'result-tag ' + (workflow.isCompleted(record) ? 'result-pass' : 'result-pending'),
+            workflow.isCompleted(record) ? `${t('처리 완료')} · ${t(summary.finalResult)}` : statusLabel(record));
+          if (workflow.isCompleted(record) && ['NG', 'Scrap'].includes(summary.finalResult)) badge.className = 'result-tag result-ng';
+          title.append(product, badge); card.append(title);
+          const metadata = element('dl', 'daily-record-meta');
+          for (const [label, value] of [['로트 카드 번호', record.lotCardNo], ['공정', record.process], ['불량 수량', `${record.quantity.toLocaleString()} PCS`], ['검사자', record.inspector || '—'], ['등록일', record.scanDate], ['검사 방법', summary.method || summary.disposition ? methodLabel(summary) : '—']]) {
+            const item = element('div'); item.append(element('dt', '', t(label)), element('dd', '', value)); metadata.append(item);
+          }
+          const defect = element('div', 'daily-defect'); defect.append(element('h4', '', t('불량 내용')), element('p', '', record.defect));
+          card.append(metadata, defect);
+          for (const [label, work] of [['최근 생산 작업', cycle?.production], ['최근 품질 판정', cycle?.quality || record.resolution]]) {
+            if (!work) continue;
+            const result = element('div', 'daily-work');
+            result.append(element('h4', '', t(label)), element('span', '', [work.completedDate || work.reinspectionDate, work.operator || work.inspector, work.result && t(work.result)].filter(Boolean).join(' · ')), element('p', '', work.notes || '—'));
+            card.append(result);
+          }
+          const actions = element('div', 'daily-record-actions');
+          const detail = element('button', 'button secondary', t('보기')); detail.type = 'button'; detail.onclick = () => onDetails(record); actions.append(detail);
+          const hasPhotos = photos.collectPhotos([record]).length > 0;
+          if (hasPhotos) {
+            const compare = element('button', 'button secondary', t('전후 사진')); compare.type = 'button'; compare.onclick = () => onComparison(record.id); actions.append(compare);
+          }
+          card.append(actions);
+          if ((record.beforePhotos || []).length || summary.afterPhotos.length) {
+            const mount = element('div', 'daily-photos', t('사진 불러오는 중…'));
+            pending.set(mount, { before: record.beforePhotos || [], after: summary.afterPhotos });
+            card.append(mount);
+            if (observer) observer.observe(mount); else load(mount);
+          } else if (!hasPhotos) card.append(element('p', 'help', t('등록된 사진이 없습니다.')));
+          section.append(card);
+        }
+        container.append(section);
+      }
+    }
+    return { render, clear };
+  }
+  root.DailyReportUI = { create };
+})(window);
+
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -6524,6 +6777,9 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   let beforeUploader, afterUploader;
   let beforeBusy = false, afterBusy = false;
   let currentView = 'register';
+  let dailyUI = null;
+  let dailyReport = null;
+  $('dailyDate').value = C.localDate();
   let detailRecordId = null;
   let comparisonRecordId = null;
   let comparisonVersion = 0;
@@ -7063,6 +7319,32 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     $('summaryScope').textContent = storageFault ? t('저장소 확인 필요') : t('전체 기간 · 등록 건 기준');
     $('navCount').textContent = records.filter(productionPending).length.toLocaleString(); $('navQualityCount').textContent = records.filter(r => W.status(r) === 'quality_review').length.toLocaleString(); $('navCompletedCount').textContent = completeCount.toLocaleString(); $('recentCount').textContent = records.length.toLocaleString();
     table('recentTable', sortedRecords().slice(0, 5), true); renderHistory(); renderCompleted(); renderQuality();
+    if (currentView === 'daily') renderDaily();
+  }
+  function renderDaily() {
+    const D = window.DailyReportCore;
+    const allowed = !sharedRecords || Boolean(sharedStatus.ready && sharedStatus.signedIn && sharedStatus.role);
+    const available = allowed && $('dailyDate').value ? records : [];
+    const equipment = $('dailyEquipment'), selected = equipment.value;
+    const values = D.equipmentOptions(available, $('dailyDate').value);
+    equipment.replaceChildren();
+    for (const value of ['', ...values]) {
+      const option = document.createElement('option'); option.value = value;
+      option.textContent = value === '' ? t('전체 설비') : value === D.UNASSIGNED ? t('설비 미지정') : value;
+      equipment.append(option);
+    }
+    equipment.value = values.includes(selected) ? selected : '';
+    dailyReport = D.build(available, { date: $('dailyDate').value, equipment: equipment.value, process: $('dailyProcess').value, state: $('dailyState').value, query: $('dailySearch').value }, { status: W.status, isCompleted: W.isCompleted, search: recordMatchesSearch });
+    const unavailable = !allowed || storageFault;
+    $('dailyScope').textContent = $('dailyDate').value || t('날짜를 선택해 주세요.');
+    for (const [id, value] of [['dailyEquipmentCount', dailyReport.equipmentCount], ['dailyRecordCount', dailyReport.count], ['dailyQuantity', dailyReport.quantity], ['dailyCompletedCount', dailyReport.completed], ['dailyPendingCount', dailyReport.pending]]) {
+      $(id).textContent = unavailable ? '—' : value.toLocaleString() + (id === 'dailyQuantity' ? ' PCS' : '');
+    }
+    $('exportDailyXLSX').disabled = unavailable || !dailyReport.count;
+    const message = !allowed ? (!sharedStatus.ready ? '공통 검사 기록을 불러오는 중입니다.' : '등록 탭에서 로그인하고 담당자 승인을 받으면 보고서를 볼 수 있습니다.') : storageFault ? '저장소 확인 필요' : !$('dailyDate').value ? '날짜를 선택해 주세요.' : !dailyReport.count ? '선택한 날짜와 조건에 맞는 불량이 없습니다.' : '';
+    notice('dailyNotice', message ? t(message) : '');
+    if (!dailyUI) dailyUI = window.DailyReportUI.create({ container: $('dailyGroups'), t, photos: P, workflow: W, statusLabel, methodLabel, onDetails: showDetails, onComparison: showComparison });
+    if (unavailable) dailyUI.clear(); else dailyUI.render(dailyReport);
   }
   function clearListFilters(view) {
     const ids = view === 'quality' ? ['qualityStart','qualityEnd','qualityProcess','qualitySearch'] : view === 'completed' ? ['completedStart','completedEnd','completedProcess','completedResult','completedSearch'] : ['filterStart','filterEnd','filterProcess','filterSearch'];
@@ -7070,15 +7352,18 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   }
   function showView(view) {
     currentView = view;
-    $('recordSummary').hidden = view === 'parts' || view === 'registration';
+    $('recordSummary').hidden = view === 'parts' || view === 'registration' || view === 'daily';
+    $('dailyView').hidden = view !== 'daily';
+    if (view !== 'daily') dailyUI?.clear();
     $('registrationView').hidden = view !== 'registration';
     $('registerView').hidden = view !== 'register'; $('historyView').hidden = view !== 'history'; $('partsView').hidden = view !== 'parts'; $('completedView').hidden = view !== 'completed'; $('qualityView').hidden = view !== 'quality';
     document.querySelectorAll('.nav-item').forEach((el) => { el.classList.toggle('active', el.dataset.view === view); if (el.dataset.view === view) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); });
-    $('pageCrumb').textContent = view === 'registration' ? t('등록') : view === 'quality' ? t('품질 재검사') : view === 'history' ? t('등록 이력') : view === 'parts' ? t('품번 관리') : view === 'completed' ? t('처리 완료') : t('공정검사');
+    $('pageCrumb').textContent = view === 'daily' ? t('데일리 보고서') : view === 'registration' ? t('등록') : view === 'quality' ? t('품질 재검사') : view === 'history' ? t('등록 이력') : view === 'parts' ? t('품번 관리') : view === 'completed' ? t('처리 완료') : t('공정검사');
     renderRegistrationPrompt();
     if (view === 'history') renderHistory();
     if (view === 'completed') renderCompleted();
     if (view === 'quality') renderQuality();
+    if (view === 'daily') renderDaily();
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
   function renderRegistrationPrompt() {
@@ -7092,6 +7377,16 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   ['filterStart', 'filterEnd', 'filterProcess', 'filterSearch', 'filterState'].forEach((id) => $(id).addEventListener('input', renderHistory));
   ['completedStart', 'completedEnd', 'completedProcess', 'completedResult', 'completedSearch'].forEach((id) => $(id).addEventListener('input', renderCompleted));
   ['qualityStart', 'qualityEnd', 'qualityProcess', 'qualitySearch'].forEach(id => $(id).addEventListener('input', renderQuality));
+  ['dailyDate', 'dailyEquipment', 'dailyProcess', 'dailyState', 'dailySearch'].forEach(id => $(id).addEventListener('input', renderDaily));
+  $('dailyToday').addEventListener('click', () => { $('dailyDate').value = C.localDate(); renderDaily(); });
+  $('exportDailyXLSX').addEventListener('click', () => {
+    renderDaily();
+    if ($('exportDailyXLSX').disabled) return;
+    try {
+      const workbook = W.exportWorkbook(dailyReport.records, window.XLSX);
+      window.XLSX.writeFile(workbook, `${t('데일리_보고서')}_${$('dailyDate').value}.xlsx`, { bookType: 'xlsx', compression: true });
+    } catch (error) { toast(error.message); }
+  });
   function showDetails(record) {
     detailRecordId = record.id;
     const list = $('recordDetails'); list.replaceChildren();
@@ -7584,6 +7879,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     sharedRecords.onStatus(status => {
       const identity = !status.signedIn ? '' : status.ready ? `${status.email}:${status.role}` : previousIdentity.startsWith(`${status.email}:`) ? previousIdentity : `${status.email}:`;
       if (identity !== previousIdentity) {
+        dailyUI?.clear(); dailyReport = null;
         records = []; methodDrafts.clear(); previousIdentity = identity; memberGeneration++;
         // Remove private details and cached image URLs when the active member changes.
         ['resolutionDialog','productionDialog','reassignDialog','comparisonDialog','detailDialog'].forEach(id => { if ($(id)?.open) $(id).close(); });
@@ -7617,7 +7913,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   parts = window.PartsManager.create({ embedded: master, container: $('partsView'), transport: sharedPartsTransport, onChange: masterChanged, onToast: toast });
   initializePhotos();
   document.addEventListener('languagechange', () => {
-    $('pageCrumb').textContent = t(({ registration: '등록', register: '공정검사', history: '등록 이력', completed: '처리 완료', parts: '품번 관리', quality: '품질 재검사' })[currentView]);
+    $('pageCrumb').textContent = t(({ daily: '데일리 보고서', registration: '등록', register: '공정검사', history: '등록 이력', completed: '처리 완료', parts: '품번 관리', quality: '품질 재검사' })[currentView]);
     $('masterCount').textContent = t('SAP PN {count}개 · 추가 / 업데이트', { count: parts.size.toLocaleString() });
     renderCard(); updateToday();
     for (const [id, message] of activeMessages) if (!$(id).hidden) $(id).textContent = retranslate(message);
