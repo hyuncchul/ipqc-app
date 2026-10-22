@@ -162,7 +162,14 @@ input[readonly] { background-color: #f3f6f9; }
 .team-mail-form>button{justify-self:start}
 @media(max-width:600px){.team-mail-form{grid-template-columns:1fr}.team-mail-form>button{justify-self:stretch}}
 
-.team-access .team-access-manager-checkbox{width:22px;min-height:22px;height:22px;accent-color:#2466b2;align-self:flex-start;cursor:pointer}
+.team-access .team-access-manager-checkbox{appearance:auto;-webkit-appearance:checkbox;width:24px;min-width:24px;min-height:24px;height:24px;flex:0 0 24px;padding:0;margin:0;accent-color:#2466b2;cursor:inherit}
+.team-access-field-title{font-size:12px;font-weight:600}
+.team-access-manager-field{grid-column:1/-1}
+.team-access .team-access-manager-toggle{display:flex;align-items:center;gap:12px;min-height:52px;margin:0;padding:12px 14px;border:1px solid #b9cbdc;border-radius:9px;background:#fff;font-size:14px;cursor:pointer;touch-action:manipulation}
+.team-access-manager-field[data-checked=true] .team-access-manager-toggle{background:#eaf3ff;border-color:#367bdd;color:#1453a4}
+.team-access-manager-field[data-disabled=true] .team-access-manager-toggle{background:#edf0f4;border-color:#d2dae2;color:#6d7d8d;cursor:not-allowed}
+.team-access-manager-toggle:focus-within{outline:3px solid #7db2ff;outline-offset:2px}
+.team-access-manager-hint{margin:0;font-size:12px;line-height:1.6;color:#52667a}
 .team-access-direct-fields{grid-template-columns:minmax(200px,2fr) minmax(130px,1fr) minmax(150px,1fr)}
 .team-access-direct-fields>button{justify-self:start}
 .team-access-request-row{grid-template-columns:minmax(150px,2fr) minmax(130px,1fr) minmax(140px,1fr)}
@@ -2505,6 +2512,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     ['작업자 이름은 등록된 별명(사번)과 같아야 합니다.', 'The operator name must match your registered alias or employee ID.', '作業人員姓名必須與您登錄的別名或員工編號相同。', 'Tên người thực hiện phải trùng với tên gọi hoặc mã nhân viên đã đăng ký.', 'Nama operator harus sesuai dengan nama panggilan atau ID karyawan yang terdaftar.'],
     ['생산 관리자 알림은 생산팀 또는 관리자에게만 지정할 수 있습니다.', 'Production manager notifications can only be assigned to production or administrator accounts.', '生產主管通知只能指定給生產團隊或管理員帳號。', 'Chỉ có thể chỉ định thông báo quản lý sản xuất cho tài khoản sản xuất hoặc quản trị viên.', 'Notifikasi manajer produksi hanya dapat ditetapkan untuk akun produksi atau administrator.'],
     ['생산 관리자 알림 수신', 'Receive production manager notifications', '接收生產主管通知', 'Nhận thông báo quản lý sản xuất', 'Terima notifikasi manajer produksi'],
+    ['알림 받기', 'Receive notifications', '接收通知', 'Nhận thông báo', 'Terima notifikasi'],
+    ['알림 받지 않기', 'Do not receive notifications', '不接收通知', 'Không nhận thông báo', 'Jangan terima notifikasi'],
+    ['담당 업무를 생산팀 또는 관리자로 선택하면 알림 수신을 설정할 수 있습니다.', 'Select Production or Administrator as the role to configure notifications.', '將負責工作選為生產團隊或管理員，即可設定是否接收通知。', 'Chọn vai trò Sản xuất hoặc Quản trị viên để thiết lập việc nhận thông báo.', 'Pilih peran Produksi atau Administrator untuk mengatur penerimaan notifikasi.'],
+    ['선택 후 담당자 저장을 눌러 주세요. 수신자는 이메일 알림 언어도 저장해야 합니다.', 'After selecting an option, click Save team member. The recipient must also save their email notification language.', '選擇後請按「儲存負責人」。收件人也必須儲存電子郵件通知語言。', 'Sau khi chọn, hãy nhấn Lưu nhân sự. Người nhận cũng cần lưu ngôn ngữ thông báo qua email.', 'Setelah memilih, klik Simpan anggota tim. Penerima juga harus menyimpan bahasa notifikasi email.'],
+    ['선택 후 승인을 눌러 주세요. 수신자는 이메일 알림 언어도 저장해야 합니다.', 'After selecting an option, click Approve. The recipient must also save their email notification language.', '選擇後請按「核准」。收件人也必須儲存電子郵件通知語言。', 'Sau khi chọn, hãy nhấn Phê duyệt. Người nhận cũng cần lưu ngôn ngữ thông báo qua email.', 'Setelah memilih, klik Setujui. Penerima juga harus menyimpan bahasa notifikasi email.'],
+    ['{email} 저장 완료 · 생산 관리자 알림: {setting}', '{email} saved · Production manager notifications: {setting}', '{email} 已儲存 · 生產主管通知：{setting}', 'Đã lưu {email} · Thông báo quản lý sản xuất: {setting}', '{email} tersimpan · Notifikasi manajer produksi: {setting}'],
     ['담당자 저장', 'Save team member', '儲存負責人', 'Lưu nhân sự', 'Simpan anggota tim'],
     ['등록된 별명(사번)이 불량 등록자와 작업자 이름으로 자동 기록됩니다. 생산 관리자 알림을 선택하면 신규 불량의 재작업 요청을 받으며, 나중에 변경할 수 있습니다.', 'The registered alias or employee ID is recorded automatically as the defect reporter and operator name. Enable production manager notifications to receive rework requests for newly reported defects. You can change this later.', '登錄的別名或員工編號會自動記錄為不良登錄人及作業人員姓名。勾選生產主管通知後，將收到新增不良的重工作業請求。之後可再變更。', 'Tên gọi hoặc mã nhân viên đã đăng ký được tự động ghi làm tên người báo lỗi và người thực hiện. Bật thông báo quản lý sản xuất để nhận yêu cầu làm lại cho lỗi mới. Bạn có thể thay đổi sau.', 'Nama panggilan atau ID karyawan yang terdaftar dicatat otomatis sebagai pelapor cacat dan nama operator. Aktifkan notifikasi manajer produksi untuk menerima permintaan pengerjaan ulang cacat baru. Pengaturan ini dapat diubah nanti.'],
     ['등록된 담당자', 'Registered team members', '已登錄的負責人', 'Nhân sự đã đăng ký', 'Anggota tim terdaftar'],
@@ -5166,7 +5179,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (!container?.append || !service?.onStatus || !service?.getStatus) throw new Error('Team access service and container are required.');
     const doc = container.ownerDocument || root.document;
     let destroyed = false, busy = false, status = service.getStatus(), requests = [], requestUnsubscribe = null;
-    let notice = null, subscriptionError = '', lastServiceError = null, requestGeneration = 0;
+    let notice = null, subscriptionError = '', lastServiceError = null, requestGeneration = 0, savedMember = null;
     let members = [], memberUnsubscribe = null, memberGeneration = 0, memberAccount = '', memberError = '';
     let mailPreference = null, mailUnsubscribe = null, mailGeneration = 0, mailAccount = '', mailReady = false, mailError = '', mailDirty = false;
     const listeners = [];
@@ -5193,6 +5206,25 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const aliasInput = id => { const input = create('input', '', id); input.type = 'text'; input.required = true; input.maxLength = 80; input.autocomplete = 'off'; bind(input, '별명 또는 사번', {}, 'placeholder'); controls.push(input); return input; };
     const managerInput = id => { const input = create('input', 'team-access-manager-checkbox', id); input.type = 'checkbox'; controls.push(input); return input; };
     const field = (source, control) => { const item = create('div', 'team-access-field'); item.append(label(source, control), control); return item; };
+    const managerField = (control, role, pending = false) => {
+      const item = create('div', 'team-access-field team-access-manager-field');
+      const title = create('span', 'team-access-field-title', `${control.id}Title`); bind(title, '생산 관리자 알림 수신');
+      const toggle = create('label', 'team-access-manager-toggle'); toggle.htmlFor = control.id;
+      const choice = create('span', '', `${control.id}Choice`);
+      const hint = create('p', 'team-access-manager-hint', `${control.id}Hint`);
+      control.setAttribute('aria-labelledby', title.id); control.setAttribute('aria-describedby', `${choice.id} ${hint.id}`);
+      toggle.append(control, choice); item.append(title, toggle, hint);
+      control.renderManager = () => {
+        item.dataset.disabled = String(control.disabled); item.dataset.checked = String(Boolean(control.checked));
+        bind(choice, control.checked ? '알림 받기' : '알림 받지 않기');
+        bind(hint, !['production', 'admin'].includes(role.value)
+          ? '담당 업무를 생산팀 또는 관리자로 선택하면 알림 수신을 설정할 수 있습니다.'
+          : pending ? '선택 후 승인을 눌러 주세요. 수신자는 이메일 알림 언어도 저장해야 합니다.'
+          : '선택 후 담당자 저장을 눌러 주세요. 수신자는 이메일 알림 언어도 저장해야 합니다.');
+      };
+      control.addEventListener('change', control.renderManager);
+      return item;
+    };
 
     const panel = create('section', 'team-access', 'teamAccessPanel');
     bind(panel, '공유 검사 기록 · 팀 접근 권한', {}, 'aria-label');
@@ -5241,10 +5273,14 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const approvalRole = roleSelect('teamAccessApprovalRole', true);
     const approvalAlias = aliasInput('teamAccessApprovalAlias');
     const productionManager = managerInput('teamAccessProductionManager');
-    const managerField = field('생산 관리자 알림 수신', productionManager);
+    const managerControl = managerField(productionManager, approvalRole);
     const approveButton = button('담당자 저장', 'teamAccessApprove', 'primary'); approveButton.type = 'submit';
-    const directFields = create('div', 'team-access-direct-fields'); directFields.append(field('Google 이메일', emailInput), field('담당 업무', approvalRole), field('별명(사번)', approvalAlias), managerField, approveButton);
-    directForm.append(directHeading, paragraph('등록된 별명(사번)이 불량 등록자와 작업자 이름으로 자동 기록됩니다. 생산 관리자 알림을 선택하면 신규 불량의 재작업 요청을 받으며, 나중에 변경할 수 있습니다.'), directFields);
+    const directFields = create('div', 'team-access-direct-fields'); directFields.append(field('Google 이메일', emailInput), field('담당 업무', approvalRole), field('별명(사번)', approvalAlias), managerControl, approveButton);
+    const directSaved = create('p', 'team-access-notice', 'teamAccessSaved'); directSaved.setAttribute('role', 'status'); directSaved.hidden = true;
+    function renderSavedMember() {
+      if (savedMember) bind(directSaved, '{email} 저장 완료 · 생산 관리자 알림: {setting}', { email: savedMember.email, setting: t(savedMember.manager ? '알림 받기' : '알림 받지 않기') });
+    }
+    directForm.append(directHeading, paragraph('등록된 별명(사번)이 불량 등록자와 작업자 이름으로 자동 기록됩니다. 생산 관리자 알림을 선택하면 신규 불량의 재작업 요청을 받으며, 나중에 변경할 수 있습니다.'), directFields, directSaved);
     const membersHeading = create('h3'); bind(membersHeading, '등록된 담당자');
     const membersList = create('div', 'team-access-members', 'teamAccessMembers'); membersList.setAttribute('aria-live', 'polite');
     const aliasWarning = paragraph('관리자가 별명(사번)을 등록한 후 작업할 수 있습니다.', 'team-access-notice error');
@@ -5275,8 +5311,12 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       requestButton.disabled = busy || !allowed() || Boolean(status.role);
       importButton.disabled = busy || !allowed() || status.role !== 'admin' || typeof onImportLocal !== 'function';
       productionManager.disabled = busy || !allowed() || !['production', 'admin'].includes(approvalRole.value);
+      productionManager.renderManager();
       for (const control of membersList.querySelectorAll('button')) control.disabled = busy || !allowed() || status.role !== 'admin';
-      for (const control of requestList.querySelectorAll('button,select,input')) control.disabled = busy || !allowed() || status.role !== 'admin' || Boolean(control.managerRoleSelect && !['production', 'admin'].includes(control.managerRoleSelect.value));
+      for (const control of requestList.querySelectorAll('button,select,input')) {
+        control.disabled = busy || !allowed() || status.role !== 'admin' || Boolean(control.managerRoleSelect && !['production', 'admin'].includes(control.managerRoleSelect.value));
+        control.renderManager?.();
+      }
     }
     async function run(operation, success, params = {}) {
       if (busy || destroyed) return;
@@ -5312,8 +5352,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         const approve = create('button', 'primary'); approve.type = 'submit'; bind(approve, '승인');
         const alias = aliasInput(`teamAccessPendingAlias${index}`); controls.pop(); alias.value = request.alias || '';
         const manager = managerInput(`teamAccessPendingManager${index}`); controls.pop(); manager.checked = false; manager.managerRoleSelect = select;
-        const managerLabel = field('생산 관리자 알림 수신', manager);
-        const updateManager = () => { manager.disabled = busy || !allowed() || !['production', 'admin'].includes(select.value); if (select.value === 'quality') manager.checked = false; };
+        const managerLabel = managerField(manager, select, true);
+        const updateManager = () => { manager.disabled = busy || !allowed() || !['production', 'admin'].includes(select.value); if (select.value === 'quality') manager.checked = false; manager.renderManager(); };
         select.addEventListener('change', updateManager);
         row.append(person, field('담당 업무', select), field('별명(사번)', alias), managerLabel, approve); updateManager();
         row.addEventListener('submit', event => {
@@ -5326,7 +5366,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     }
     function syncRequests() {
       if (status?.role !== 'admin') {
-        requestGeneration++; requestUnsubscribe?.(); requestUnsubscribe = null; requests = []; subscriptionError = ''; emailInput.value = ''; approvalAlias.value = ''; productionManager.checked = false; requestList.replaceChildren(); return;
+        requestGeneration++; requestUnsubscribe?.(); requestUnsubscribe = null; requests = []; subscriptionError = ''; emailInput.value = ''; approvalAlias.value = ''; productionManager.checked = false; directSaved.hidden = true; requestList.replaceChildren(); return;
       }
       if (requestUnsubscribe || !status.online) return;
       const generation = ++requestGeneration;
@@ -5351,6 +5391,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         edit.addEventListener('click', () => {
           if (busy || !allowed() || status.role !== 'admin') return;
           emailInput.value = member.email; approvalRole.value = member.role; approvalAlias.value = member.alias || ''; productionManager.checked = member.productionManager === true;
+          directSaved.hidden = true;
           renderDisabled(); directForm.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); approvalAlias.focus?.();
         });
         row.append(person, edit); membersList.append(row);
@@ -5420,8 +5461,15 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     listen(directForm, 'submit', event => {
       event.preventDefault(); if (!allowed() || status.role !== 'admin' || busy || !directForm.reportValidity()) return;
       const address = emailInput.value.trim().toLowerCase(), role = approvalRole.value;
-      run(() => service.approve(address, role, { alias: approvalAlias.value.trim(), productionManager: ['production', 'admin'].includes(role) && productionManager.checked }), '담당자 권한을 승인했습니다.').then(result => { if (result && !destroyed && emailInput.value.trim().toLowerCase() === address) { emailInput.value = ''; approvalAlias.value = ''; productionManager.checked = false; } });
+      const manager = ['production', 'admin'].includes(role) && productionManager.checked;
+      directSaved.hidden = true;
+      run(() => service.approve(address, role, { alias: approvalAlias.value.trim(), productionManager: manager }), '담당자 권한을 승인했습니다.').then(result => {
+        if (result && !destroyed && emailInput.value.trim().toLowerCase() === address) {
+          savedMember = { email: address, manager }; renderSavedMember(); directSaved.hidden = false;
+        }
+      });
     });
+    for (const control of [emailInput, approvalRole, approvalAlias, productionManager]) listen(control, 'input', () => { directSaved.hidden = true; });
     listen(approvalRole, 'change', () => { if (approvalRole.value === 'quality') productionManager.checked = false; renderDisabled(); });
     listen(mailLanguage, 'change', () => { mailDirty = true; renderDisabled(); });
     listen(mailForm, 'submit', event => {
@@ -5433,7 +5481,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       });
     });
     listen(importButton, 'click', () => { if (!importButton.disabled) run(() => onImportLocal()); });
-    listen(doc, 'languagechange', () => { renderStatus(); renderRequests(); renderMembers(); root.I18n?.refresh?.(panel); });
+    listen(doc, 'languagechange', () => { renderStatus(); renderRequests(); renderMembers(); renderSavedMember(); root.I18n?.refresh?.(panel); });
     const statusUnsubscribe = service.onStatus(value => {
       if (destroyed) return; status = value; renderStatus();
       if (value.error && value.error !== lastServiceError) { lastServiceError = value.error; reportError(value.error); }
