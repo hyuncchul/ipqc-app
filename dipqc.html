@@ -103,6 +103,12 @@
 .equipment-mode-control{margin-bottom:12px}.equipment-mode-control select,.equipment-entry select,.equipment-issue-date input{height:46px;min-height:46px}.equipment-entry{padding:16px;margin:16px 0 22px;border:1px solid #d5e4f6;border-radius:8px;background:#f7faff}.equipment-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.equipment-heading h3{display:flex;align-items:center;gap:8px;margin:0;font-size:14px;color:#294b70}.equipment-source-link{font-size:11px;color:#2668b6;text-underline-offset:3px;max-width:45%;text-align:right;overflow-wrap:anywhere}.equipment-actions{display:flex;flex-wrap:wrap;gap:9px}.equipment-actions .button{min-height:44px;flex:1;padding:9px 11px;font-size:12px;white-space:normal}.equipment-entry .notice{margin:12px 0}.equipment-entry>label{margin-top:16px}.equipment-details{display:grid;grid-template-columns:minmax(80px,.8fr) minmax(0,1.2fr);gap:10px 12px;margin:16px 0 0;padding-top:14px;border-top:1px solid #dbe6f1;font-size:12px}.equipment-details dt{color:#73849a;overflow-wrap:anywhere}.equipment-details dd{min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;color:#294b70}.equipment-details>div{display:contents}.equipment-issue-date>label{display:flex;align-items:center;gap:8px}.equipment-issue-date input{width:100%;max-width:100%}.equipment-login-field{margin:18px 0}.equipment-login-field input{min-height:46px}.equipment-login-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}.equipment-login-actions .button{min-height:46px;white-space:normal}.equipment-mode-control+ .help{margin-bottom:16px}
 @media(max-width:580px){.equipment-entry{padding:13px}.equipment-heading{flex-direction:column;gap:8px}.equipment-source-link{max-width:100%;text-align:left;min-height:28px;display:inline-flex;align-items:center}.equipment-details{grid-template-columns:minmax(76px,.8fr) minmax(0,1.2fr);gap:10px}.equipment-actions .button{font-size:13px}.equipment-login-actions .button{flex:1;min-width:0}.equipment-issue-date>label{font-size:13px;gap:7px}#equipmentLoginDialog{max-height:calc(100dvh - 24px);overflow:auto}#equipmentLoginDialog .dialog-heading h2{font-size:18px}}
 
+/* Quantity outcomes stay legible on handheld inspection devices. */
+#productionDefectRate { font-size: 1.2rem; font-weight: 700; color: var(--ink, #20364b); }
+#productionQuantityHint.quantity-mismatch { color: #b42318; }
+input[readonly] { background-color: #f3f6f9; }
+#productionAccessMount { margin-bottom: 20px; }
+
 .parts-total{font-size:13px;color:#487399;background:#eaf2fa;border:1px solid #d9e6f3;padding:10px 15px;border-radius:7px;white-space:nowrap}.parts-toolbar{padding:22px 24px 12px;display:flex;align-items:center;justify-content:space-between;gap:18px}.parts-toolbar h2{margin:0 0 7px;font-size:17px}.parts-toolbar .help{margin:0}.parts-actions{display:flex;gap:10px;flex-wrap:wrap}.parts-format-help{font-size:12px;line-height:1.7;color:#72869c;padding:0 24px 20px;margin:0}.parts-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}.parts-form{display:flex;flex-direction:column;gap:18px}.parts-form label{display:block;margin-bottom:8px}.parts-form input{width:100%}.parts-form input[readonly]{background:#f0f4f8;color:#7890a5}.parts-form .help{margin:0}.parts-form .notice{margin:0}.parts-searchbar{padding:22px 22px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.parts-searchbar label{font-size:13px;flex-basis:100%}.parts-searchbar input{flex:1;min-width:140px}.parts-searchbar .subtle{font-size:11px}.parts-table-wrap{overflow-x:auto}.parts-table-wrap table{width:100%;min-width:520px}.parts-table-wrap td{font-size:12px;vertical-align:top}.parts-table-wrap .parts-pn{white-space:nowrap;font-weight:600;color:#345b80}.parts-table-wrap .parts-desc{white-space:normal;min-width:150px;overflow-wrap:anywhere;line-height:1.6}.parts-empty{text-align:center;padding:36px!important;color:#7c8fa1}.parts-more{display:block;margin:17px auto}.parts-preview{margin:0 24px 24px;padding:20px;border:1px solid #d6e4f1;border-radius:8px;background:#f8fbff}.parts-preview h3{margin:0 0 14px;font-size:14px;overflow-wrap:anywhere}.parts-preview-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.parts-preview-counts>div{display:flex;align-items:baseline;gap:7px;background:#fff;border:1px solid #dce6ee;border-radius:7px;padding:12px}.parts-preview-counts strong{font-size:22px;color:#286da8}.parts-preview-counts span{font-size:12px;color:#6f8295}.parts-preview .help{line-height:1.6}.parts-changes{padding:0;list-style:none;margin:18px 0}.parts-changes li{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:5px 14px;padding:10px 0;border-top:1px solid #e3ebf4;font-size:12px;overflow-wrap:anywhere}.parts-changes small{grid-column:2;color:#8392a3;font-size:11px}.parts-changes li>strong{color:#3c617e}.parts-preview .parts-actions{margin-top:20px}#partsMessage{margin:0 24px 20px}#partsReload{margin:-6px 0 18px}#partsView>.history-note{line-height:1.8}#partsStorageError{margin-bottom:15px}
 @media(max-width:1150px){.parts-grid{grid-template-columns:260px minmax(0,1fr);gap:16px}.parts-toolbar{align-items:flex-start;flex-direction:column}.parts-searchbar{padding:18px}.parts-table-wrap th,.parts-table-wrap td{padding-left:14px;padding-right:14px}}
 @media(max-width:900px){.parts-grid{grid-template-columns:1fr}.parts-form{display:grid;grid-template-columns:1fr 1fr}.parts-form>div:nth-child(2){grid-column:1/-1}.parts-form>.help,.parts-form>.notice{grid-column:1/-1}.parts-form .button{align-self:end}.parts-toolbar{flex-direction:row}.parts-table-wrap table{min-width:510px}}
@@ -150,6 +156,20 @@
 .team-access-notice{font-size:13px;line-height:1.6;margin:10px 0 0;color:#146751;overflow-wrap:anywhere}
 .team-access-notice.error{color:#ac2b34}
 @media(max-width:600px){.team-access{padding:12px}.team-access-bar{align-items:flex-start}.team-access-identity-group{flex-basis:100%}.team-access-actions{width:100%}.team-access-actions button{flex:1}.team-access input,.team-access select{font-size:16px}.team-access-request-form,.team-access-direct-fields{grid-template-columns:1fr}.team-access-request-form>button{justify-self:stretch}.team-access-request-row{grid-template-columns:1fr 110px}.team-access-request-person{grid-column:1/-1}.team-access-request-row>select{min-width:0}.team-access-direct-fields>button,.team-access-import>button{width:100%}}
+
+.team-mail-preference{margin-top:12px;border-top:1px solid #dce5ee;padding-top:1px}
+.team-mail-form{display:grid;grid-template-columns:minmax(180px,320px) auto;gap:12px;align-items:end;max-width:560px}
+.team-mail-form>button{justify-self:start}
+@media(max-width:600px){.team-mail-form{grid-template-columns:1fr}.team-mail-form>button{justify-self:stretch}}
+
+.team-access .team-access-manager-checkbox{width:22px;min-height:22px;height:22px;accent-color:#2466b2;align-self:flex-start;cursor:pointer}
+.team-access-direct-fields{grid-template-columns:minmax(200px,2fr) minmax(130px,1fr) minmax(150px,1fr)}
+.team-access-direct-fields>button{justify-self:start}
+.team-access-request-row{grid-template-columns:minmax(150px,2fr) minmax(130px,1fr) minmax(140px,1fr)}
+.team-access-members{display:grid;gap:8px}
+.team-access-member-row{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px;border:1px solid #d8e2ed;border-radius:10px;background:#fff}
+@media(max-width:760px){.team-access-direct-fields,.team-access-request-row{grid-template-columns:1fr 1fr}.team-access-direct-fields>.team-access-field:first-child,.team-access-request-person{grid-column:1/-1}}
+@media(max-width:600px){.team-access-direct-fields,.team-access-request-row,.team-access-request-form{grid-template-columns:1fr}.team-access-direct-fields>button{justify-self:stretch}.team-access-member-row{align-items:flex-start;flex-wrap:wrap}}
 
 .daily-filters{display:grid;grid-template-columns:minmax(210px,1.3fr) repeat(3,minmax(120px,1fr));gap:16px;padding:20px;margin-bottom:20px}
 .daily-filters>div{min-width:0}.daily-filters label{display:block;margin-bottom:7px}.daily-filters input,.daily-filters select{width:100%;min-width:0;height:44px;box-sizing:border-box}
@@ -218,8 +238,8 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
       </section>
       <section id="registrationView" aria-labelledby="registrationHeading" hidden>
         <div class="page-heading"><div><h1 id="registrationHeading" data-i18n="계정·팀 등록">계정·팀 등록</h1><p data-i18n="Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.">Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.</p></div></div>
-        <div id="teamAccessMount"></div>
-        <div id="teamPhotoAccessMount"></div>
+        <div id="registrationAccessHome"><div id="teamAccessMount"></div></div>
+        <div id="registrationPhotoHome"><div id="teamPhotoAccessMount"></div></div>
       </section>
       <section id="registerView">
         <div class="page-heading"><div><div class="eyebrow"><span data-i18n="PROCESS INSPECTION">PROCESS INSPECTION</span></div><h1><span data-i18n="공정 불량 등록">공정 불량 등록</span></h1><p><span data-i18n="품질에서 불량을 등록하면 등록 이력에서 생산팀이 검사 방법을 선택하고 결과를 입력합니다.">품질에서 불량을 등록하면 등록 이력에서 생산팀이 검사 방법을 선택하고 결과를 입력합니다.</span></p></div><button type="button" class="master-badge" data-view="parts"><span class="master-mark" aria-hidden="true">✓</span><span><span data-i18n="품번 관리">품번 관리</span><span id="masterCount"><span data-i18n="품번 데이터 준비 중">품번 데이터 준비 중</span></span></span></button></div>
@@ -278,10 +298,11 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
             <div class="panel-heading"><h2 id="defectHeading"><span class="step-number">02</span> <span data-i18n="불량 내용 입력">불량 내용 입력</span></h2><span class="required-note"><span data-i18n="* 필수">* 필수</span></span></div>
             <form id="defectForm" class="panel-body">
               <fieldset><legend><span data-i18n="불량 발생 공정">불량 발생 공정</span> <em>*</em></legend><div class="process-options"><label><input type="radio" name="process" value="FOL" required><span>FOL</span></label><label><input type="radio" name="process" value="EOL"><span>EOL</span></label><label><input type="radio" name="process" value="OQC"><span>OQC</span></label></div></fieldset>
-              <div class="form-row"><div><label for="quantity"><span data-i18n="불량 수량">불량 수량</span> <em>*</em></label><div class="unit-input"><input id="quantity" type="number" min="1" step="1" value="1" required max="999999999"><span>PCS</span></div></div><div><label for="inspector"><span data-i18n="검사자">검사자</span> <em>*</em></label><input id="inspector" type="text" required placeholder="이름 또는 사번" maxlength="80" autocomplete="off" data-i18n-placeholder="이름 또는 사번"></div></div>
+              <div class="form-row"><div><label for="quantity"><span data-i18n="불량 수량">불량 수량</span> <em>*</em></label><div class="unit-input"><input id="quantity" type="number" min="1" step="1" value="400" required max="999999999"><span>PCS</span></div></div><div><label for="inspector"><span data-i18n="검사자">검사자</span> <em>*</em></label><input id="inspector" type="text" required placeholder="이름 또는 사번" maxlength="80" autocomplete="off" data-i18n-placeholder="이름 또는 사번"></div></div>
               <label for="defect"><span data-i18n="불량 내용">불량 내용</span> <em>*</em></label><textarea id="defect" rows="6" maxlength="2000" required placeholder="불량 종류, 발생 위치, 상태를 입력하세요.&#10;예: 트레이 우측 모서리 스크래치" data-i18n-placeholder="불량 종류, 발생 위치, 상태를 입력하세요.
 예: 트레이 우측 모서리 스크래치"></textarea><div class="textarea-footer"><span><span data-i18n="관찰한 불량 내용을 구체적으로 기록하세요.">관찰한 불량 내용을 구체적으로 기록하세요.</span></span><span id="charCount">0 / 2,000</span></div>
               <div id="saveMessage" class="notice error" role="alert" hidden></div>
+              <p id="memberAliasHint" class="help" role="status" hidden></p>
               <div class="save-area"><p id="saveHint"><span data-i18n="바코드와 QR 인식 후 등록할 수 있습니다.">바코드와 QR 인식 후 등록할 수 있습니다.</span></p><button id="saveButton" class="button primary" type="submit" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></path></svg><span data-i18n="불량 등록">불량 등록</span></button></div>
             </form>
           </section>
@@ -289,6 +310,7 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
         <section class="panel recent-panel"><div class="panel-heading"><h2><span data-i18n="최근 등록 이력">최근 등록 이력</span> <span id="recentCount" class="inline-count">0</span></h2><button class="text-button" data-view="history" data-history-state="all" type="button"><span data-i18n="전체 이력 보기">전체 이력 보기</span></button></div><div id="recentTable"></div></section>
       </section>
       <section id="historyView" hidden>
+        <div id="productionAccessMount" hidden></div>
         <div class="page-heading"><div><div class="eyebrow"><span data-i18n="INSPECTION RECORDS">INSPECTION RECORDS</span></div><h1><span data-i18n="등록 이력">등록 이력</span></h1><p><span data-i18n="목록 오른쪽에서 검사 방법을 선택하고 결과를 입력한 뒤 재검사 진행 완료를 누르세요.">목록 오른쪽에서 검사 방법을 선택하고 결과를 입력한 뒤 재검사 진행 완료를 누르세요.</span></p></div><button class="button primary" data-view="register" type="button"><span data-i18n="불량 등록하기">불량 등록하기</span></button></div>
         <section class="panel history-panel">
           <div class="history-toolbar">
@@ -396,8 +418,15 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
           <div id="productionCustomMethodWrap" class="workflow-field" hidden><label for="productionCustomMethod"><span data-i18n="기타 검사 방법">기타 검사 방법</span> <em>*</em></label><input id="productionCustomMethod" type="text" maxlength="120" autocomplete="off" placeholder="검사 방법을 직접 입력하세요" data-i18n-placeholder="검사 방법을 직접 입력하세요"></div>
         </div>
         <div class="form-row resolution-form-row"><div><label for="productionOperator"><span data-i18n="생산 작업자">생산 작업자</span> <em>*</em></label><input id="productionOperator" maxlength="80" autocomplete="off" placeholder="이름 또는 사번" data-i18n-placeholder="이름 또는 사번" required></div><div><label for="productionDate"><span data-i18n="작업 완료일">작업 완료일</span> <em>*</em></label><input id="productionDate" type="date" required></div></div>
-        <label for="productionQuantity"><span data-i18n="처리 수량">처리 수량</span> <em>*</em></label><div class="unit-input"><input id="productionQuantity" type="number" min="1" max="999999999" step="1" required><span>PCS</span></div>
+        <p id="productionActorHint" class="help" hidden></p>
+        <label for="productionQuantity"><span data-i18n="처리 수량">처리 수량</span> <em>*</em></label><div class="unit-input"><input id="productionQuantity" type="number" min="1" max="999999999" step="1" readonly required><span>PCS</span></div>
         <p class="help" data-i18n="등록된 불량 수량 전체를 처리한 뒤 결과를 입력하세요.">등록된 불량 수량 전체를 처리한 뒤 결과를 입력하세요.</p>
+        <div class="form-row resolution-form-row production-counts">
+          <div><label for="productionGoodQuantity"><span data-i18n="양품 수량">양품 수량</span> <em>*</em></label><div class="unit-input"><input id="productionGoodQuantity" type="number" min="0" max="999999999" step="1" required inputmode="numeric"><span>PCS</span></div></div>
+          <div><label for="productionDefectiveQuantity"><span data-i18n="불량 수량">불량 수량</span> <em>*</em></label><div class="unit-input"><input id="productionDefectiveQuantity" type="number" min="0" max="999999999" step="1" required inputmode="numeric"><span>PCS</span></div></div>
+        </div>
+        <p class="help"><span data-i18n="불량률">불량률</span>: <output id="productionDefectRate" for="productionQuantity productionGoodQuantity productionDefectiveQuantity" aria-live="polite">—</output></p>
+        <p id="productionQuantityHint" class="help" role="status" data-i18n="양품 수량과 불량 수량의 합계가 처리 수량과 같아야 합니다.">양품 수량과 불량 수량의 합계가 처리 수량과 같아야 합니다.</p>
         <label for="productionNotes"><span data-i18n="검사 내용 / 결과">검사 내용 / 결과</span> <em>*</em></label><textarea id="productionNotes" rows="4" maxlength="2000" placeholder="선택한 검사 방법으로 진행한 내용과 결과를 기록하세요." data-i18n-placeholder="선택한 검사 방법으로 진행한 내용과 결과를 기록하세요." required></textarea>
         <div id="productionPhotosMount"></div>
       </fieldset>
@@ -2077,6 +2106,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 (function (global) {
   'use strict';
   const rows = [
+    ['생산 담당자 이름', 'Production operator name', '生產作業人員姓名', 'Tên người thực hiện sản xuất', 'Nama operator produksi'],
+    ['품질 담당자 이름', 'Quality inspector name', '品質檢驗人員姓名', 'Tên nhân viên chất lượng', 'Nama pemeriksa kualitas'],
+    ['최초 품질 담당자 이름', 'Original quality inspector name', '原始品質登錄人員姓名', 'Tên nhân viên chất lượng ghi nhận ban đầu', 'Nama pemeriksa kualitas yang pertama mencatat'],
+    ['품질 재검사 담당자 이름', 'Quality reinspection inspector name', '品質複驗人員姓名', 'Tên nhân viên kiểm tra lại chất lượng', 'Nama pemeriksa ulang kualitas'],
+    ['양품 수량', 'Good quantity', '良品數量', 'Số lượng đạt', 'Jumlah produk baik'],
+    ['생산 불량 수량', 'Production defective quantity', '生產不良數量', 'Số lượng lỗi sau sản xuất', 'Jumlah produk cacat setelah produksi'],
+    ['불량률', 'Defect rate', '不良率', 'Tỷ lệ lỗi', 'Tingkat cacat'],
+    ['불량률 (%)', 'Defect rate (%)', '不良率 (%)', 'Tỷ lệ lỗi (%)', 'Tingkat cacat (%)'],
+    ['양품 수량과 불량 수량은 0 이상의 정수로 입력해 주세요.', 'Enter the good and defective quantities as whole numbers of zero or more.', '請將良品及不良數量輸入為大於或等於 0 的整數。', 'Nhập số lượng đạt và số lượng lỗi là số nguyên không âm.', 'Masukkan jumlah produk baik dan cacat sebagai bilangan bulat nol atau lebih.'],
+    ['양품 수량과 불량 수량의 합계는 처리 수량 {quantity}개와 같아야 합니다.', 'Good and defective quantities must add up to the processed quantity of {quantity}.', '良品與不良數量的合計必須等於處理數量 {quantity}。', 'Tổng số lượng đạt và số lượng lỗi phải bằng số lượng đã xử lý là {quantity}.', 'Jumlah produk baik dan cacat harus sama dengan jumlah yang diproses, yaitu {quantity}.'],
     ["등록", "Registration", "註冊", "Đăng ký", "Pendaftaran"],
     ["계정·팀 등록", "Account and team registration", "帳戶與團隊註冊", "Đăng ký tài khoản và nhóm", "Pendaftaran akun dan tim"],
     ["Google 로그인, 담당자 권한 및 공통 사진 폴더를 관리합니다.", "Manage Google sign-in, member permissions, and the shared photo folder.", "管理 Google 登入、成員權限及共用照片資料夾。", "Quản lý đăng nhập Google, quyền thành viên và thư mục ảnh dùng chung.", "Kelola login Google, izin anggota, dan folder foto bersama."],
@@ -2436,6 +2475,59 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   ];
   global.I18n.addMessages(Object.fromEntries(rows.map(([source, en, zhTW, vi, id]) => [source, { en, 'zh-TW': zhTW, vi, id }])));
 })(typeof window !== 'undefined' ? window : globalThis);
+
+(function (global) {
+  'use strict';
+  const rows = [
+    ['이메일 알림 언어', 'Email notification language', '電子郵件通知語言', 'Ngôn ngữ email thông báo', 'Bahasa notifikasi email'],
+    ['불량 등록·재작업·품질 판정 알림은 수신자별 이메일 언어로 발송됩니다. 화면 언어와 별도로 저장됩니다.', 'Defect registration, rework, and quality decision notifications use each recipient’s email language. This setting is saved separately from the screen language.', '不良登錄、重工作業及品質判定通知會依各收件者設定的電子郵件語言寄送。此設定與畫面語言分開儲存。', 'Thông báo đăng ký lỗi, làm lại và phán định chất lượng sử dụng ngôn ngữ email của từng người nhận. Cài đặt này được lưu riêng với ngôn ngữ giao diện.', 'Notifikasi pendaftaran cacat, pengerjaan ulang, dan keputusan kualitas menggunakan bahasa email setiap penerima. Pengaturan ini disimpan terpisah dari bahasa tampilan.'],
+    ['이메일 알림 언어를 선택해 주세요.', 'Select your email notification language.', '請選擇電子郵件通知語言。', 'Vui lòng chọn ngôn ngữ email thông báo.', 'Pilih bahasa notifikasi email Anda.'],
+    ['알림 언어 저장', 'Save notification language', '儲存通知語言', 'Lưu ngôn ngữ thông báo', 'Simpan bahasa notifikasi'],
+    ['받을 이메일의 언어', 'Language for received emails', '收到郵件的語言', 'Ngôn ngữ email nhận được', 'Bahasa email yang diterima'],
+    ['이메일 알림 언어를 불러오는 중입니다.', 'Loading email notification language.', '正在載入電子郵件通知語言。', 'Đang tải ngôn ngữ email thông báo.', 'Memuat bahasa notifikasi email.'],
+    ['직접 선택한 이메일 언어: {language}', 'Manually selected email language: {language}', '手動選擇的電子郵件語言：{language}', 'Ngôn ngữ email đã chọn thủ công: {language}', 'Bahasa email yang dipilih secara manual: {language}'],
+    ['Google 로그인에서 확인하여 저장한 이메일 언어: {language}', 'Email language saved from Google sign-in: {language}', '從 Google 登入取得並儲存的電子郵件語言：{language}', 'Ngôn ngữ email đã lưu từ thông tin đăng nhập Google: {language}', 'Bahasa email yang disimpan dari login Google: {language}'],
+    ['Google 로그인에서 확인한 언어를 저장하고 있습니다.', 'Saving the language provided by Google sign-in.', '正在儲存 Google 登入提供的語言。', 'Đang lưu ngôn ngữ do thông tin đăng nhập Google cung cấp.', 'Menyimpan bahasa yang diberikan saat login Google.'],
+    ['Google 로그인에서 지원 언어를 확인하지 못했습니다. 위에서 한 번 선택해 주세요. 언어가 저장되기 전에는 이메일 알림이 보류됩니다.', 'Google sign-in did not provide a supported language. Select one above once. Email notifications are held until a language is saved.', 'Google 登入未提供支援的語言。請在上方選擇一次。儲存語言前，電子郵件通知將暫緩寄送。', 'Thông tin đăng nhập Google không cung cấp ngôn ngữ được hỗ trợ. Vui lòng chọn một lần ở trên. Email thông báo sẽ được tạm giữ cho đến khi lưu ngôn ngữ.', 'Login Google tidak memberikan bahasa yang didukung. Pilih satu bahasa di atas sekali saja. Notifikasi email ditunda sampai bahasa disimpan.'],
+    ['이메일 알림 언어 설정을 확인해 주세요.', 'Check your email notification language setting.', '請確認電子郵件通知語言設定。', 'Vui lòng kiểm tra cài đặt ngôn ngữ email thông báo.', 'Periksa pengaturan bahasa notifikasi email Anda.'],
+    ['이메일 알림 언어를 저장했습니다.', 'Email notification language saved.', '已儲存電子郵件通知語言。', 'Đã lưu ngôn ngữ email thông báo.', 'Bahasa notifikasi email telah disimpan.']
+  ];
+  global.I18n.addMessages(Object.fromEntries(rows.map(([source, en, zhTW, vi, id]) => [source, { en, 'zh-TW': zhTW, vi, id }])));
+})(typeof window !== 'undefined' ? window : globalThis);
+
+(function (global) {
+  'use strict';
+  const rows = [
+    ['별명(사번)', 'Alias (employee ID)', '別名（員工編號）', 'Tên gọi (mã nhân viên)', 'Nama panggilan (ID karyawan)'],
+    ['별명 또는 사번', 'Alias or employee ID', '別名或員工編號', 'Tên gọi hoặc mã nhân viên', 'Nama panggilan atau ID karyawan'],
+    ['별명(사번)을 입력해 주세요.', 'Enter an alias or employee ID.', '請輸入別名或員工編號。', 'Vui lòng nhập tên gọi hoặc mã nhân viên.', 'Masukkan nama panggilan atau ID karyawan.'],
+    ['관리자가 별명(사번)을 등록한 후 작업할 수 있습니다.', 'An administrator must register your alias or employee ID before you can submit work.', '管理員登錄您的別名或員工編號後，您才能提交作業。', 'Quản trị viên cần đăng ký tên gọi hoặc mã nhân viên trước khi bạn có thể gửi công việc.', 'Administrator harus mendaftarkan nama panggilan atau ID karyawan Anda sebelum Anda dapat mengirim pekerjaan.'],
+    ['작업자 이름은 등록된 별명(사번)과 같아야 합니다.', 'The operator name must match your registered alias or employee ID.', '作業人員姓名必須與您登錄的別名或員工編號相同。', 'Tên người thực hiện phải trùng với tên gọi hoặc mã nhân viên đã đăng ký.', 'Nama operator harus sesuai dengan nama panggilan atau ID karyawan yang terdaftar.'],
+    ['생산 관리자 알림은 생산팀 또는 관리자에게만 지정할 수 있습니다.', 'Production manager notifications can only be assigned to production or administrator accounts.', '生產主管通知只能指定給生產團隊或管理員帳號。', 'Chỉ có thể chỉ định thông báo quản lý sản xuất cho tài khoản sản xuất hoặc quản trị viên.', 'Notifikasi manajer produksi hanya dapat ditetapkan untuk akun produksi atau administrator.'],
+    ['생산 관리자 알림 수신', 'Receive production manager notifications', '接收生產主管通知', 'Nhận thông báo quản lý sản xuất', 'Terima notifikasi manajer produksi'],
+    ['담당자 저장', 'Save team member', '儲存負責人', 'Lưu nhân sự', 'Simpan anggota tim'],
+    ['등록된 별명(사번)이 불량 등록자와 작업자 이름으로 자동 기록됩니다. 생산 관리자 알림을 선택하면 신규 불량의 재작업 요청을 받으며, 나중에 변경할 수 있습니다.', 'The registered alias or employee ID is recorded automatically as the defect reporter and operator name. Enable production manager notifications to receive rework requests for newly reported defects. You can change this later.', '登錄的別名或員工編號會自動記錄為不良登錄人及作業人員姓名。勾選生產主管通知後，將收到新增不良的重工作業請求。之後可再變更。', 'Tên gọi hoặc mã nhân viên đã đăng ký được tự động ghi làm tên người báo lỗi và người thực hiện. Bật thông báo quản lý sản xuất để nhận yêu cầu làm lại cho lỗi mới. Bạn có thể thay đổi sau.', 'Nama panggilan atau ID karyawan yang terdaftar dicatat otomatis sebagai pelapor cacat dan nama operator. Aktifkan notifikasi manajer produksi untuk menerima permintaan pengerjaan ulang cacat baru. Pengaturan ini dapat diubah nanti.'],
+    ['등록된 담당자', 'Registered team members', '已登錄的負責人', 'Nhân sự đã đăng ký', 'Anggota tim terdaftar'],
+    ['등록된 담당자가 없습니다.', 'No team members are registered.', '尚未登錄負責人。', 'Chưa có nhân sự được đăng ký.', 'Belum ada anggota tim yang terdaftar.'],
+    ['별명(사번) 등록 필요', 'Alias or employee ID required', '需要登錄別名或員工編號', 'Cần đăng ký tên gọi hoặc mã nhân viên', 'Nama panggilan atau ID karyawan diperlukan'],
+    ['담당자 수정', 'Edit team member', '編輯負責人', 'Sửa nhân sự', 'Edit anggota tim'],
+    ['등록된 담당자를 불러오지 못했습니다.', 'Could not load registered team members.', '無法載入已登錄的負責人。', 'Không tải được nhân sự đã đăng ký.', 'Tidak dapat memuat anggota tim terdaftar.'],
+    ['양품 수량과 불량 수량의 합계는 처리 수량과 같아야 합니다.', 'Good and defective quantities must add up to the processed quantity.', '良品數量與不良品數量的總和必須等於處理數量。', 'Tổng số lượng đạt và lỗi phải bằng số lượng đã xử lý.', 'Jumlah produk baik dan cacat harus sama dengan jumlah yang diproses.']
+  ];
+  global.I18n.addMessages(Object.fromEntries(rows.map(([source, en, zhTW, vi, id]) => [source, { en, 'zh-TW': zhTW, vi, id }])));
+})(typeof window !== 'undefined' ? window : globalThis);
+
+(function(global){
+  'use strict';
+  const rows = [
+    ['양품 수량','Good quantity','良品數量','Số lượng đạt','Jumlah baik'],
+    ['불량률','Defect rate','不良率','Tỷ lệ lỗi','Tingkat cacat'],
+    ['양품 수량과 불량 수량의 합계가 처리 수량과 같아야 합니다.','Good and defective quantities must add up to the processed quantity.','良品數量與不良數量的合計必須等於處理數量。','Tổng số lượng đạt và lỗi phải bằng số lượng đã xử lý.','Jumlah baik dan cacat harus sama dengan jumlah yang diproses.'],
+    ['로그인 담당자: {name} · 별명(사번): {alias}','Signed in: {name} · Alias (employee ID): {alias}','登入負責人：{name} · 暱稱（工號）：{alias}','Người đăng nhập: {name} · Biệt danh (mã nhân viên): {alias}','Pengguna: {name} · Nama panggilan (ID karyawan): {alias}'],
+    ['등록 탭에서 관리자가 별명(사번)을 등록한 후 검사 내용을 저장할 수 있습니다.','An administrator must register your alias (employee ID) in Registration before you can save inspection results.','管理員須先在「登錄」分頁設定您的暱稱（工號），才能儲存檢驗結果。','Quản trị viên cần đăng ký biệt danh (mã nhân viên) của bạn trong mục Đăng ký trước khi bạn lưu kết quả kiểm tra.','Administrator perlu mendaftarkan nama panggilan (ID karyawan) Anda di tab Pendaftaran sebelum hasil inspeksi dapat disimpan.']
+  ];
+  global.I18n.addMessages(Object.fromEntries(rows.map(([ko,en,zh,vi,id])=>[ko,{en,'zh-TW':zh,vi,id}])));
+})(globalThis);
 </script>
   <script>(function (root, factory) {
   'use strict';
@@ -2739,6 +2831,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     ['process', '불량 공정'],
     ['defect', '불량 내용'],
     ['quantity', '불량 수량'],
+    ['inspectorName', '품질 담당자 이름'],
     ['inspector', '검사자'],
     ['issueDate', '카드 발행일'],
     ['materialName', '원료명'],
@@ -3104,6 +3197,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
   const clone = value => JSON.parse(JSON.stringify(value));
   const text = (value, max, required = true) => typeof value === 'string' && value === value.trim() && value.length <= max && (!required || value.length > 0);
+  const parseCount = value => typeof value === 'string' && /^\d+$/.test(value.trim()) ? Number(value.trim()) : value;
+
+  // Older production entries did not record the split. Keep them readable, but
+  // never treat an absent result as zero or persist a calculated percentage.
+  function productionQuantities(production) {
+    if (!object(production)) return null;
+    const { processedQuantity, goodQuantity, defectiveQuantity } = production;
+    if (!Number.isSafeInteger(processedQuantity) || processedQuantity < 1 ||
+      !Number.isSafeInteger(goodQuantity) || goodQuantity < 0 ||
+      !Number.isSafeInteger(defectiveQuantity) || defectiveQuantity < 0 ||
+      goodQuantity > processedQuantity || defectiveQuantity !== processedQuantity - goodQuantity) return null;
+    return { processedQuantity, goodQuantity, defectiveQuantity, defectRate: defectiveQuantity / processedQuantity * 100 };
+  }
 
   function validDate(value) {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -3183,10 +3289,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (cycle.disposition === 'Scrap' && !cycle.production?.method && (own(cycle, 'production') || own(cycle, 'quality'))) return false;
       if (own(cycle, 'production')) {
         const result = cycle.production;
-        if (!keys(result, ['operator', 'completedDate', 'completedAt', 'notes', 'processedQuantity', 'afterPhotos', 'revision', ...(value.version === 2 ? ['method', 'customMethod'] : [])],
+        if (!keys(result, ['operator', 'operatorName', 'completedDate', 'completedAt', 'notes', 'processedQuantity', 'goodQuantity', 'defectiveQuantity', 'afterPhotos', 'revision', ...(value.version === 2 ? ['method', 'customMethod'] : [])],
           ['operator', 'completedDate', 'completedAt', 'notes', 'processedQuantity', 'revision']) ||
           !text(result.operator, 80) || !text(result.notes, 2000) || !validTimestamp(result.completedAt) || !validDate(result.completedDate) ||
+          (own(result, 'operatorName') && !text(result.operatorName, 120)) ||
           result.completedAt < previousTime || result.completedDate < previousDate || result.processedQuantity !== cycle.quantity ||
+          ((own(result, 'goodQuantity') || own(result, 'defectiveQuantity')) && !productionQuantities(result)) ||
           !validPhotos(result.afterPhotos) || !UUID.test(result.revision) || revisions.has(result.revision) ||
           (own(result, 'method') && (!METHODS.includes(result.method) || (result.method === 'Other' ? !text(result.customMethod, 120) : own(result, 'customMethod')))) ||
           (!own(result, 'method') && own(result, 'customMethod'))) return false;
@@ -3194,9 +3302,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       }
       if (own(cycle, 'quality')) {
         const result = cycle.quality;
-        if (!cycle.production || !keys(result, ['result', 'inspector', 'reinspectionDate', 'completedAt', 'notes', 'afterPhotos', 'revision'],
+        if (!cycle.production || !keys(result, ['result', 'inspector', 'inspectorName', 'reinspectionDate', 'completedAt', 'notes', 'afterPhotos', 'revision'],
           ['result', 'inspector', 'reinspectionDate', 'completedAt', 'notes', 'revision']) ||
           !['Pass', 'NG'].includes(result.result) || !text(result.inspector, 80) || !text(result.notes, 2000) ||
+          (own(result, 'inspectorName') && !text(result.inspectorName, 120)) ||
           !validTimestamp(result.completedAt) || !validDate(result.reinspectionDate) || result.completedAt < previousTime || result.reinspectionDate < previousDate ||
           !validPhotos(result.afterPhotos) || !UUID.test(result.revision) || revisions.has(result.revision)) return false;
         revisions.add(result.revision); previousTime = result.completedAt; previousDate = result.reinspectionDate;
@@ -3234,7 +3343,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       completedAt: state === 'completed' ? quality?.completedAt || cycle?.assignedAt || resolution?.completedAt || '' : '',
       completedDate: state === 'completed' ? quality?.reinspectionDate || cycle?.assignedDate || resolution?.reinspectionDate || '' : '',
       inspector: quality?.inspector || cycle?.assignedBy || resolution?.inspector || '',
+      ...(quality?.inspectorName ? { inspectorName: quality.inspectorName } : {}),
       notes: quality?.notes || cycle?.notes || resolution?.notes || '',
+      ...(productionQuantities(cycle?.production) || {}),
       afterPhotos: clone(quality?.afterPhotos?.length ? quality.afterPhotos : cycle?.production?.afterPhotos || resolution?.afterPhotos || [])
     };
   }
@@ -3293,11 +3404,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         assignedAt: clock.at, assignedDate: completedDate, assignedBy: operator, notes, revision: newRevision() });
     }
     const current = cycles.at(-1);
-    const quantity = typeof input.processedQuantity === 'string' && /^\d+$/.test(input.processedQuantity.trim()) ? Number(input.processedQuantity.trim()) : input.processedQuantity;
+    const quantity = parseCount(input.processedQuantity);
     if (!Number.isSafeInteger(quantity) || quantity !== current.quantity) throw new Error(t('작업 완료 수량은 등록된 불량 수량 {quantity}개와 같아야 합니다.', { quantity: current.quantity }));
+    const goodQuantity = parseCount(input.goodQuantity), defectiveQuantity = parseCount(input.defectiveQuantity);
+    if (!Number.isSafeInteger(goodQuantity) || goodQuantity < 0 || !Number.isSafeInteger(defectiveQuantity) || defectiveQuantity < 0) {
+      throw new Error(t('양품 수량과 불량 수량은 0 이상의 정수로 입력해 주세요.'));
+    }
+    if (!productionQuantities({ processedQuantity: quantity, goodQuantity, defectiveQuantity })) {
+      throw new Error(t('양품 수량과 불량 수량의 합계는 처리 수량 {quantity}개와 같아야 합니다.', { quantity }));
+    }
     if (!validPhotos(input.afterPhotos)) throw new Error(t('처리 후 증명 사진 정보를 확인해 주세요.'));
     current.production = { operator, completedDate: requireDate(input.completedDate, current.assignedDate, clock.date),
-      completedAt: clock.at, notes, processedQuantity: quantity, revision: newRevision(),
+      completedAt: clock.at, notes, processedQuantity: quantity, goodQuantity, defectiveQuantity, revision: newRevision(),
+      ...(input.operatorName === undefined ? {} : { operatorName: requireText(input.operatorName, '생산 담당자 이름', 120) }),
       ...(modern ? { method: input.method, ...(customMethod === undefined ? {} : { customMethod }) } : {}),
       ...(input.afterPhotos === undefined ? {} : { afterPhotos: clone(input.afterPhotos) }) };
     return withCycles(record, cycles, record.workflow?.createdAt || clock.at, modern ? 2 : 1);
@@ -3308,6 +3427,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!validPhotos(input.afterPhotos)) throw new Error(t('처리 후 증명 사진 정보를 확인해 주세요.'));
     const clock = nowInfo(record, now), cycles = clone(record.workflow.cycles), current = cycles.at(-1);
     current.quality = { result: input.result, inspector: requireText(input.inspector, '품질 담당자', 80),
+      ...(input.inspectorName === undefined ? {} : { inspectorName: requireText(input.inspectorName, '품질 담당자 이름', 120) }),
       reinspectionDate: requireDate(input.reinspectionDate, current.production.completedDate, clock.date), completedAt: clock.at,
       notes: requireText(input.notes, '재확인 결과', 2000), revision: newRevision(),
       ...(input.afterPhotos === undefined ? {} : { afterPhotos: clone(input.afterPhotos) }) };
@@ -3385,18 +3505,22 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
   const STATUS_LABELS = Object.freeze({ registered: '생산팀 처리 대기', production_pending: '생산 작업 대기', quality_review: '품질 재확인 대기', completed: '처리 완료' });
   const WORKFLOW_COLUMNS = Object.freeze([
+    ['originalInspectorName', '최초 품질 담당자 이름', 24],
     ['disposition', '불량 구분', 14], ['method', '검사 방법', 18], ['customMethod', '기타 검사 방법', 30], ['cycle', '처리 회차', 12], ['workflowUpdatedAt', '처리 단계 수정 시각(UTC)', 28],
     ['productionQuantity', '생산 작업 완료 수량', 20], ['productionDate', '생산 작업 완료일', 18],
-    ['productionOperator', '생산 담당자', 18], ['productionNotes', '생산 작업 결과', 40],
+    ['goodQuantity', '양품 수량', 16], ['defectiveQuantity', '생산 불량 수량', 18], ['defectRate', '불량률 (%)', 16],
+    ['productionOperator', '생산 담당자', 18], ['productionOperatorName', '생산 담당자 이름', 24], ['qualityInspectorName', '품질 재검사 담당자 이름', 24], ['productionNotes', '생산 작업 결과', 40],
     ['beforeStorageReferences', '불량 전 사진 Google 저장 참조', 64], ['afterStorageReferences', '처리 후 사진 Google 저장 참조', 64]
   ].map(Object.freeze));
   const CYCLE_COLUMNS = Object.freeze([
     ['id', '등록 ID', 38], ['sapPN', 'SAP PN', 22], ['lotCardNo', '로트 카드 번호', 22],
+    ['originalInspectorName', '최초 품질 담당자 이름', 24],
     ['cycle', '처리 회차', 12], ['disposition', '불량 구분', 14], ['method', '검사 방법', 18], ['customMethod', '기타 검사 방법', 30], ['quantity', '불량 수량', 14],
     ['assignedDate', '분류일', 16], ['assignedBy', '품질 분류 담당자', 20], ['assignmentNotes', '분류 사유', 40],
     ['productionQuantity', '생산 작업 완료 수량', 20], ['productionDate', '생산 작업 완료일', 18],
-    ['productionOperator', '생산 담당자', 18], ['productionNotes', '생산 작업 결과', 40],
-    ['qualityResult', '품질 재확인 결과', 20], ['qualityDate', '품질 재확인일', 18], ['qualityInspector', '품질 재확인 담당자', 20],
+    ['goodQuantity', '양품 수량', 16], ['defectiveQuantity', '생산 불량 수량', 18], ['defectRate', '불량률 (%)', 16],
+    ['productionOperator', '생산 담당자', 18], ['productionOperatorName', '생산 담당자 이름', 24], ['productionNotes', '생산 작업 결과', 40],
+    ['qualityResult', '품질 재확인 결과', 20], ['qualityDate', '품질 재확인일', 18], ['qualityInspector', '품질 재확인 담당자', 20], ['qualityInspectorName', '품질 재검사 담당자 이름', 24],
     ['qualityNotes', '재확인 결과', 40], ['productionPhotoCount', '생산 증명 사진 수', 18], ['qualityPhotoCount', '품질 증명 사진 수', 18],
     ['productionPhotoLinks', '생산 증명 사진 링크', 64], ['qualityPhotoLinks', '품질 증명 사진 링크', 64],
     ['productionStorageReferences', '생산 증명 사진 Google 저장 참조', 64], ['qualityStorageReferences', '품질 증명 사진 Google 저장 참조', 64]
@@ -3412,6 +3536,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     };
     const links = photos => (photos || []).map(photo => photo.driveWebViewLink).filter(Boolean).join('\n');
     const storageReferences = photos => (photos || []).filter(photo => photo.storageBucket && photo.storagePath).map(photo => `${photo.storageBucket}/${photo.storagePath}`).join('\n');
+    const countFields = production => {
+      const values = productionQuantities(production);
+      return values ? { goodQuantity: values.goodQuantity, defectiveQuantity: values.defectiveQuantity, defectRate: Math.round(values.defectRate * 100) / 100 } : {};
+    };
     const auditRows = [CYCLE_COLUMNS.map(([, label]) => t(label))];
     WORKFLOW_COLUMNS.forEach(([, label], column) => put(sheet, 0, legacy.EXPORT_COLUMNS.length + column, t(label)));
     records.forEach((record, index) => {
@@ -3423,13 +3551,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         Object.entries(fields).forEach(([key, value]) => overwrite(index + 1, key, value));
       } else if (details.status === 'registered') overwrite(index + 1, 'status', t('생산팀 처리 대기'));
       const extra = { disposition: details.disposition, method: details.method, customMethod: details.customMethod, cycle: details.cycle || '', workflowUpdatedAt: record.workflow?.updatedAt,
-        productionQuantity: action?.processedQuantity, productionDate: action?.completedDate, productionOperator: action?.operator, productionNotes: action?.notes,
+        originalInspectorName: record.inspectorName, productionOperatorName: action?.operatorName, qualityInspectorName: cycle?.quality?.inspectorName,
+        productionQuantity: action?.processedQuantity, ...countFields(action), productionDate: action?.completedDate, productionOperator: action?.operator, productionNotes: action?.notes,
         beforeStorageReferences: storageReferences(record.beforePhotos), afterStorageReferences: storageReferences(details.afterPhotos) };
       WORKFLOW_COLUMNS.forEach(([key], column) => put(sheet, index + 1, legacy.EXPORT_COLUMNS.length + column, extra[key]));
       (record.workflow?.cycles || []).forEach(entry => {
         const values = { id: record.id, sapPN: record.sapPN, lotCardNo: record.lotCardNo, cycle: entry.number, disposition: entry.disposition, method: entry.production?.method || entry.disposition, customMethod: entry.production?.customMethod || '',
+          originalInspectorName: record.inspectorName, productionOperatorName: entry.production?.operatorName, qualityInspectorName: entry.quality?.inspectorName,
           quantity: entry.quantity, assignedDate: entry.assignedDate, assignedBy: entry.assignedBy, assignmentNotes: entry.notes,
-          productionQuantity: entry.production?.processedQuantity, productionDate: entry.production?.completedDate,
+          productionQuantity: entry.production?.processedQuantity, ...countFields(entry.production), productionDate: entry.production?.completedDate,
           productionOperator: entry.production?.operator, productionNotes: entry.production?.notes,
           qualityResult: entry.quality?.result || (entry.disposition === 'Scrap' && !entry.production?.method ? 'Scrap' : ''), qualityDate: entry.quality?.reinspectionDate,
           qualityInspector: entry.quality?.inspector, qualityNotes: entry.quality?.notes,
@@ -3451,7 +3581,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return workbook;
   }
   return Object.freeze({ DISPOSITIONS, METHODS, STATUSES, STATUS_LABELS, CYCLE_LIMIT, WORKFLOW_COLUMNS, CYCLE_COLUMNS, validateWorkflow, validPhotos,
-    status, isCompleted, currentCycle, expected, finalResult, summary, start, completeProduction, review, reassign, mergeBackupRecords, exportWorkbook });
+    status, isCompleted, currentCycle, expected, finalResult, summary, productionQuantities, start, completeProduction, review, reassign, mergeBackupRecords, exportWorkbook });
 });
 </script>
   <script>(function (root, factory) {
@@ -4809,6 +4939,16 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   'use strict';
   const SDK_VERSION='12.19.0',COLLECTION='inspectionRecords',MAX_RECORD_BYTES=360000;
   const ROLES=Object.freeze(['admin','quality','production']);
+  const actorName=user=>String(user.displayName||'').trim().slice(0,120).trim()||String(user.email||'').trim().slice(0,120).trim();
+  const validAlias=value=>typeof value==='string'&&value.length<=80&&value===value.trim()&&value.length>0&&!/[\r\n\t]/.test(value);
+  const MAIL_LANGUAGES=Object.freeze(['ko','en','zh-TW','vi','id']);
+  function normalizeMailLanguage(locale){
+    if(typeof locale!=='string'||!locale.trim())return '';
+    const tag=locale.trim().replace(/_/g,'-').toLowerCase();
+    if(!/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/.test(tag))return '';
+    const primary=tag.split('-')[0];
+    return primary==='zh'?'zh-TW':primary==='in'?'id':['ko','en','vi','id'].includes(primary)?primary:'';
+  }
   const t=(text)=>root.I18n?.t(text)||text;
   const fail=(code,message,extra={})=>Object.assign(new Error(t(message)),{code:`shared-records/${code}`,...extra});
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -4822,9 +4962,9 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   function create({config,validateRecord,loadSDK=loadDefault}={}){
     const allowed=['apiKey','authDomain','projectId','appId','storageBucket','messagingSenderId','measurementId','databaseURL'];
     if(!object(config)||Object.keys(config).some(key=>!allowed.includes(key))||['apiKey','authDomain','projectId','appId'].some(key=>typeof config[key]!=='string'||!config[key])||typeof validateRecord!=='function')throw fail('configuration','공유 검사 기록 연결 설정을 확인해 주세요.');
-    const settings={...config};let environment,initialization,authGeneration=0,memberUnsubscribe,signInPromise;
-    let status=Object.freeze({ready:false,signedIn:false,role:'',canQuality:false,canProduction:false,displayName:'',email:'',online:false});
-    const statusListeners=new Set(),recordListeners=new Set(),requestListeners=new Set(),photoSettingsListeners=new Set();
+    const settings={...config};let environment,initialization,authGeneration=0,memberUnsubscribe,signInPromise,pendingGooglePreference=null,googlePreferenceSync=null;
+    let status=Object.freeze({ready:false,signedIn:false,role:'',memberAlias:'',productionManager:false,canQuality:false,canProduction:false,displayName:'',email:'',online:false,googleMailLanguage:'',googleLocaleAvailable:false,mailPreferenceError:null});
+    const statusListeners=new Set(),recordListeners=new Set(),requestListeners=new Set(),photoSettingsListeners=new Set(),mailPreferenceListeners=new Set(),memberListeners=new Set();
     function report(patch){status=Object.freeze({...status,...patch});for(const listener of statusListeners){try{listener(status);}catch(_){}}}
     function validate(value){let accepted=false;try{accepted=validateRecord(value)===true;}catch(_){}if(!accepted||!object(value)||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||new TextEncoder().encode(JSON.stringify(value)).length>MAX_RECORD_BYTES)throw fail('invalid-data','공유할 불량 기록 형식 또는 크기를 확인해 주세요.');return clone(value);}
     function checkServer(snapshot){if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)throw fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.');}
@@ -4832,14 +4972,17 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     async function verifiedUser(env){if(typeof env.auth.authStateReady==='function')await env.auth.authStateReady();const user=env.auth.currentUser;if(!user)throw fail('auth-required','Google 계정으로 로그인해 주세요.');const token=await env.sdk.getIdTokenResult(user);if(token.claims?.email_verified!==true||token.claims?.firebase?.sign_in_provider!=='google.com'||!validEmail(email(user.email)))throw fail('auth-required','이메일이 확인된 Google 계정으로 로그인해 주세요.');return user;}
     function sameUser(env,user){if(env.auth.currentUser?.uid!==user.uid||email(env.auth.currentUser?.email)!==email(user.email))throw fail('auth-required','Google 계정으로 로그인해 주세요.');}
     function memberRef(env,address){return env.sdk.doc(env.db,'inspectionAccess',address);}
-    function roleFrom(snapshot,address){if(!snapshot.exists())return '';const value=snapshot.data();if(value.email!==address||!ROLES.includes(value.role))throw fail('permission-denied','검사 기록 사용 권한을 확인해 주세요.');return value.role;}
-    async function authorize(env,permission){const user=await verifiedUser(env);const snap=await env.sdk.getDocFromServer(memberRef(env,email(user.email)));sameUser(env,user);checkServer(snap);const role=roleFrom(snap,email(user.email));if(!role||(permission==='quality'&&!['quality','admin'].includes(role))||(permission==='production'&&!['production','admin'].includes(role))||(permission==='admin'&&role!=='admin'))throw fail('permission-denied','관리자가 승인한 담당 업무 권한이 필요합니다.');return {user,role};}
-    function stopDataSubscriptions(){for(const holder of [...recordListeners,...requestListeners,...photoSettingsListeners]){holder.unsubscribe?.();holder.unsubscribe=null;holder.generation++;}}
-    function restartDataSubscriptions(){for(const holder of recordListeners)startRecordListener(holder);for(const holder of requestListeners)startRequestListener(holder);for(const holder of photoSettingsListeners)startPhotoSettingsListener(holder);}
-    async function authChanged(user){const generation=++authGeneration;memberUnsubscribe?.();memberUnsubscribe=null;stopDataSubscriptions();report({ready:false,signedIn:!!user,role:'',canQuality:false,canProduction:false,displayName:user?.displayName||'',email:email(user?.email),online:false,error:null});
-      if(!user){report({ready:true});for(const holder of recordListeners)holder.next([]);for(const holder of photoSettingsListeners)holder.next(null);return;}
+    function memberFrom(snapshot,address){if(!snapshot.exists())return null;const value=snapshot.data();if(value.email!==address||!ROLES.includes(value.role)||('alias' in value&&!validAlias(value.alias))||('productionManager' in value&&(typeof value.productionManager!=='boolean'||value.productionManager&&!['admin','production'].includes(value.role))))throw fail('permission-denied','검사 기록 사용 권한을 확인해 주세요.');return Object.freeze({email:address,role:value.role,alias:value.alias||'',productionManager:value.productionManager===true});}
+    function roleFrom(snapshot,address){return memberFrom(snapshot,address)?.role||'';}
+    function assertActorAlias(member,value){if(!validAlias(member?.alias))throw fail('alias-required','관리자가 별명(사번)을 등록한 후 작업할 수 있습니다.');if(value!==member.alias)throw fail('actor-mismatch','작업자 이름은 등록된 별명(사번)과 같아야 합니다.');}
+    function assertProductionQuantities(record){const p=record.workflow?.cycles?.at(-1)?.production;if(!p||!Number.isSafeInteger(p.goodQuantity)||p.goodQuantity<0||!Number.isSafeInteger(p.defectiveQuantity)||p.defectiveQuantity<0||p.goodQuantity+p.defectiveQuantity!==p.processedQuantity)throw fail('invalid-data','양품 수량과 불량 수량의 합계는 처리 수량과 같아야 합니다.');}
+    async function authorize(env,permission){const user=await verifiedUser(env);const snap=await env.sdk.getDocFromServer(memberRef(env,email(user.email)));sameUser(env,user);checkServer(snap);const role=roleFrom(snap,email(user.email));if(!role||(permission==='quality'&&!['quality','admin'].includes(role))||(permission==='production'&&!['production','admin'].includes(role))||(permission==='admin'&&role!=='admin'))throw fail('permission-denied','관리자가 승인한 담당 업무 권한이 필요합니다.');return {user,role,member:memberFrom(snap,email(user.email))};}
+    function stopDataSubscriptions(){for(const holder of [...recordListeners,...requestListeners,...photoSettingsListeners,...mailPreferenceListeners,...memberListeners]){holder.unsubscribe?.();holder.unsubscribe=null;holder.generation++;}}
+    function restartDataSubscriptions(){for(const holder of recordListeners)startRecordListener(holder);for(const holder of requestListeners)startRequestListener(holder);for(const holder of photoSettingsListeners)startPhotoSettingsListener(holder);for(const holder of mailPreferenceListeners)startMailPreferenceListener(holder);for(const holder of memberListeners)startMembersListener(holder);}
+    async function authChanged(user){const generation=++authGeneration;const changedAccount=email(user?.email)!==status.email;if(changedAccount&&(!user||pendingGooglePreference?.uid!==user.uid)){pendingGooglePreference=null;report({googleMailLanguage:'',googleLocaleAvailable:false,mailPreferenceError:null});}for(const holder of mailPreferenceListeners)holder.next(null);for(const holder of memberListeners)holder.next([]); memberUnsubscribe?.();memberUnsubscribe=null;stopDataSubscriptions();report({ready:false,signedIn:!!user,role:'',memberAlias:'',productionManager:false,canQuality:false,canProduction:false,displayName:user?.displayName||'',email:email(user?.email),online:false,error:null});
+      if(!user){report({ready:true});for(const holder of memberListeners)holder.next([]);for(const holder of recordListeners)holder.next([]);for(const holder of photoSettingsListeners)holder.next(null);return;}
       try{await verifiedUser(environment);if(generation!==authGeneration)return;
-        memberUnsubscribe=environment.sdk.onSnapshot(memberRef(environment,email(user.email)),{includeMetadataChanges:true},snapshot=>{if(generation!==authGeneration)return;if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites){report({online:false});stopDataSubscriptions();return;}try{const role=roleFrom(snapshot,email(user.email));const changed=role!==status.role;report({ready:true,signedIn:true,role,canQuality:['quality','admin'].includes(role),canProduction:['production','admin'].includes(role),online:true,error:null});if(changed||[...recordListeners,...requestListeners,...photoSettingsListeners].some(h=>!h.unsubscribe))restartDataSubscriptions();if(!role){for(const holder of recordListeners)holder.next([]);for(const holder of photoSettingsListeners)holder.next(null);}}catch(cause){report({ready:true,online:false,error:cause});stopDataSubscriptions();}},cause=>{if(generation===authGeneration){report({ready:true,online:false,error:cause});stopDataSubscriptions();}});
+        memberUnsubscribe=environment.sdk.onSnapshot(memberRef(environment,email(user.email)),{includeMetadataChanges:true},snapshot=>{if(generation!==authGeneration)return;if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites){report({online:false});stopDataSubscriptions();return;}try{const member=memberFrom(snapshot,email(user.email)),role=member?.role||'';const changed=role!==status.role;report({ready:true,signedIn:true,role,memberAlias:member?.alias||'',productionManager:member?.productionManager===true,canQuality:['quality','admin'].includes(role),canProduction:['production','admin'].includes(role),online:true,error:null});if(changed||[...recordListeners,...requestListeners,...photoSettingsListeners,...mailPreferenceListeners,...memberListeners].some(h=>!h.unsubscribe))restartDataSubscriptions();if(role!=='admin')for(const holder of memberListeners)holder.next([]);if(role)syncGoogleMailPreference();if(!role){for(const holder of mailPreferenceListeners)holder.next(null);for(const holder of recordListeners)holder.next([]);for(const holder of photoSettingsListeners)holder.next(null);}}catch(cause){report({ready:true,online:false,error:cause});stopDataSubscriptions();}},cause=>{if(generation===authGeneration){report({ready:true,online:false,error:cause});stopDataSubscriptions();}});
       }catch(cause){if(generation===authGeneration)report({ready:true,online:false,error:cause});}}
     function init(){if(!initialization)initialization=(async()=>{const sdk=await loadSDK(),name=`peak-inspection-parts-${settings.projectId}`;const app=sdk.getApps().find(app=>app.name===name)||sdk.initializeApp(settings,name);if(app.options?.projectId!==settings.projectId)throw fail('configuration','공유 검사 기록 연결 설정을 확인해 주세요.');environment={sdk,app,db:sdk.getFirestore(app),auth:sdk.getAuth(app)};sdk.onIdTokenChanged(environment.auth,authChanged,cause=>report({ready:true,online:false,error:cause}));return environment;})().catch(cause=>{initialization=null;report({ready:true,online:false,error:cause});throw cause;});return initialization;}
     function onStatus(callback){statusListeners.add(callback);queueMicrotask(()=>{if(statusListeners.has(callback))callback(status);});init().catch(()=>{});return()=>statusListeners.delete(callback);}
@@ -4873,13 +5016,39 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         if(old.status!=='quality_review'||!['completed','registered'].includes(next.status)||!same(unchanged,oldCurrent)||!newCurrent.quality)throw fail('invalid-transition','품질 재확인 내용을 확인해 주세요.');
       }else throw fail('invalid-transition','현재 처리 단계에서는 이 작업을 저장할 수 없습니다.');
     }
-    async function createRecord(input){const record=validate(input),env=await init(),{user}=await authorize(env,'quality');if(record.workflow!==undefined||record.resolution!==undefined)throw fail('invalid-transition','새 불량은 등록 이력에서 생산 검사를 진행해 주세요.');const {sdk,db}=env,ref=sdk.doc(db,COLLECTION,record.id);await sdk.runTransaction(db,async tx=>{const current=await tx.get(ref);sameUser(env,user);if(current.exists()){if(same(unwrap(current).record,record))return;throw fail('conflict','동일한 등록 번호가 이미 사용 중입니다.');}const stamp=sdk.serverTimestamp();tx.set(ref,{record,version:1,updatedAt:stamp,updatedBy:user.uid,action:'create'});tx.set(sdk.doc(db,COLLECTION,record.id,'events','1'),{before:null,after:record,actor:user.uid,serverAt:stamp,action:'create',version:1});});return record;}
+    async function createRecord(input){const record=validate(input),env=await init(),{user,member}=await authorize(env,'quality');assertActorAlias(member,record.inspector);record.inspectorName=actorName(user);validate(record);if(record.workflow!==undefined||record.resolution!==undefined)throw fail('invalid-transition','새 불량은 등록 이력에서 생산 검사를 진행해 주세요.');const {sdk,db}=env,ref=sdk.doc(db,COLLECTION,record.id);await sdk.runTransaction(db,async tx=>{const current=await tx.get(ref);sameUser(env,user);if(current.exists()){if(same(unwrap(current).record,record))return;throw fail('conflict','동일한 등록 번호가 이미 사용 중입니다.');}const stamp=sdk.serverTimestamp();tx.set(ref,{record,version:1,updatedAt:stamp,updatedBy:user.uid,action:'create'});tx.set(sdk.doc(db,COLLECTION,record.id,'events','1'),{before:null,after:record,actor:user.uid,serverAt:stamp,action:'create',version:1});});return record;}
     async function importRecord(input){const record=validate(input),env=await init(),{user}=await authorize(env,'admin'),{sdk,db}=env,ref=sdk.doc(db,COLLECTION,record.id);await sdk.runTransaction(db,async tx=>{const snapshot=await tx.get(ref);sameUser(env,user);if(snapshot.exists()){if(same(unwrap(snapshot).record,record))return;throw fail('conflict','동일한 등록 번호가 이미 사용 중입니다.');}const stamp=sdk.serverTimestamp();tx.set(ref,{record,version:1,updatedAt:stamp,updatedBy:user.uid,action:'import'});tx.set(sdk.doc(db,COLLECTION,record.id,'events','1'),{before:null,after:record,actor:user.uid,serverAt:stamp,action:'import',version:1});});return record;}
-    async function updateRecord(beforeInput,afterInput,action){const before=validate(beforeInput),after=validate(afterInput);transition(before,after,action);const env=await init(),{user}=await authorize(env,action==='production'?'production':'quality'),{sdk,db}=env,ref=sdk.doc(db,COLLECTION,before.id);await sdk.runTransaction(db,async tx=>{const snapshot=await tx.get(ref);sameUser(env,user);if(!snapshot.exists())throw fail('not-found','공유 불량 기록을 찾을 수 없습니다.');const current=unwrap(snapshot);if(!same(current.record,before)){if(same(current.record,after))return;throw fail('conflict','다른 담당자가 먼저 처리했습니다. 최신 기록을 다시 열어 주세요.');}const version=current.version+1,stamp=sdk.serverTimestamp();tx.set(ref,{record:after,version,updatedAt:stamp,updatedBy:user.uid,action});tx.set(sdk.doc(db,COLLECTION,before.id,'events',String(version)),{before,after,actor:user.uid,serverAt:stamp,action,version});});return after;}
-    async function requestAccess(requestedRole='quality'){if(!['quality','production'].includes(requestedRole))throw fail('invalid-data','신청할 담당 업무를 선택해 주세요.');const env=await init(),user=await verifiedUser(env),{sdk,db}=env;await sdk.runTransaction(db,async tx=>{const ref=sdk.doc(db,'inspectionAccessRequests',user.uid),snapshot=await tx.get(ref);sameUser(env,user);if(snapshot.exists()&&snapshot.data().status==='approved')throw fail('permission-denied','이미 승인된 계정입니다. 권한 변경은 관리자에게 요청해 주세요.');tx.set(ref,{uid:user.uid,email:email(user.email),displayName:String(user.displayName||'').slice(0,120),requestedRole,status:'pending',createdAt:sdk.serverTimestamp()});});return true;}
+    async function updateRecord(beforeInput,afterInput,action){const before=validate(beforeInput),after=validate(afterInput);transition(before,after,action);const env=await init(),{user,member}=await authorize(env,action==='production'?'production':'quality'),{sdk,db}=env,ref=sdk.doc(db,COLLECTION,before.id);assertActorAlias(member,action==='production'?after.workflow?.cycles?.at(-1)?.production?.operator:after.workflow?.cycles?.at(-1)?.quality?.inspector);if(action==='production'){assertProductionQuantities(after);after.workflow.cycles.at(-1).production.operatorName=actorName(user);}else after.workflow.cycles.at(-1).quality.inspectorName=actorName(user);validate(after);await sdk.runTransaction(db,async tx=>{const snapshot=await tx.get(ref);sameUser(env,user);if(!snapshot.exists())throw fail('not-found','공유 불량 기록을 찾을 수 없습니다.');const current=unwrap(snapshot);if(!same(current.record,before)){if(same(current.record,after))return;throw fail('conflict','다른 담당자가 먼저 처리했습니다. 최신 기록을 다시 열어 주세요.');}const version=current.version+1,stamp=sdk.serverTimestamp();tx.set(ref,{record:after,version,updatedAt:stamp,updatedBy:user.uid,action});tx.set(sdk.doc(db,COLLECTION,before.id,'events',String(version)),{before,after,actor:user.uid,serverAt:stamp,action,version});});return after;}
+    async function requestAccess(requestedRole='quality',alias){alias=typeof alias==='string'?alias.trim():alias;if(!validAlias(alias))throw fail('invalid-data','별명(사번)을 입력해 주세요.');if(!['quality','production'].includes(requestedRole))throw fail('invalid-data','신청할 담당 업무를 선택해 주세요.');const env=await init(),user=await verifiedUser(env),{sdk,db}=env;await sdk.runTransaction(db,async tx=>{const ref=sdk.doc(db,'inspectionAccessRequests',user.uid),snapshot=await tx.get(ref);sameUser(env,user);if(snapshot.exists()&&snapshot.data().status==='approved')throw fail('permission-denied','이미 승인된 계정입니다. 권한 변경은 관리자에게 요청해 주세요.');tx.set(ref,{uid:user.uid,email:email(user.email),displayName:String(user.displayName||'').slice(0,120),alias,requestedRole,status:'pending',createdAt:sdk.serverTimestamp()});});return true;}
     function startRequestListener(holder){holder.unsubscribe?.();holder.unsubscribe=null;const generation=++holder.generation;if(holder.closed||status.role!=='admin'||!status.online||!environment)return;const {sdk,db}=environment;holder.unsubscribe=sdk.onSnapshot(sdk.collection(db,'inspectionAccessRequests'),{includeMetadataChanges:true},snapshot=>{if(holder.closed||holder.generation!==generation||snapshot.metadata?.hasPendingWrites)return;if(snapshot.metadata?.fromCache){holder.error(fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.'));return;}holder.next(snapshot.docs.map(doc=>({...doc.data(),id:doc.id})));},holder.error);}
     function subscribeAccessRequests(next,error=()=>{}){const holder={next,error,closed:false,generation:0,unsubscribe:null};requestListeners.add(holder);init().then(()=>startRequestListener(holder),error);return()=>{holder.closed=true;holder.generation++;holder.unsubscribe?.();requestListeners.delete(holder);};}
-    async function approve(address,role){address=email(address);if(!validEmail(address)||!ROLES.includes(role))throw fail('invalid-data','승인할 이메일과 담당 업무를 확인해 주세요.');const env=await init(),{user}=await authorize(env,'admin'),{sdk,db}=env;const requests=await sdk.getDocsFromServer(sdk.query(sdk.collection(db,'inspectionAccessRequests'),sdk.where('email','==',address)));checkServer(requests);await sdk.runTransaction(db,async tx=>{const ref=memberRef(env,address);await tx.get(ref);const pending=await Promise.all(requests.docs.map(doc=>tx.get(sdk.doc(db,'inspectionAccessRequests',doc.id))));sameUser(env,user);if(address===email(user.email)&&role!=='admin')throw fail('permission-denied','본인의 관리자 권한은 제거할 수 없습니다.');const stamp=sdk.serverTimestamp();tx.set(ref,{email:address,role,approvedBy:user.uid,approvedAt:stamp});pending.forEach(snapshot=>{if(snapshot.exists())tx.set(sdk.doc(db,'inspectionAccessRequests',snapshot.id),{...snapshot.data(),status:'approved',approvedBy:user.uid,approvedAt:stamp});});});return true;}
+    function startMembersListener(holder){
+      holder.unsubscribe?.();holder.unsubscribe=null;const generation=++holder.generation;
+      if(holder.closed||status.role!=='admin'||!status.online||!environment)return;
+      const {sdk,db}=environment;holder.unsubscribe=sdk.onSnapshot(sdk.collection(db,'inspectionAccess'),{includeMetadataChanges:true},snapshot=>{
+        if(holder.closed||holder.generation!==generation||snapshot.metadata?.hasPendingWrites)return;
+        if(snapshot.metadata?.fromCache){holder.error(fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.'));return;}
+        try{holder.next(snapshot.docs.map(doc=>memberFrom(doc,doc.id)).filter(Boolean));}catch(cause){holder.error(cause);}
+      },cause=>{if(!holder.closed&&holder.generation===generation)holder.error(cause);});
+    }
+    function subscribeMembers(next,error=()=>{}){
+      const holder={next,error,closed:false,generation:0,unsubscribe:null};memberListeners.add(holder);init().then(()=>startMembersListener(holder),error);
+      return()=>{holder.closed=true;holder.generation++;holder.unsubscribe?.();memberListeners.delete(holder);};
+    }
+    async function approve(address,role,profile={}){
+      address=email(address);const alias=typeof profile.alias==='string'?profile.alias.trim():profile.alias,productionManager=profile.productionManager;
+      if(!validEmail(address)||!ROLES.includes(role))throw fail('invalid-data','승인할 이메일과 담당 업무를 확인해 주세요.');
+      if(!validAlias(alias))throw fail('invalid-data','별명(사번)을 입력해 주세요.');
+      if(typeof productionManager!=='boolean'||productionManager&&!['production','admin'].includes(role))throw fail('invalid-data','생산 관리자 알림은 생산팀 또는 관리자에게만 지정할 수 있습니다.');
+      const env=await init(),{user}=await authorize(env,'admin'),{sdk,db}=env;
+      const requests=await sdk.getDocsFromServer(sdk.query(sdk.collection(db,'inspectionAccessRequests'),sdk.where('email','==',address)));checkServer(requests);
+      await sdk.runTransaction(db,async tx=>{
+        const ref=memberRef(env,address);await tx.get(ref);const pending=await Promise.all(requests.docs.map(doc=>tx.get(sdk.doc(db,'inspectionAccessRequests',doc.id))));sameUser(env,user);
+        if(address===email(user.email)&&role!=='admin')throw fail('permission-denied','본인의 관리자 권한은 제거할 수 없습니다.');
+        const stamp=sdk.serverTimestamp();tx.set(ref,{email:address,role,alias,productionManager,approvedBy:user.uid,approvedAt:stamp});
+        pending.forEach(snapshot=>{if(snapshot.exists())tx.set(sdk.doc(db,'inspectionAccessRequests',snapshot.id),{...snapshot.data(),status:'approved',approvedBy:user.uid,approvedAt:stamp});});
+      });return true;
+    }
     function photoSettingsValue(value){
       if(!object(value)||Object.keys(value).sort().join(',')!=='folderId,folderName,provider,updatedAt,updatedBy'||value.provider!=='drive'||!/^[-A-Za-z0-9_]{10,200}$/.test(value.folderId)||typeof value.folderName!=='string'||!value.folderName.trim()||value.folderName.length>120||typeof value.updatedBy!=='string'||!value.updatedBy||typeof value.updatedAt?.toMillis!=='function')throw fail('invalid-data','공통 사진 폴더 설정을 확인해 주세요.');
       return Object.freeze({provider:'drive',folderId:value.folderId,folderName:value.folderName,updatedBy:value.updatedBy,updatedAt:value.updatedAt.toMillis()});
@@ -4908,12 +5077,64 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         tx.set(ref,{provider:'drive',folderId:input.folderId,folderName:input.folderName.trim(),updatedBy:user.uid,updatedAt:sdk.serverTimestamp()});
       });return {provider:'drive',folderId:input.folderId,folderName:input.folderName.trim()};
     }
+    function mailPreferenceValue(value,user){
+      if(!object(value)||Object.keys(value).sort().join(',')!=='email,languageSource,mailLanguage,uid,updatedAt'||value.uid!==user.uid||value.email!==email(user.email)||!MAIL_LANGUAGES.includes(value.mailLanguage)||!['google','manual'].includes(value.languageSource)||typeof value.updatedAt?.toMillis!=='function')throw fail('invalid-data','이메일 알림 언어 설정을 확인해 주세요.');
+      return Object.freeze({...value,updatedAt:value.updatedAt.toMillis()});
+    }
+    async function readMailPreference(){
+      const env=await init(),{user}=await authorize(env),snapshot=await env.sdk.getDocFromServer(env.sdk.doc(env.db,'inspectionPreferences',user.uid));
+      sameUser(env,user);checkServer(snapshot);return snapshot.exists()?mailPreferenceValue(snapshot.data(),user):null;
+    }
+    function startMailPreferenceListener(holder){
+      holder.unsubscribe?.();holder.unsubscribe=null;const generation=++holder.generation;
+      if(holder.closed||!status.role||!status.online||!environment)return;
+      const {sdk,db,auth}=environment,user=auth.currentUser;if(!user)return;
+      holder.unsubscribe=sdk.onSnapshot(sdk.doc(db,'inspectionPreferences',user.uid),{includeMetadataChanges:true},snapshot=>{
+        if(holder.closed||holder.generation!==generation||auth.currentUser?.uid!==user.uid||snapshot.metadata?.hasPendingWrites)return;
+        if(snapshot.metadata?.fromCache){holder.error(fail('offline','서버 연결을 확인한 후 다시 시도해 주세요.'));return;}
+        try{holder.next(snapshot.exists()?mailPreferenceValue(snapshot.data(),user):null);}catch(cause){holder.next(null);holder.error(cause);}
+      },cause=>{if(!holder.closed&&holder.generation===generation&&auth.currentUser?.uid===user.uid){holder.next(null);holder.error(cause);}});
+    }
+    function subscribeMailPreference(next,error=()=>{}){
+      const holder={next,error,closed:false,generation:0,unsubscribe:null};mailPreferenceListeners.add(holder);
+      init().then(()=>startMailPreferenceListener(holder),error);
+      return()=>{holder.closed=true;holder.generation++;holder.unsubscribe?.();mailPreferenceListeners.delete(holder);};
+    }
+    async function writeMailPreference(language,source,expectedUser){
+      if(!MAIL_LANGUAGES.includes(language)||!['google','manual'].includes(source))throw fail('invalid-data','이메일 알림 언어를 선택해 주세요.');
+      const env=await init(),{user}=await authorize(env);if(expectedUser&&expectedUser!==user.uid)throw fail('auth-required','Google 계정으로 로그인해 주세요.');
+      const {sdk,db}=env,ref=sdk.doc(db,'inspectionPreferences',user.uid);
+      await sdk.runTransaction(db,async tx=>{
+        const snapshot=await tx.get(ref);sameUser(env,user);
+        const previous=snapshot.exists()?mailPreferenceValue(snapshot.data(),user):null;
+        // A Google profile can never replace a language explicitly selected by its owner.
+        if(previous&&(source==='google'&&previous.languageSource==='manual'||previous.mailLanguage===language&&previous.languageSource===source))return;
+        tx.set(ref,{uid:user.uid,email:email(user.email),mailLanguage:language,languageSource:source,updatedAt:sdk.serverTimestamp()});
+      });return true;
+    }
+    function saveMailLanguage(language){return writeMailPreference(language,'manual',environment?.auth.currentUser?.uid);}
+    function syncGoogleMailPreference(){
+      if(!pendingGooglePreference||googlePreferenceSync||!status.role||!status.online)return;
+      const pending=pendingGooglePreference;
+      googlePreferenceSync=writeMailPreference(pending.language,'google',pending.uid).then(()=>{
+        if(pendingGooglePreference===pending){pendingGooglePreference=null;report({mailPreferenceError:null});}
+      },cause=>{if(pendingGooglePreference===pending)report({mailPreferenceError:cause});}).finally(()=>{googlePreferenceSync=null;if(pendingGooglePreference&&pendingGooglePreference!==pending)syncGoogleMailPreference();});
+    }
+    function captureGoogleMailLanguage(result){
+      if(!result?.user||environment?.auth.currentUser?.uid!==result.user.uid)return;
+      let locale;try{locale=environment.sdk.getAdditionalUserInfo?.(result)?.profile?.locale;}catch(_){}
+      const language=normalizeMailLanguage(locale);
+      report({googleMailLanguage:language,googleLocaleAvailable:typeof locale==='string'&&!!locale.trim(),mailPreferenceError:null});
+      // Missing or unsupported profile locales require an explicit user choice.
+      // Existing saved preferences are retained; neither navigator.language nor the UI language is used.
+      if(language){pendingGooglePreference={uid:result.user.uid,language};syncGoogleMailPreference();}
+    }
     function signIn(){
       if(signInPromise)return signInPromise;
       const launch=env=>{const provider=new env.sdk.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});return env.sdk.signInWithPopup(env.auth,provider);};
       let attempt,timer;try{attempt=environment?launch(environment):init().then(launch);}catch(cause){return Promise.reject(cause);}
       const timeout=new Promise((_,reject)=>{timer=root.setTimeout(()=>reject(fail('auth-timeout','Google 로그인 응답이 없습니다. Chrome 또는 Safari에서 팝업을 허용한 후 연결 버튼을 다시 눌러 주세요.')),60000);});
-      const pending=Promise.race([Promise.resolve(attempt).then(()=>status),timeout]).finally(()=>{root.clearTimeout(timer);if(signInPromise===pending)signInPromise=null;});
+      const pending=Promise.race([Promise.resolve(attempt).then(result=>{captureGoogleMailLanguage(result);return status;}),timeout]).finally(()=>{root.clearTimeout(timer);if(signInPromise===pending)signInPromise=null;});
       signInPromise=pending;return pending;
     }
     async function signOut(){const env=await init();await env.sdk.signOut(env.auth);}
@@ -4927,9 +5148,9 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         return await response.json();
       }finally{clearTimeout(timer);}
     }
-    return Object.freeze({syncEquipmentLights,read,subscribe,onStatus,getStatus:()=>status,createRecord,importRecord,updateRecord,requestAccess,subscribeAccessRequests,approve,subscribePhotoSettings,savePhotoSettings,signIn,signOut});
+    return Object.freeze({syncEquipmentLights,read,subscribe,onStatus,getStatus:()=>status,createRecord,importRecord,updateRecord,requestAccess,subscribeAccessRequests,approve,subscribeMembers,subscribePhotoSettings,savePhotoSettings,readMailPreference,subscribeMailPreference,saveMailLanguage,signIn,signOut});
   }
-  return Object.freeze({create,SDK_VERSION,COLLECTION,MAX_RECORD_BYTES,ROLES});
+  return Object.freeze({create,SDK_VERSION,COLLECTION,MAX_RECORD_BYTES,ROLES,validAlias,MAIL_LANGUAGES,normalizeMailLanguage});
 });
 
 (function (root, factory) {
@@ -4946,6 +5167,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const doc = container.ownerDocument || root.document;
     let destroyed = false, busy = false, status = service.getStatus(), requests = [], requestUnsubscribe = null;
     let notice = null, subscriptionError = '', lastServiceError = null, requestGeneration = 0;
+    let members = [], memberUnsubscribe = null, memberGeneration = 0, memberAccount = '', memberError = '';
+    let mailPreference = null, mailUnsubscribe = null, mailGeneration = 0, mailAccount = '', mailReady = false, mailError = '', mailDirty = false;
     const listeners = [];
     const controls = [];
     const create = (tag, className, id) => {
@@ -4967,6 +5190,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       }
       controls.push(select); return select;
     };
+    const aliasInput = id => { const input = create('input', '', id); input.type = 'text'; input.required = true; input.maxLength = 80; input.autocomplete = 'off'; bind(input, '별명 또는 사번', {}, 'placeholder'); controls.push(input); return input; };
+    const managerInput = id => { const input = create('input', 'team-access-manager-checkbox', id); input.type = 'checkbox'; controls.push(input); return input; };
     const field = (source, control) => { const item = create('div', 'team-access-field'); item.append(label(source, control), control); return item; };
 
     const panel = create('section', 'team-access', 'teamAccessPanel');
@@ -4982,14 +5207,29 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const signOut = button('로그아웃', 'teamAccessSignOut');
     actions.append(signIn, signOut); bar.append(identityGroup, actions);
 
+    const mailSection = create('section', 'team-mail-preference', 'teamMailPreference');
+    const mailHeading = create('h3'); bind(mailHeading, '이메일 알림 언어');
+    const mailHint = paragraph('불량 등록·재작업·품질 판정 알림은 수신자별 이메일 언어로 발송됩니다. 화면 언어와 별도로 저장됩니다.');
+    const mailForm = create('form', 'team-mail-form');
+    const mailLanguage = create('select', '', 'teamMailLanguage'); mailLanguage.required = true; controls.push(mailLanguage);
+    const emptyMailOption = create('option'); emptyMailOption.value = ''; bind(emptyMailOption, '이메일 알림 언어를 선택해 주세요.'); mailLanguage.append(emptyMailOption);
+    const mailNames = { ko: '한국어', en: 'English', 'zh-TW': '繁體中文（台灣）', vi: 'Tiếng Việt', id: 'Bahasa Indonesia' };
+    for (const [code, name] of Object.entries(mailNames)) { const option = create('option'); option.value = code; option.textContent = name; mailLanguage.append(option); }
+    const mailSave = button('알림 언어 저장', 'teamMailSave', 'primary'); mailSave.type = 'submit';
+    mailForm.append(field('받을 이메일의 언어', mailLanguage), mailSave);
+    const mailSource = create('p', 'team-access-hint', 'teamMailSource'); mailSource.setAttribute('role', 'status');
+    const mailProblem = create('p', 'team-access-notice error', 'teamMailError'); mailProblem.setAttribute('role', 'alert'); mailProblem.hidden = true;
+    mailSection.append(mailHeading, mailHint, mailForm, mailSource, mailProblem);
+
     const details = create('details', 'team-access-details', 'teamAccessDetails');
     const detailsTitle = create('summary'); bind(detailsTitle, '팀 권한 및 기기 기록 가져오기'); details.append(detailsTitle);
     const guestMessage = paragraph('공유 검사 기록은 Google 로그인 후 관리자가 승인한 담당자만 사용할 수 있습니다.');
     const memberMessage = paragraph('품질팀은 불량 등록과 품질 재검사를, 생산팀은 등록 이력에서 검사 방법 선택과 결과 입력을 담당합니다.');
     const requestForm = create('form', 'team-access-request-form');
     const requestedRole = roleSelect('teamAccessRequestedRole');
+    const requestedAlias = aliasInput('teamAccessRequestedAlias');
     const requestButton = button('팀 사용 권한 신청', 'teamAccessRequest', 'primary'); requestButton.type = 'submit';
-    requestForm.append(paragraph('담당 업무를 선택해 신청하면 관리자가 확인 후 승인합니다.'), field('신청할 담당 업무', requestedRole), requestButton);
+    requestForm.append(paragraph('담당 업무를 선택해 신청하면 관리자가 확인 후 승인합니다.'), field('신청할 담당 업무', requestedRole), field('별명(사번)', requestedAlias), requestButton);
 
     const adminSection = create('div', 'team-access-admin');
     const requestsHeading = create('h3'); bind(requestsHeading, '승인 대기 신청');
@@ -4999,34 +5239,44 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const emailInput = create('input', '', 'teamAccessEmail'); emailInput.type = 'email'; emailInput.required = true; emailInput.maxLength = 254; emailInput.autocomplete = 'email'; emailInput.inputMode = 'email'; controls.push(emailInput);
     bind(emailInput, '담당자의 Google 이메일', {}, 'placeholder');
     const approvalRole = roleSelect('teamAccessApprovalRole', true);
-    const approveButton = button('담당자 승인', 'teamAccessApprove', 'primary'); approveButton.type = 'submit';
-    const directFields = create('div', 'team-access-direct-fields'); directFields.append(field('Google 이메일', emailInput), field('담당 업무', approvalRole), approveButton);
-    directForm.append(directHeading, directFields);
+    const approvalAlias = aliasInput('teamAccessApprovalAlias');
+    const productionManager = managerInput('teamAccessProductionManager');
+    const managerField = field('생산 관리자 알림 수신', productionManager);
+    const approveButton = button('담당자 저장', 'teamAccessApprove', 'primary'); approveButton.type = 'submit';
+    const directFields = create('div', 'team-access-direct-fields'); directFields.append(field('Google 이메일', emailInput), field('담당 업무', approvalRole), field('별명(사번)', approvalAlias), managerField, approveButton);
+    directForm.append(directHeading, paragraph('등록된 별명(사번)이 불량 등록자와 작업자 이름으로 자동 기록됩니다. 생산 관리자 알림을 선택하면 신규 불량의 재작업 요청을 받으며, 나중에 변경할 수 있습니다.'), directFields);
+    const membersHeading = create('h3'); bind(membersHeading, '등록된 담당자');
+    const membersList = create('div', 'team-access-members', 'teamAccessMembers'); membersList.setAttribute('aria-live', 'polite');
+    const aliasWarning = paragraph('관리자가 별명(사번)을 등록한 후 작업할 수 있습니다.', 'team-access-notice error');
     const importSection = create('div', 'team-access-import');
     const importButton = button('이 기기의 기존 검사 기록 가져오기', 'teamAccessImportLocal');
     importSection.append(paragraph('기존 기기 기록은 자동으로 공유하지 않습니다. 관리자가 확인한 기록만 공통 목록으로 가져옵니다.'), importButton);
-    adminSection.append(requestsHeading, requestList, directForm, importSection);
-    details.append(guestMessage, memberMessage, requestForm, adminSection);
+    adminSection.append(requestsHeading, requestList, directForm, membersHeading, membersList, importSection);
+    details.append(guestMessage, memberMessage, aliasWarning, requestForm, adminSection);
     const noticeNode = create('p', 'team-access-notice', 'teamAccessNotice'); noticeNode.setAttribute('role', 'status'); noticeNode.hidden = true;
     const errorNode = create('p', 'team-access-notice error', 'teamAccessError'); errorNode.setAttribute('role', 'alert'); errorNode.hidden = true;
-    panel.append(bar, details, noticeNode, errorNode); container.append(panel);
+    panel.append(bar, mailSection, details, noticeNode, errorNode); container.append(panel);
 
     function reportError(error) { if (typeof onError === 'function') { try { onError(error); } catch (_) {} } }
     function actionNotice(source, params = {}, error = false) { notice = { source, params, error }; renderNotice(); }
     function renderNotice() {
       noticeNode.hidden = !notice;
       if (notice) { noticeNode.className = `team-access-notice${notice.error ? ' error' : ''}`; bind(noticeNode, notice.source, notice.params); }
-      const problem = status?.error?.message || subscriptionError;
+      const problem = status?.error?.message || subscriptionError || memberError;
       errorNode.hidden = !problem; errorNode.textContent = problem ? root.I18n?.retranslate?.(problem) || problem : '';
     }
     function allowed() { return status?.ready === true && status.signedIn && status.online; }
     function renderDisabled() {
       for (const control of controls) control.disabled = busy || !allowed();
+      mailLanguage.disabled = busy || !allowed() || !status.role || !mailReady;
+      mailSave.disabled = busy || !allowed() || !status.role || !mailReady || !mailLanguage.value;
       signIn.disabled = busy || status?.ready !== true || status.signedIn;
       signOut.disabled = busy || status?.ready !== true || !status.signedIn;
       requestButton.disabled = busy || !allowed() || Boolean(status.role);
       importButton.disabled = busy || !allowed() || status.role !== 'admin' || typeof onImportLocal !== 'function';
-      for (const control of requestList.querySelectorAll('button,select')) control.disabled = busy || !allowed() || status.role !== 'admin';
+      productionManager.disabled = busy || !allowed() || !['production', 'admin'].includes(approvalRole.value);
+      for (const control of membersList.querySelectorAll('button')) control.disabled = busy || !allowed() || status.role !== 'admin';
+      for (const control of requestList.querySelectorAll('button,select,input')) control.disabled = busy || !allowed() || status.role !== 'admin' || Boolean(control.managerRoleSelect && !['production', 'admin'].includes(control.managerRoleSelect.value));
     }
     async function run(operation, success, params = {}) {
       if (busy || destroyed) return;
@@ -5060,10 +5310,15 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         controls.pop(); select.value = ['quality', 'production'].includes(request.requestedRole) ? request.requestedRole : 'quality';
         bind(select, '승인할 담당 업무', {}, 'aria-label');
         const approve = create('button', 'primary'); approve.type = 'submit'; bind(approve, '승인');
-        row.append(person, select, approve);
+        const alias = aliasInput(`teamAccessPendingAlias${index}`); controls.pop(); alias.value = request.alias || '';
+        const manager = managerInput(`teamAccessPendingManager${index}`); controls.pop(); manager.checked = false; manager.managerRoleSelect = select;
+        const managerLabel = field('생산 관리자 알림 수신', manager);
+        const updateManager = () => { manager.disabled = busy || !allowed() || !['production', 'admin'].includes(select.value); if (select.value === 'quality') manager.checked = false; };
+        select.addEventListener('change', updateManager);
+        row.append(person, field('담당 업무', select), field('별명(사번)', alias), managerLabel, approve); updateManager();
         row.addEventListener('submit', event => {
-          event.preventDefault(); if (!allowed() || status.role !== 'admin') return;
-          run(() => service.approve(request.email, select.value), '담당자 권한을 승인했습니다.');
+          event.preventDefault(); if (!allowed() || status.role !== 'admin' || !row.reportValidity()) return;
+          run(() => service.approve(request.email, select.value, { alias: alias.value.trim(), productionManager: ['production', 'admin'].includes(select.value) && manager.checked }), '담당자 권한을 승인했습니다.');
         });
         requestList.append(row);
       });
@@ -5071,7 +5326,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     }
     function syncRequests() {
       if (status?.role !== 'admin') {
-        requestGeneration++; requestUnsubscribe?.(); requestUnsubscribe = null; requests = []; subscriptionError = ''; emailInput.value = ''; requestList.replaceChildren(); return;
+        requestGeneration++; requestUnsubscribe?.(); requestUnsubscribe = null; requests = []; subscriptionError = ''; emailInput.value = ''; approvalAlias.value = ''; productionManager.checked = false; requestList.replaceChildren(); return;
       }
       if (requestUnsubscribe || !status.online) return;
       const generation = ++requestGeneration;
@@ -5083,31 +5338,102 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         subscriptionError = error?.message || t('권한 신청 목록을 불러오지 못했습니다.'); renderNotice(); reportError(error);
       });
     }
+    function renderMembers() {
+      membersList.replaceChildren(); if (status.role !== 'admin') return;
+      if (!members.length) { membersList.append(paragraph('등록된 담당자가 없습니다.')); return; }
+      for (const member of [...members].sort((a, b) => a.email.localeCompare(b.email))) {
+        const row = create('div', 'team-access-member-row');
+        const person = create('div', 'team-access-request-person');
+        const address = create('strong'); address.textContent = member.email;
+        const info = create('span'); info.textContent = [t(ROLES[member.role] || '미지정'), member.alias || t('별명(사번) 등록 필요'), member.productionManager ? t('생산 관리자 알림 수신') : ''].filter(Boolean).join(' · ');
+        person.append(address, info);
+        const edit = create('button', 'secondary'); edit.type = 'button'; bind(edit, '담당자 수정');
+        edit.addEventListener('click', () => {
+          if (busy || !allowed() || status.role !== 'admin') return;
+          emailInput.value = member.email; approvalRole.value = member.role; approvalAlias.value = member.alias || ''; productionManager.checked = member.productionManager === true;
+          renderDisabled(); directForm.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); approvalAlias.focus?.();
+        });
+        row.append(person, edit); membersList.append(row);
+      }renderDisabled();
+    }
+    function syncMembers() {
+      const account = status.role === 'admin' ? status.email : '';
+      if (account !== memberAccount) { memberGeneration++; memberUnsubscribe?.(); memberUnsubscribe = null; memberAccount = account; members = []; memberError = ''; membersList.replaceChildren(); }
+      if (!account || memberUnsubscribe || !status.online || typeof service.subscribeMembers !== 'function') return;
+      const generation = ++memberGeneration;
+      memberUnsubscribe = service.subscribeMembers(value => {
+        if (destroyed || generation !== memberGeneration || status.role !== 'admin' || status.email !== account) return;
+        members = Array.isArray(value) ? value : []; memberError = ''; renderMembers(); renderNotice();
+      }, error => {
+        if (destroyed || generation !== memberGeneration || status.email !== account) return;
+        memberError = error?.message || t('등록된 담당자를 불러오지 못했습니다.'); renderNotice(); reportError(error);
+      });
+    }
+    function renderMailPreference() {
+      mailSection.hidden = !status?.signedIn || !status.role || typeof service.subscribeMailPreference !== 'function';
+      if (!mailDirty) mailLanguage.value = mailPreference?.mailLanguage || '';
+      const selectedName = mailNames[mailPreference?.mailLanguage] || '';
+      if (!mailReady) bind(mailSource, '이메일 알림 언어를 불러오는 중입니다.');
+      else if (mailPreference?.languageSource === 'manual') bind(mailSource, '직접 선택한 이메일 언어: {language}', { language: selectedName });
+      else if (mailPreference?.languageSource === 'google') bind(mailSource, 'Google 로그인에서 확인하여 저장한 이메일 언어: {language}', { language: selectedName });
+      else if (status.googleMailLanguage) bind(mailSource, 'Google 로그인에서 확인한 언어를 저장하고 있습니다.');
+      else bind(mailSource, 'Google 로그인에서 지원 언어를 확인하지 못했습니다. 위에서 한 번 선택해 주세요. 언어가 저장되기 전에는 이메일 알림이 보류됩니다.');
+      const error = mailError || status?.mailPreferenceError?.message || '';
+      mailProblem.hidden = !error; mailProblem.textContent = error ? root.I18n?.retranslate?.(error) || error : '';
+    }
+    function syncMailPreference() {
+      const account = status?.signedIn && status.role ? status.email : '';
+      if (account !== mailAccount) {
+        mailGeneration++; mailUnsubscribe?.(); mailUnsubscribe = null; mailAccount = account;
+        mailPreference = null; mailReady = false; mailError = ''; mailDirty = false; mailLanguage.value = '';
+      }
+      if (!account || mailUnsubscribe || typeof service.subscribeMailPreference !== 'function') { renderMailPreference(); return; }
+      const generation = ++mailGeneration;
+      mailUnsubscribe = service.subscribeMailPreference(value => {
+        if (destroyed || generation !== mailGeneration || status.email !== account) return;
+        mailPreference = value; mailReady = true; mailError = ''; renderMailPreference(); renderDisabled();
+      }, error => {
+        if (destroyed || generation !== mailGeneration || status.email !== account) return;
+        mailReady = false; mailError = error?.message || t('이메일 알림 언어 설정을 확인해 주세요.'); renderMailPreference(); renderDisabled(); reportError(error);
+      });
+      renderMailPreference();
+    }
     function renderStatus() {
       if (destroyed) return;
       const ready = status?.ready === true, signedIn = Boolean(status?.signedIn), role = status?.role;
       signIn.hidden = signedIn; signOut.hidden = !signedIn;
       const state = !ready ? '로그인 상태 확인 중' : !signedIn ? '로그인이 필요합니다.' : !status.online ? '서버 연결 확인 중' : role ? '공유 기록 연결됨' : '담당 업무 승인 필요';
       bind(statusText, state); statusText.dataset.state = !ready ? 'loading' : !signedIn ? 'signed-out' : !status.online ? 'offline' : role ? 'online' : 'unapproved';
-      identity.textContent = signedIn ? [status.displayName || status.email || '', role ? t(ROLES[role] || '미지정') : ''].filter(Boolean).join(' · ') : '';
+      identity.textContent = signedIn ? [status.memberAlias || status.displayName || status.email || '', role ? t(ROLES[role] || '미지정') : ''].filter(Boolean).join(' · ') : '';
+      aliasWarning.hidden = !signedIn || !role || Boolean(status.memberAlias);
       guestMessage.hidden = signedIn; memberMessage.hidden = !signedIn || !role;
       requestForm.hidden = !signedIn || Boolean(role); adminSection.hidden = role !== 'admin';
       importSection.hidden = typeof onImportLocal !== 'function';
-      syncRequests(); renderDisabled(); renderNotice();
+      syncRequests(); syncMembers(); syncMailPreference(); renderDisabled(); renderNotice();
     }
     listen(signIn, 'click', () => { if (!signIn.disabled) run(() => service.signIn()); });
     listen(signOut, 'click', () => { if (!signOut.disabled) run(() => service.signOut()); });
     listen(requestForm, 'submit', event => {
-      event.preventDefault(); if (!allowed() || status.role || busy) return;
-      run(() => service.requestAccess(requestedRole.value), '사용 권한 신청을 보냈습니다. 관리자 승인 후 사용할 수 있습니다.');
+      event.preventDefault(); if (!allowed() || status.role || busy || !requestForm.reportValidity()) return;
+      run(() => service.requestAccess(requestedRole.value, requestedAlias.value.trim()), '사용 권한 신청을 보냈습니다. 관리자 승인 후 사용할 수 있습니다.');
     });
     listen(directForm, 'submit', event => {
       event.preventDefault(); if (!allowed() || status.role !== 'admin' || busy || !directForm.reportValidity()) return;
       const address = emailInput.value.trim().toLowerCase(), role = approvalRole.value;
-      run(() => service.approve(address, role), '담당자 권한을 승인했습니다.').then(result => { if (result && !destroyed && emailInput.value.trim().toLowerCase() === address) emailInput.value = ''; });
+      run(() => service.approve(address, role, { alias: approvalAlias.value.trim(), productionManager: ['production', 'admin'].includes(role) && productionManager.checked }), '담당자 권한을 승인했습니다.').then(result => { if (result && !destroyed && emailInput.value.trim().toLowerCase() === address) { emailInput.value = ''; approvalAlias.value = ''; productionManager.checked = false; } });
+    });
+    listen(approvalRole, 'change', () => { if (approvalRole.value === 'quality') productionManager.checked = false; renderDisabled(); });
+    listen(mailLanguage, 'change', () => { mailDirty = true; renderDisabled(); });
+    listen(mailForm, 'submit', event => {
+      event.preventDefault(); if (mailSave.disabled || !mailForm.reportValidity()) return;
+      const account = status.email, language = mailLanguage.value, generation = mailGeneration;
+      run(() => service.saveMailLanguage(language)).then(saved => {
+        if (!saved || destroyed || generation !== mailGeneration || status.email !== account) return;
+        mailDirty = false; mailLanguage.value = language; renderMailPreference(); actionNotice('이메일 알림 언어를 저장했습니다.');
+      });
     });
     listen(importButton, 'click', () => { if (!importButton.disabled) run(() => onImportLocal()); });
-    listen(doc, 'languagechange', () => { renderStatus(); renderRequests(); root.I18n?.refresh?.(panel); });
+    listen(doc, 'languagechange', () => { renderStatus(); renderRequests(); renderMembers(); root.I18n?.refresh?.(panel); });
     const statusUnsubscribe = service.onStatus(value => {
       if (destroyed) return; status = value; renderStatus();
       if (value.error && value.error !== lastServiceError) { lastServiceError = value.error; reportError(value.error); }
@@ -5115,7 +5441,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     });
     renderStatus();
     return Object.freeze({ destroy() {
-      if (destroyed) return; destroyed = true; requestGeneration++; statusUnsubscribe?.(); requestUnsubscribe?.();
+      if (destroyed) return; destroyed = true; requestGeneration++; mailGeneration++; memberGeneration++; memberUnsubscribe?.(); statusUnsubscribe?.(); requestUnsubscribe?.(); mailUnsubscribe?.();
       listeners.forEach(remove => remove()); requests = []; panel.remove();
     } });
   }
@@ -6705,7 +7031,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
           if (workflow.isCompleted(record) && ['NG', 'Scrap'].includes(summary.finalResult)) badge.className = 'result-tag result-ng';
           title.append(product, badge); card.append(title);
           const metadata = element('dl', 'daily-record-meta');
-          for (const [label, value] of [['로트 카드 번호', record.lotCardNo], ['공정', record.process], ['불량 수량', `${record.quantity.toLocaleString()} PCS`], ['검사자', record.inspector || '—'], ['등록일', record.scanDate], ['검사 방법', summary.method || summary.disposition ? methodLabel(summary) : '—']]) {
+          for (const [label, value] of [['로트 카드 번호', record.lotCardNo], ['공정', record.process], ['불량 수량', `${record.quantity.toLocaleString()} PCS`], ['검사자', [record.inspectorName,record.inspector].filter(Boolean).join(' · ') || '—'], ['등록일', record.scanDate], ['검사 방법', summary.method || summary.disposition ? methodLabel(summary) : '—']]) {
             const item = element('div'); item.append(element('dt', '', t(label)), element('dd', '', value)); metadata.append(item);
           }
           const defect = element('div', 'daily-defect'); defect.append(element('h4', '', t('불량 내용')), element('p', '', record.defect));
@@ -6713,7 +7039,9 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
           for (const [label, work] of [['최근 생산 작업', cycle?.production], ['최근 품질 판정', cycle?.quality || record.resolution]]) {
             if (!work) continue;
             const result = element('div', 'daily-work');
-            result.append(element('h4', '', t(label)), element('span', '', [work.completedDate || work.reinspectionDate, work.operator || work.inspector, work.result && t(work.result)].filter(Boolean).join(' · ')), element('p', '', work.notes || '—'));
+            result.append(element('h4', '', t(label)), element('span', '', [work.completedDate || work.reinspectionDate, [work.operatorName || work.inspectorName, work.operator || work.inspector].filter(Boolean).join(' · '), work.result && t(work.result)].filter(Boolean).join(' · ')), element('p', '', work.notes || '—'));
+            const quantities = workflow.productionQuantities(work);
+            if (quantities) result.append(element('p', '', `${t('양품 수량')}: ${quantities.goodQuantity.toLocaleString()} PCS · ${t('불량 수량')}: ${quantities.defectiveQuantity.toLocaleString()} PCS · ${t('불량률')}: ${quantities.defectRate.toFixed(2)}%`));
             card.append(result);
           }
           const actions = element('div', 'daily-record-actions');
@@ -6823,6 +7151,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (!R.validateResolution(record.resolution)) return false;
     if (!P.validatePhotos(record.beforePhotos) || (record.resolution && (!P.validatePhotos(record.resolution.afterPhotos) || record.resolution.history.some(item => !P.validatePhotos(item.afterPhotos))))) return false;
     if (record.resolution && (record.resolution.reinspectionDate < record.scanDate || record.resolution.history.some((item) => item.reinspectionDate < record.scanDate))) return false;
+    if (record.inspectorName !== undefined && (typeof record.inspectorName !== 'string' || !record.inspectorName.trim() || record.inspectorName.length > 120)) return false;
     const fromLTC = record.dataSource === 'ltc-excel';
     const fromPhoto = record.dataSource === 'card-photo';
     const fromPN = record.dataSource === 'pn-barcode';
@@ -6857,8 +7186,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     return raw ? validateRecords(JSON.parse(raw)) : [];
   }
   function readRecords() { return sharedRecords ? records.slice() : readLocalRecords(); }
-  function canQuality() { return !sharedRecords || (sharedStatus.canQuality && sharedStatus.online); }
-  function canProduction() { return !sharedRecords || (sharedStatus.canProduction && sharedStatus.online); }
+  function canQuality() { return !sharedRecords || (sharedStatus.canQuality && sharedStatus.online && Boolean(sharedStatus.memberAlias)); }
+  function canProduction() { return !sharedRecords || (sharedStatus.canProduction && sharedStatus.online && Boolean(sharedStatus.memberAlias)); }
   function statusLabel(record) { return t(({ registered: record.workflow ? '재처리 요청' : '생산팀 처리 대기', production_pending: '생산팀 처리 대기', quality_review: '품질 재검사 대기', completed: '처리 완료' })[W.status(record)] || '미완료'); }
   function productionPending(record) { return ['registered', 'production_pending'].includes(W.status(record)); }
   function methodLabel(value) { return value?.method === 'Other' ? `${t('기타')}: ${value.customMethod || ''}` : t(value?.method === 'Reinspection' ? '재검사' : value?.method || value?.disposition || '검사 방법 선택'); }
@@ -7102,7 +7431,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     $('qrInput').value = '';
     $('barcodeInput').value = '';
     $('defect').value = '';
-    $('quantity').value = '1';
+    $('quantity').value = '400';
     $('mismatchCheck').checked = false;
     $('charCount').textContent = '0 / 2,000';
     beforeUploader?.reset();
@@ -7133,7 +7462,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         if (!confirm(t('현재 로트 카드의 하단 바코드를 변경할까요? 입력한 불량 내용은 초기화됩니다.'))) return false;
         state.barcode = null;
         $('defect').value = '';
-        $('quantity').value = '1';
+        $('quantity').value = '400';
         $('charCount').textContent = '0 / 2,000';
         beforeUploader?.reset();
         notice('saveMessage', '');
@@ -7157,7 +7486,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (state.barcode && state.barcode.sapPN.toUpperCase() !== pn.sapPN) {
       if (!confirm(t('다른 품번입니다. 현재 카드의 제품 정보와 불량 입력을 초기화하고 변경할까요?'))) return false;
       state.barcode = null; state.ocr = null;
-      $('defect').value = ''; $('quantity').value = '1'; $('charCount').textContent = '0 / 2,000';
+      $('defect').value = ''; $('quantity').value = '400'; $('charCount').textContent = '0 / 2,000';
       beforeUploader?.reset(); notice('saveMessage', '');
     }
     state.pn = pn;
@@ -7225,7 +7554,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         if (saveRevision !== entryRevision || saveGeneration !== memberGeneration) throw new Error(t('입력 내용이 변경되었습니다. 확인 후 다시 등록해 주세요.'));
         if (mismatch() && !$('mismatchCheck').checked) throw new Error(t('같은 로트 카드인지 확인해 주세요.'));
       }
-      let record = C.createRecord({ ...state, process: document.querySelector('input[name="process"]:checked')?.value, defect: $('defect').value, quantity: $('quantity').value, inspector: $('inspector').value, part: currentPart() });
+      let record = C.createRecord({ ...state, process: document.querySelector('input[name="process"]:checked')?.value, defect: $('defect').value, quantity: $('quantity').value, inspector: sharedRecords ? sharedStatus.memberAlias : $('inspector').value, part: currentPart() });
+      if (sharedRecords) record.inspectorName = String(sharedStatus.displayName || '').trim().slice(0,120).trim() || String(sharedStatus.email || '').trim().slice(0,120);
       record.beforePhotos = beforeUploader.getPhotos();
       if (!validRecord(record)) throw new Error(t('등록 내용을 확인해 주세요.'));
       record.orderMismatchConfirmed = mismatch() && $('mismatchCheck').checked;
@@ -7277,7 +7607,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       cell(row, summary.method || summary.disposition ? methodLabel(summary) : '—'); cell(row, String(summary.cycle || 0));
       cell(row, r.defect, 'defect-cell'); cell(row, `${r.quantity.toLocaleString()} PCS`);
       const statusCell = cell(row, ''); const resultTag = document.createElement('span'); resultTag.className = `result-tag ${completed ? resultClass(summary.finalResult) : 'result-pending'}`; resultTag.textContent = completed ? t(summary.finalResult) : statusLabel(r); statusCell.append(resultTag);
-      if (completedList) { cell(row, summary.notes || '—', 'defect-cell'); cell(row, summary.inspector || '—'); }
+      if (completedList) { cell(row, summary.notes || '—', 'defect-cell'); cell(row, [summary.inspectorName,summary.inspector].filter(Boolean).join(' · ') || '—'); }
       const actions = cell(row, '', 'row-actions');
       const add = (label, handler, disabled = false, style = 'detail-link') => { const button = document.createElement('button'); button.type = 'button'; button.className = style; button.textContent = t(label); button.disabled = disabled; button.onclick = handler; actions.append(button); };
       add('보기', () => showDetails(r));
@@ -7314,7 +7644,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   }
   function sortedRecords() { return [...records].sort((a, b) => b.createdAt.localeCompare(a.createdAt)); }
   function resultClass(result) { return ({ Pass: 'result-pass', Waive: 'result-waive', MRB: 'result-mrb', NG: 'result-ng', 기타: 'result-other', Scrap: 'result-ng' })[result] || 'result-pending'; }
-  function recordMatchesSearch(r, q) { return !q || [r.equipmentId, ...Object.values(r.equipmentSnapshot || {}), r.sapPN, r.description, r.lotCardNo, r.materialName, r.planOrder, r.moldNo, r.defect, r.inspector, r.resolution?.result, r.resolution && t(r.resolution.result), r.resolution?.notes, r.resolution?.inspector, methodLabel(W.summary(r)), statusLabel(r), ...((r.workflow?.cycles || []).flatMap(cycle => [cycle.notes, cycle.production?.method, cycle.production?.customMethod, cycle.production?.operator, cycle.production?.notes, cycle.quality?.inspector, cycle.quality?.notes]))].join(' ').toLowerCase().includes(q); }
+  function recordMatchesSearch(r, q) { return !q || [r.equipmentId, ...Object.values(r.equipmentSnapshot || {}), r.sapPN, r.description, r.lotCardNo, r.materialName, r.planOrder, r.moldNo, r.defect, r.inspectorName, r.inspector, r.resolution?.result, r.resolution && t(r.resolution.result), r.resolution?.notes, r.resolution?.inspector, methodLabel(W.summary(r)), statusLabel(r), ...((r.workflow?.cycles || []).flatMap(cycle => [cycle.notes, cycle.production?.method, cycle.production?.customMethod, cycle.production?.operatorName, cycle.production?.operator, cycle.production?.notes, cycle.quality?.inspectorName, cycle.quality?.inspector, cycle.quality?.notes]))].join(' ').toLowerCase().includes(q); }
   function filteredRecords() {
     const start = $('filterStart').value, end = $('filterEnd').value, process = $('filterProcess').value, q = $('filterSearch').value.trim().toLowerCase();
     const status = $('filterState').value;
@@ -7382,6 +7712,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     for (const id of ids) $(id).value = '';
   }
   function showView(view) {
+    if (sharedRecords && sharedStatus.role === 'production') view = 'history';
     currentView = view;
     $('recordSummary').hidden = view === 'parts' || view === 'registration' || view === 'daily';
     $('dailyView').hidden = view !== 'daily';
@@ -7396,6 +7727,33 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (view === 'quality') renderQuality();
     if (view === 'daily') renderDaily();
     window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  function renderMemberAccess() {
+    const productionOnly = Boolean(sharedRecords && sharedStatus.role === 'production');
+    document.querySelectorAll('[data-view]').forEach(button => {
+      button.hidden = productionOnly && button.dataset.view !== 'history';
+    });
+    $('productionAccessMount').hidden = !productionOnly;
+    $('backupButton').hidden = $('backupSide').hidden = productionOnly;
+    const accountHome = productionOnly ? $('productionAccessMount') : $('registrationAccessHome');
+    const photoHome = productionOnly ? $('productionAccessMount') : $('registrationPhotoHome');
+    if ($('teamAccessMount').parentElement !== accountHome) accountHome.append($('teamAccessMount'));
+    if ($('teamPhotoAccessMount').parentElement !== photoHome) photoHome.append($('teamPhotoAccessMount'));
+    $('inspector').readOnly = Boolean(sharedRecords);
+    if (sharedRecords) {
+      $('inspector').value = sharedStatus.memberAlias || '';
+      if ($('productionDialog').open) {
+        $('productionOperator').value = sharedStatus.memberAlias || '';
+        $('productionActorHint').textContent = t('로그인 담당자: {name} · 별명(사번): {alias}', {name: sharedStatus.displayName || sharedStatus.email, alias: sharedStatus.memberAlias || ''});
+      }
+      if ($('resolutionDialog').open) $('reinspectionInspector').value = sharedStatus.memberAlias || '';
+    }
+    const hint = $('memberAliasHint');
+    hint.hidden = !sharedRecords || !sharedStatus.signedIn;
+    hint.textContent = sharedStatus.memberAlias
+      ? t('로그인 담당자: {name} · 별명(사번): {alias}', {name: sharedStatus.displayName || sharedStatus.email, alias: sharedStatus.memberAlias})
+      : t('등록 탭에서 관리자가 별명(사번)을 등록한 후 검사 내용을 저장할 수 있습니다.');
+    if (productionOnly && currentView !== 'history') showView('history');
   }
   function renderRegistrationPrompt() {
     $('registrationPrompt').hidden = !sharedRecords || !sharedStatus.ready || sharedStatus.signedIn || currentView === 'registration';
@@ -7421,7 +7779,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   function showDetails(record) {
     detailRecordId = record.id;
     const list = $('recordDetails'); list.replaceChildren();
-    const values = [ [t('불량 등록일'), record.scanDate], [t('스캔 시각'), new Date(record.scannedAt).toLocaleString(window.I18n.locale)], [t('스캔 시간대'), record.timeZone], [t('저장 시각'), new Date(record.createdAt).toLocaleString(window.I18n.locale)], ['SAP PN', record.sapPN], [t('Description'), record.description], [t('로트 카드'), record.lotCardNo], [t('공정'), record.process], [t('불량 수량'), `${record.quantity} PCS`], [t('검사자'), record.inspector || '—'], [t('불량 내용'), record.defect], [t('카드 발행일'), record.issueDate], [t('원료명'), record.materialName || '—'], [t('자재 관리번호'), record.materialControlNo], [t('금형 번호'), record.moldNo], [t('계획 오더'), record.planOrder], [t('리비전'), record.revision], [t('하단 바코드'), record.barcodeRaw], [t('QR 원문'), record.qrRaw] ];
+    const values = [ [t('불량 등록일'), record.scanDate], [t('스캔 시각'), new Date(record.scannedAt).toLocaleString(window.I18n.locale)], [t('스캔 시간대'), record.timeZone], [t('저장 시각'), new Date(record.createdAt).toLocaleString(window.I18n.locale)], ['SAP PN', record.sapPN], [t('Description'), record.description], [t('로트 카드'), record.lotCardNo], [t('공정'), record.process], [t('불량 수량'), `${record.quantity} PCS`], [t('검사자'), [record.inspectorName, record.inspector].filter(Boolean).join(' · ') || '—'], [t('불량 내용'), record.defect], [t('카드 발행일'), record.issueDate], [t('원료명'), record.materialName || '—'], [t('자재 관리번호'), record.materialControlNo], [t('금형 번호'), record.moldNo], [t('계획 오더'), record.planOrder], [t('리비전'), record.revision], [t('하단 바코드'), record.barcodeRaw], [t('QR 원문'), record.qrRaw] ];
     values.push([t('정보 출처'), t(record.dataSource === 'production-equipment' ? '생산 설비 정보 + QR' : record.dataSource === 'pn-barcode' ? 'QR + 품번 바코드' : record.dataSource === 'card-photo' ? '카드 사진 · 확인 완료' : record.dataSource === 'ltc-excel' ? 'LTC Excel 조회' : '하단 바코드 스캔')]);
     if (record.dataSource === 'production-equipment') values.push(...equipmentValues(record.equipmentSnapshot), [t('설비 조회 시각'), new Date(record.equipmentFetchedAt).toLocaleString(window.I18n.locale)], [t('정보 출처'), record.equipmentSource]);
     if (record.pnBarcodeRaw) values.push([t('품번 바코드 원문'), record.pnBarcodeRaw]);
@@ -7429,7 +7787,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (record.dataSource === 'ltc-excel') values.push([t('LTC 업로드 시각'), new Date(record.ltcImportedAt).toLocaleString(window.I18n.locale)], [t('LTC 원본 파일'), record.ltcSourceName]);
     if (record.orderMismatchConfirmed) values.push([t('카드 확인'), t('계획 오더와 번호가 다름 · 등록 시 같은 카드임을 확인')]);
     values.push([t('처리 상태'), statusLabel(record)], [t('검사 방법'), methodLabel(W.summary(record))]);
-    if (record.workflow) values.push([t('처리 이력'), record.workflow.cycles.map(cycle => `${t('처리 회차')} ${cycle.number} · ${methodLabel(cycle.production || cycle)}\n${cycle.assignedDate} · ${cycle.assignedBy}\n${cycle.notes}\n${cycle.production ? `${t('작업 결과 입력')}: ${cycle.production.completedDate} · ${cycle.production.operator} · ${cycle.production.processedQuantity} PCS\n${cycle.production.notes}` : ''}\n${cycle.quality ? `${t('품질 재검사')}: ${cycle.quality.reinspectionDate} · ${cycle.quality.inspector} · ${cycle.quality.result}\n${cycle.quality.notes}` : ''}`).join('\n\n')]);
+    if (record.workflow) values.push([t('처리 이력'), record.workflow.cycles.map(cycle => `${t('처리 회차')} ${cycle.number} · ${methodLabel(cycle.production || cycle)}\n${cycle.assignedDate} · ${cycle.assignedBy}\n${cycle.notes}\n${cycle.production ? `${t('작업 결과 입력')}: ${cycle.production.completedDate} · ${[cycle.production.operatorName, cycle.production.operator].filter(Boolean).join(' · ')} · ${cycle.production.processedQuantity} PCS\n${productionQuantitySummary(cycle.production)}\n${cycle.production.notes}` : ''}\n${cycle.quality ? `${t('품질 재검사')}: ${cycle.quality.reinspectionDate} · ${[cycle.quality.inspectorName, cycle.quality.inspector].filter(Boolean).join(' · ')} · ${cycle.quality.result}\n${cycle.quality.notes}` : ''}`).join('\n\n')]);
     if (R.isCompleted(record)) {
       const resolution = record.resolution;
       values.push([t('처리 결과'), t(resolution.result)], [t('재검사일'), resolution.reinspectionDate], [t('재검사자'), resolution.inspector || '—'], [t('재검사 내용'), resolution.notes || '—'], [t('최초 완료 시각'), new Date(resolution.completedAt).toLocaleString(window.I18n.locale)], [t('최종 수정 시각'), new Date(resolution.updatedAt).toLocaleString(window.I18n.locale)]);
@@ -7444,7 +7802,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   function resolutionInfo(record) {
     const info = (record.equipmentId ? `${t('설비 번호')}: ${record.equipmentId}\n` : '') + t('{pn} · 로트 {lot} · {process}\n불량: {defect}\n불량 수량 {quantity} PCS 전체에 결과를 적용합니다.', { pn: record.sapPN, lot: record.lotCardNo, process: record.process, defect: record.defect, quantity: record.quantity.toLocaleString() });
     const cycle = W.currentCycle(record);
-    return info + (cycle ? `\n${t('검사 방법')}: ${methodLabel(cycle.production || cycle)} · ${t('처리 회차')}: ${cycle.number}\n${cycle.production ? `${t('생산 작업 결과')}: ${cycle.production.completedDate} · ${cycle.production.operator}\n${cycle.production.notes}` : cycle.notes}` : '');
+    return info + (cycle ? `\n${t('검사 방법')}: ${methodLabel(cycle.production || cycle)} · ${t('처리 회차')}: ${cycle.number}\n${cycle.production ? `${t('생산 작업 결과')}: ${cycle.production.completedDate} · ${[cycle.production.operatorName, cycle.production.operator].filter(Boolean).join(' · ')}\n${productionQuantitySummary(cycle.production)}\n${cycle.production.notes}` : cycle.notes}` : '');
   }
   async function renderResolutionPhotos(record) {
     const version = ++resolutionPreviewVersion;
@@ -7502,7 +7860,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       $('reinspectionDate').value = resolution?.reinspectionDate || C.localDate();
       $('reinspectionDate').min = record.scanDate;
       $('reinspectionDate').max = C.localDate();
-      $('reinspectionInspector').value = resolution?.inspector || sharedStatus.displayName || '';
+      $('reinspectionInspector').value = sharedRecords ? sharedStatus.memberAlias || '' : resolution?.inspector || '';
+      $('reinspectionInspector').readOnly = Boolean(sharedRecords);
       $('reinspectionNotes').value = resolution?.notes || '';
       $('resolutionNotesRequired').hidden = !record.workflow && $('resolutionResult').value !== '기타';
       $('reinspectionNotes').required = Boolean(record.workflow) || $('resolutionResult').value === '기타';
@@ -7531,7 +7890,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     event.preventDefault();
     if (resolutionSaving || afterBusy || !resolutionTarget) return;
     const target = { ...resolutionTarget };
-    const input = { result: $('resolutionResult').value, reinspectionDate: $('reinspectionDate').value, inspector: $('reinspectionInspector').value, notes: $('reinspectionNotes').value };
+    const input = { result: $('resolutionResult').value, reinspectionDate: $('reinspectionDate').value, inspector: sharedRecords ? sharedStatus.memberAlias : $('reinspectionInspector').value, notes: $('reinspectionNotes').value };
+    if (sharedRecords) input.inspectorName = String(sharedStatus.displayName || '').trim().slice(0,120).trim() || String(sharedStatus.email || '').trim().slice(0,120);
     input.afterPhotos = afterUploader.getPhotos();
     setResolutionBusy(true); notice('resolutionError', '');
     try {
@@ -7556,13 +7916,33 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       $('productionMethod').value = draft.method; $('productionCustomMethod').value = draft.customMethod || ''; updateProductionMethod();
       productionTarget = structuredClone(record);
       $('productionRecordInfo').textContent = resolutionInfo(record);
-      $('productionOperator').value = sharedStatus.displayName || '';
+      $('productionOperator').value = sharedStatus.memberAlias || '';
+      $('productionOperator').readOnly = Boolean(sharedRecords);
+      $('productionActorHint').hidden = !sharedRecords;
+      $('productionActorHint').textContent = sharedRecords ? t('로그인 담당자: {name} · 별명(사번): {alias}', {name: sharedStatus.displayName || sharedStatus.email, alias: sharedStatus.memberAlias || ''}) : '';
       $('productionDate').value = C.localDate(); $('productionDate').min = W.currentCycle(record)?.quality?.reinspectionDate || W.currentCycle(record)?.assignedDate || record.scanDate; $('productionDate').max = C.localDate();
       $('productionQuantity').value = String(record.quantity); $('productionQuantity').max = String(record.quantity);
+      $('productionGoodQuantity').value = ''; $('productionDefectiveQuantity').value = '';
+      $('productionGoodQuantity').max = $('productionDefectiveQuantity').max = String(record.quantity); updateProductionQuantities();
       $('productionNotes').value = ''; productionUploader.reset(); notice('productionError', '');
       $('productionDialog').showModal();
     } catch (error) { toast(error.message); }
   }
+  function quantityInput(id) {
+    const raw = $(id).value.trim();
+    return /^\d+$/.test(raw) && Number.isSafeInteger(Number(raw)) ? Number(raw) : NaN;
+  }
+  function productionQuantitySummary(result) {
+    if (!Number.isSafeInteger(result?.goodQuantity) || !Number.isSafeInteger(result?.defectiveQuantity)) return '';
+    return `${t('양품 수량')}: ${result.goodQuantity.toLocaleString()} PCS · ${t('불량 수량')}: ${result.defectiveQuantity.toLocaleString()} PCS · ${t('불량률')}: ${(result.defectiveQuantity / result.processedQuantity * 100).toFixed(2)}%`;
+  }
+  function updateProductionQuantities() {
+    const total = quantityInput('productionQuantity'), good = quantityInput('productionGoodQuantity'), bad = quantityInput('productionDefectiveQuantity');
+    const valid = total > 0 && good >= 0 && bad >= 0 && good + bad === total;
+    $('productionDefectRate').textContent = valid ? `${(bad / total * 100).toFixed(2)}%` : '—';
+    $('productionQuantityHint').classList.toggle('quantity-mismatch', Number.isFinite(good) && Number.isFinite(bad) && !valid);
+  }
+  ['productionGoodQuantity', 'productionDefectiveQuantity'].forEach(id => $(id).addEventListener('input', updateProductionQuantities));
   function updateProductionMethod() {
     const other = $('productionMethod').value === 'Other';
     $('productionCustomMethodWrap').hidden = !other; $('productionCustomMethod').required = other;
@@ -7582,7 +7962,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     productionLocked(true); notice('productionError', '');
     try {
       if (!canProduction()) throw new Error(t('생산팀 권한과 인터넷 연결을 확인해 주세요.'));
-      const after = W.completeProduction(before, { ...W.expected(before), method: $('productionMethod').value, customMethod: $('productionCustomMethod').value, operator: $('productionOperator').value, completedDate: $('productionDate').value, processedQuantity: Number($('productionQuantity').value), notes: $('productionNotes').value, afterPhotos: productionUploader.getPhotos() });
+      const after = W.completeProduction(before, { ...W.expected(before), method: $('productionMethod').value, customMethod: $('productionCustomMethod').value, operator: sharedRecords ? sharedStatus.memberAlias : $('productionOperator').value, ...(sharedRecords ? {operatorName: String(sharedStatus.displayName || '').trim().slice(0,120).trim() || String(sharedStatus.email || '').trim().slice(0,120)} : {}), completedDate: $('productionDate').value, processedQuantity: Number($('productionQuantity').value), goodQuantity: quantityInput('productionGoodQuantity'), defectiveQuantity: quantityInput('productionDefectiveQuantity'), notes: $('productionNotes').value, afterPhotos: productionUploader.getPhotos() });
       if (!await persistUpdate(before, after, 'production')) return;
       methodDrafts.delete(before.id); $('productionDialog').close(); clearListFilters('quality'); renderRecords(); showView('quality'); toast(t('생산 작업 결과를 저장하고 품질 재검사를 요청했습니다.'));
     } catch (error) { notice('productionError', t('저장하지 못했습니다. {error}', { error: error.message }), 'error'); }
@@ -7595,7 +7975,8 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     reassignTarget = structuredClone(record);
     $('reassignRecordInfo').textContent = resolutionInfo(record);
     $('reassignDisposition').value = record.workflow?.disposition || '';
-    $('reassignInspector').value = sharedStatus.displayName || '';
+    $('reassignInspector').value = sharedStatus.memberAlias || '';
+    $('reassignInspector').readOnly = Boolean(sharedRecords);
     $('reassignNotes').value = ''; notice('reassignError', ''); $('reassignDialog').showModal();
   }
   ['reassignClose', 'reassignCancel'].forEach(id => $(id).addEventListener('click', () => { if (!reassignSaving) $('reassignDialog').close(); }));
@@ -7632,6 +8013,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   $('exportHistoryXLSX').addEventListener('click', () => exportList(false));
   $('exportQualityXLSX').addEventListener('click', () => exportList('quality'));
   async function backup() {
+    if (sharedRecords && sharedStatus.role === 'production') return;
     if (backupBusy) return;
     const backupGeneration = memberGeneration;
     backupBusy = true; $('backupButton').disabled = true; $('backupSide').disabled = true;
@@ -7918,7 +8300,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
         resetEntry(false);
       }
       sharedStatus = status;
-      renderRegistrationPrompt();
+      renderMemberAccess(); renderRegistrationPrompt();
       notice('storageError', status.error ? t('공유 이력 연결을 확인해 주세요. {error}', {error:status.error.message}) : '');
       renderRecords(); updateSaveButton();
       beforeUploader?.setDisabled(saving || !canQuality());
@@ -7944,6 +8326,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   parts = window.PartsManager.create({ embedded: master, container: $('partsView'), transport: sharedPartsTransport, onChange: masterChanged, onToast: toast });
   initializePhotos();
   document.addEventListener('languagechange', () => {
+    renderMemberAccess(); updateProductionQuantities();
     $('pageCrumb').textContent = t(({ daily: '데일리 보고서', registration: '등록', register: '공정검사', history: '등록 이력', completed: '처리 완료', parts: '품번 관리', quality: '품질 재검사' })[currentView]);
     $('masterCount').textContent = t('SAP PN {count}개 · 추가 / 업데이트', { count: parts.size.toLocaleString() });
     renderCard(); updateToday();
