@@ -107,6 +107,7 @@
 #productionDefectRate { font-size: 1.2rem; font-weight: 700; color: var(--ink, #20364b); }
 #productionQuantityHint.quantity-mismatch { color: #b42318; }
 input[readonly] { background-color: #f3f6f9; }
+.defect-category-field{margin-bottom:18px}.defect-category-field select{min-height:48px}.defect-dimensions{padding:15px;border:1px solid #d6e3f1;border-radius:9px;background:#f5f9ff;margin-bottom:18px}.defect-dimensions legend{margin:0;font-size:13px}.defect-dimensions .help{margin:0 0 10px;color:#61758b}.defect-dimension-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.defect-dimension-options label{display:flex;align-items:center;gap:8px;min-height:46px;margin:0;padding:10px;border:1px solid #c9d7e7;border-radius:7px;background:#fff;font-size:13px;cursor:pointer;touch-action:manipulation}.defect-dimension-options input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:20px;height:20px;min-width:20px;margin:0;padding:0;accent-color:#1769e0}.defect-dimension-options label:has(input:checked){border-color:#367bdd;background:#e7f1ff;color:#1453a4}.defect-dimension-options label:focus-within{outline:2px solid #7db2ff;outline-offset:2px}.defect-selection-preview{margin-top:12px;padding:12px 14px;background:#f5f8fc;border:1px solid #e0e7ef;border-radius:7px}.defect-selection-preview>span{font-size:11px;color:#687d92}.defect-selection-preview output{display:block;margin-top:5px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;color:#203b56}.defect-panel #defect{min-height:112px}@media(max-width:600px){.defect-dimension-options{grid-template-columns:repeat(2,minmax(0,1fr))}.defect-category-field select{font-size:16px}}
 #productionAccessMount { margin-bottom: 20px; }
 
 .parts-total{font-size:13px;color:#487399;background:#eaf2fa;border:1px solid #d9e6f3;padding:10px 15px;border-radius:7px;white-space:nowrap}.parts-toolbar{padding:22px 24px 12px;display:flex;align-items:center;justify-content:space-between;gap:18px}.parts-toolbar h2{margin:0 0 7px;font-size:17px}.parts-toolbar .help{margin:0}.parts-actions{display:flex;gap:10px;flex-wrap:wrap}.parts-format-help{font-size:12px;line-height:1.7;color:#72869c;padding:0 24px 20px;margin:0}.parts-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}.parts-form{display:flex;flex-direction:column;gap:18px}.parts-form label{display:block;margin-bottom:8px}.parts-form input{width:100%}.parts-form input[readonly]{background:#f0f4f8;color:#7890a5}.parts-form .help{margin:0}.parts-form .notice{margin:0}.parts-searchbar{padding:22px 22px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.parts-searchbar label{font-size:13px;flex-basis:100%}.parts-searchbar input{flex:1;min-width:140px}.parts-searchbar .subtle{font-size:11px}.parts-table-wrap{overflow-x:auto}.parts-table-wrap table{width:100%;min-width:520px}.parts-table-wrap td{font-size:12px;vertical-align:top}.parts-table-wrap .parts-pn{white-space:nowrap;font-weight:600;color:#345b80}.parts-table-wrap .parts-desc{white-space:normal;min-width:150px;overflow-wrap:anywhere;line-height:1.6}.parts-empty{text-align:center;padding:36px!important;color:#7c8fa1}.parts-more{display:block;margin:17px auto}.parts-preview{margin:0 24px 24px;padding:20px;border:1px solid #d6e4f1;border-radius:8px;background:#f8fbff}.parts-preview h3{margin:0 0 14px;font-size:14px;overflow-wrap:anywhere}.parts-preview-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.parts-preview-counts>div{display:flex;align-items:baseline;gap:7px;background:#fff;border:1px solid #dce6ee;border-radius:7px;padding:12px}.parts-preview-counts strong{font-size:22px;color:#286da8}.parts-preview-counts span{font-size:12px;color:#6f8295}.parts-preview .help{line-height:1.6}.parts-changes{padding:0;list-style:none;margin:18px 0}.parts-changes li{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:5px 14px;padding:10px 0;border-top:1px solid #e3ebf4;font-size:12px;overflow-wrap:anywhere}.parts-changes small{grid-column:2;color:#8392a3;font-size:11px}.parts-changes li>strong{color:#3c617e}.parts-preview .parts-actions{margin-top:20px}#partsMessage{margin:0 24px 20px}#partsReload{margin:-6px 0 18px}#partsView>.history-note{line-height:1.8}#partsStorageError{margin-bottom:15px}
@@ -306,8 +307,10 @@ footer{flex-wrap:wrap;gap:12px}.public-links{display:flex;flex-wrap:wrap;gap:6px
             <form id="defectForm" class="panel-body">
               <fieldset><legend><span data-i18n="불량 발생 공정">불량 발생 공정</span> <em>*</em></legend><div class="process-options"><label><input type="radio" name="process" value="FOL" required><span>FOL</span></label><label><input type="radio" name="process" value="EOL"><span>EOL</span></label><label><input type="radio" name="process" value="OQC"><span>OQC</span></label></div></fieldset>
               <div class="form-row"><div><label for="quantity"><span data-i18n="불량 수량">불량 수량</span> <em>*</em></label><div class="unit-input"><input id="quantity" type="number" min="1" step="1" value="400" required max="999999999"><span>PCS</span></div></div><div><label for="inspector"><span data-i18n="검사자">검사자</span> <em>*</em></label><input id="inspector" type="text" required placeholder="이름 또는 사번" maxlength="80" autocomplete="off" data-i18n-placeholder="이름 또는 사번"></div></div>
-              <label for="defect"><span data-i18n="불량 내용">불량 내용</span> <em>*</em></label><textarea id="defect" rows="6" maxlength="2000" required placeholder="불량 종류, 발생 위치, 상태를 입력하세요.&#10;예: 트레이 우측 모서리 스크래치" data-i18n-placeholder="불량 종류, 발생 위치, 상태를 입력하세요.
-예: 트레이 우측 모서리 스크래치"></textarea><div class="textarea-footer"><span><span data-i18n="관찰한 불량 내용을 구체적으로 기록하세요.">관찰한 불량 내용을 구체적으로 기록하세요.</span></span><span id="charCount">0 / 2,000</span></div>
+              <div class="defect-category-field"><label for="defectCategory"><span data-i18n="불량 항목">불량 항목</span> <em>*</em></label><select id="defectCategory" required><option value="" data-i18n="불량 항목을 선택해 주세요.">불량 항목을 선택해 주세요.</option></select></div>
+              <fieldset id="defectDimensions" class="defect-dimensions" hidden><legend><span data-i18n="Dimension 세부 항목">Dimension 세부 항목</span> <em>*</em></legend><p class="help" id="defectDimensionsHint" data-i18n="해당하는 치수 항목을 선택하세요. 여러 개 선택할 수 있습니다.">해당하는 치수 항목을 선택하세요. 여러 개 선택할 수 있습니다.</p><div id="defectDimensionOptions" class="defect-dimension-options" aria-describedby="defectDimensionsHint"></div></fieldset>
+              <label for="defect"><span id="defectNotesLabel" data-i18n="추가 설명 (선택)">추가 설명 (선택)</span><em id="defectNotesRequired" hidden>*</em></label><textarea id="defect" rows="4" maxlength="2000" placeholder="발생 위치나 상태 등 추가 설명을 입력하세요." data-i18n-placeholder="발생 위치나 상태 등 추가 설명을 입력하세요."></textarea><div class="textarea-footer"><span data-i18n="선택한 항목과 설명이 함께 저장됩니다.">선택한 항목과 설명이 함께 저장됩니다.</span><span id="charCount">0 / 2,000</span></div>
+              <div id="defectPreviewBox" class="defect-selection-preview" hidden><span data-i18n="저장될 불량 내용">저장될 불량 내용</span><output id="defectPreview" for="defectCategory defect"></output></div>
               <div id="saveMessage" class="notice error" role="alert" hidden></div>
               <p id="memberAliasHint" class="help" role="status" hidden></p>
               <div class="save-area"><p id="saveHint"><span data-i18n="바코드와 QR 인식 후 등록할 수 있습니다.">바코드와 QR 인식 후 등록할 수 있습니다.</span></p><button id="saveButton" class="button primary" type="submit" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></path></svg><span data-i18n="불량 등록">불량 등록</span></button></div>
@@ -2541,6 +2544,28 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   ];
   global.I18n.addMessages(Object.fromEntries(rows.map(([ko,en,zh,vi,id])=>[ko,{en,'zh-TW':zh,vi,id}])));
 })(globalThis);
+
+(function (global) {
+  'use strict';
+  const rows = [
+    ['불량 항목', 'Defect category', '不良項目', 'Loại lỗi', 'Kategori cacat'],
+    ['불량 항목을 선택해 주세요.', 'Select a defect category.', '請選擇不良項目。', 'Vui lòng chọn loại lỗi.', 'Pilih kategori cacat.'],
+    ['기타 · 직접 입력', 'Other · enter manually', '其他 · 自行輸入', 'Khác · nhập thủ công', 'Lainnya · masukkan sendiri'],
+    ['Dimension 세부 항목', 'Dimension details', 'Dimension 細項', 'Chi tiết Dimension', 'Rincian Dimension'],
+    ['해당하는 치수 항목을 선택하세요. 여러 개 선택할 수 있습니다.', 'Select the applicable dimensions. You can select more than one.', '請選擇適用的尺寸項目，可複選。', 'Chọn các hạng mục kích thước liên quan. Bạn có thể chọn nhiều mục.', 'Pilih dimensi yang sesuai. Anda dapat memilih lebih dari satu.'],
+    ['Dimension 세부 항목을 하나 이상 선택해 주세요.', 'Select at least one Dimension detail.', '請至少選擇一個 Dimension 細項。', 'Vui lòng chọn ít nhất một mục chi tiết Dimension.', 'Pilih setidaknya satu rincian Dimension.'],
+    ['Dimension 세부 항목을 확인해 주세요.', 'Check the selected Dimension details.', '請確認所選的 Dimension 細項。', 'Vui lòng kiểm tra các mục chi tiết Dimension đã chọn.', 'Periksa rincian Dimension yang dipilih.'],
+    ['기타를 선택하면 불량 내용을 직접 입력해 주세요.', 'If you select Other, enter the defect description.', '選擇「其他」時，請自行輸入不良內容。', 'Nếu chọn Khác, vui lòng nhập nội dung lỗi.', 'Jika memilih Lainnya, masukkan deskripsi cacat.'],
+    ['불량 상세 내용을 확인해 주세요.', 'Check the defect details.', '請確認不良詳細內容。', 'Vui lòng kiểm tra nội dung chi tiết của lỗi.', 'Periksa rincian cacat.'],
+    ['추가 설명 (선택)', 'Additional details (optional)', '補充說明（選填）', 'Mô tả bổ sung (không bắt buộc)', 'Keterangan tambahan (opsional)'],
+    ['불량 내용 · 직접 입력', 'Defect description · enter manually', '不良內容 · 自行輸入', 'Nội dung lỗi · nhập thủ công', 'Deskripsi cacat · masukkan sendiri'],
+    ['발생 위치나 상태 등 추가 설명을 입력하세요.', 'Enter additional details, such as the location or condition of the defect.', '請輸入不良發生位置、狀況等補充說明。', 'Nhập mô tả bổ sung, chẳng hạn như vị trí hoặc tình trạng lỗi.', 'Masukkan keterangan tambahan, seperti lokasi atau kondisi cacat.'],
+    ['목록에 없는 불량 내용을 입력하세요.', 'Describe the defect that is not listed.', '請輸入清單中未列出的不良內容。', 'Nhập nội dung lỗi không có trong danh sách.', 'Masukkan deskripsi cacat yang tidak tercantum dalam daftar.'],
+    ['선택한 항목과 설명이 함께 저장됩니다.', 'The selected category and description will be saved together.', '所選項目與說明將一併儲存。', 'Mục đã chọn và mô tả sẽ được lưu cùng nhau.', 'Kategori yang dipilih dan deskripsi akan disimpan bersama.'],
+    ['저장될 불량 내용', 'Defect description to be saved', '即將儲存的不良內容', 'Nội dung lỗi sẽ được lưu', 'Deskripsi cacat yang akan disimpan']
+  ];
+  global.I18n.addMessages(Object.fromEntries(rows.map(([source, en, zhTW, vi, id]) => [source, { en, 'zh-TW': zhTW, vi, id }])));
+})(typeof window !== 'undefined' ? window : globalThis);
 </script>
   <script>(function (root, factory) {
   'use strict';
@@ -2884,6 +2909,57 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   return Object.freeze({ PROCESSES, EQUIPMENT_SOURCE, EQUIPMENT_FIELDS, EQUIPMENT_EXPORT_COLUMNS, cleanScan, parseBarcode, parseLot, parsePN, pnProduct, parseScan, parseLTCData, parsePhotoData,
     normalizeEquipmentMachine, parseEquipmentData, validEquipmentRecord, equipmentExportValue, localDate, createRecord, toCSV });
+});
+
+(function (root, factory) {
+  'use strict';
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root) root.DefectCategories = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const CATEGORIES = Object.freeze([
+    'FM', 'Warpage', 'Crack', 'Unfield Fence', 'Incomplete Fence',
+    'C/C&STH', 'S/R', 'Dimension', 'Date Code', 'other'
+  ]);
+  const DIMENSIONS = Object.freeze(['EL', 'OL', 'OW', 'TSL', 'BSL', 'TSW', 'BSW', 'Pocket']);
+  const t = source => globalThis.I18n?.t(source) || source;
+
+  function preview(input = {}) {
+    const { category, dimensions, notes } = input || {};
+    const detail = typeof notes === 'string' ? notes.trim() : '';
+    let label = CATEGORIES.includes(category) && category !== 'other' ? category : '';
+    if (category === 'Dimension') {
+      const selected = DIMENSIONS.filter(code => Array.isArray(dimensions) && dimensions.includes(code));
+      if (selected.length) label += ` (${selected.join(', ')})`;
+    }
+    return [label, detail].filter(Boolean).join('\n');
+  }
+
+  function compose(input = {}) {
+    if (!input || typeof input !== 'object' || Array.isArray(input) || !CATEGORIES.includes(input.category)) {
+      throw new Error(t('불량 항목을 선택해 주세요.'));
+    }
+    const dimensions = input.dimensions === undefined ? [] : input.dimensions;
+    if (!Array.isArray(dimensions) || Array.from(dimensions).some(code => !DIMENSIONS.includes(code))) {
+      throw new Error(t('Dimension 세부 항목을 확인해 주세요.'));
+    }
+    if (input.category === 'Dimension' && !dimensions.length) {
+      throw new Error(t('Dimension 세부 항목을 하나 이상 선택해 주세요.'));
+    }
+    if (input.notes !== undefined && typeof input.notes !== 'string') {
+      throw new Error(t('불량 상세 내용을 확인해 주세요.'));
+    }
+    if (input.category === 'other' && !input.notes?.trim()) {
+      throw new Error(t('기타를 선택하면 불량 내용을 직접 입력해 주세요.'));
+    }
+    const result = preview(input);
+    if (result.length > 2000) throw new Error(t('불량 내용은 2,000자 이내로 입력해 주세요.'));
+    return result;
+  }
+
+  return Object.freeze({ CATEGORIES, DIMENSIONS, preview, compose });
 });
 </script>
   <script>(function (root, factory) {
@@ -7119,6 +7195,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   'use strict';
   const $ = (id) => document.getElementById(id);
   const C = window.LotCore;
+  const D = window.DefectCategories;
   const R = window.ReinspectionCore;
   const W = window.ProductionWorkflow;
   const P = window.EvidencePhotos;
@@ -7301,8 +7378,51 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   function scanInputFor(type) { return $(type === 'lot' ? 'qrInput' : 'barcodeInput'); }
   function scanIsCurrent(type) { if (type === 'barcode' && isEquipmentMode()) return Boolean(state.equipment && $('equipmentSelect').value === state.equipment.machine.id && !equipmentChanged && state.equipment.machine.part && state.equipment.machine.description); return Boolean(state[type] && C.cleanScan(scanInputFor(type).value) === (type === 'barcode' ? state.productInputRaw ?? state[type].raw : state[type].raw)); }
   function focusNextScan() {
-    const input = isEquipmentMode() ? !state.equipment ? $('equipmentSelect') : !scanIsCurrent('lot') ? $('qrInput') : !$('equipmentIssueDate').value ? $('equipmentIssueDate') : $('defect') : scanIsCurrent('lot') ? (scanIsCurrent('barcode') ? $('defect') : $('barcodeInput')) : $('qrInput');
+    const input = isEquipmentMode() ? !state.equipment ? $('equipmentSelect') : !scanIsCurrent('lot') ? $('qrInput') : !$('equipmentIssueDate').value ? $('equipmentIssueDate') : $('defectCategory') : scanIsCurrent('lot') ? (scanIsCurrent('barcode') ? $('defectCategory') : $('barcodeInput')) : $('qrInput');
     input.focus(); input.select?.();
+  }
+  function defectDraft() {
+    return { category: $('defectCategory').value, dimensions: [...$('defectDimensionOptions').querySelectorAll('input:checked')].map(input => input.value), notes: $('defect').value };
+  }
+  function hasDefectDraft() { return Boolean($('defectCategory').value || $('defect').value.trim()); }
+  function renderDefectSelection() {
+    const draft = defectDraft(), other = draft.category === 'other';
+    $('defectDimensions').hidden = draft.category !== 'Dimension';
+    $('defectDimensions').disabled = draft.category !== 'Dimension';
+    $('defect').required = other;
+    $('defectNotesRequired').hidden = !other;
+    window.I18n.bind($('defectNotesLabel'), other ? '불량 내용 · 직접 입력' : '추가 설명 (선택)');
+    window.I18n.bind($('defect'), other ? '목록에 없는 불량 내용을 입력하세요.' : '발생 위치나 상태 등 추가 설명을 입력하세요.', {}, 'placeholder');
+    const preview = D.preview(draft);
+    $('defectPreview').textContent = preview;
+    $('defectPreviewBox').hidden = !preview;
+    $('charCount').textContent = `${preview.length.toLocaleString()} / 2,000`;
+  }
+  function resetDefectSelection() {
+    $('defectCategory').value = '';
+    $('defect').value = '';
+    $('defectDimensionOptions').querySelectorAll('input').forEach(input => { input.checked = false; });
+    renderDefectSelection();
+  }
+  function initializeDefectSelection() {
+    for (const category of D.CATEGORIES) {
+      const option = document.createElement('option'); option.value = category;
+      if (category === 'other') window.I18n.bind(option, '기타 · 직접 입력');
+      else option.textContent = category;
+      $('defectCategory').append(option);
+    }
+    for (const dimension of D.DIMENSIONS) {
+      const label = document.createElement('label'), checkbox = document.createElement('input'), text = document.createElement('span');
+      checkbox.type = 'checkbox'; checkbox.value = dimension; checkbox.name = 'defectDimension';
+      text.textContent = dimension; label.append(checkbox, text); $('defectDimensionOptions').append(label);
+    }
+    $('defectCategory').addEventListener('change', () => {
+      entryRevision++;
+      if ($('defectCategory').value !== 'Dimension') $('defectDimensionOptions').querySelectorAll('input').forEach(input => { input.checked = false; });
+      renderDefectSelection(); notice('saveMessage', '');
+    });
+    $('defectDimensionOptions').addEventListener('change', () => { entryRevision++; renderDefectSelection(); notice('saveMessage', ''); });
+    renderDefectSelection();
   }
   function mismatch() { return Boolean(state.barcode?.planOrder && state.lot && state.lot.lotCardNo.slice(0, -5) !== state.barcode.planOrder); }
   const equipmentLabels = [['id','설비 번호'],['customer','고객'],['operator_no','생산 작업자'],['status','설비 상태'],['status_note','상태 메모'],['p_mc','P-M/C'],['pbin_color','Pbin Color'],['co','COO'],['technician','Technician'],['qc','Q.C'],['etc','기타 생산 정보'],['card_date','원본 카드 날짜'],['updated','생산 정보 갱신 시각']];
@@ -7379,7 +7499,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   $('equipmentRefresh').addEventListener('click', () => loadEquipment());
   $('equipmentSelect').addEventListener('change', () => {
     const selected = $('equipmentSelect').value;
-    if ((state.lot || $('defect').value.trim() || beforeUploader?.getPhotos().length) && !confirm(t('설비를 다시 선택하면 현재 카드와 불량 입력이 초기화됩니다. 계속할까요?'))) { $('equipmentSelect').value = state.equipment?.machine.id || ''; return; }
+    if ((state.lot || hasDefectDraft() || beforeUploader?.getPhotos().length) && !confirm(t('설비를 다시 선택하면 현재 카드와 불량 입력이 초기화됩니다. 계속할까요?'))) { $('equipmentSelect').value = state.equipment?.machine.id || ''; return; }
     cancelEquipmentRequest();
     if (!selected) { resetEntry(false); return; }
     loadEquipment(selected);
@@ -7398,7 +7518,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     finally { if (request === equipmentRequest) { equipmentBusy = false; $('equipmentLoginSubmit').disabled = false; renderEquipment(); updateSaveButton(); } }
   });
   $('entryMode').addEventListener('change', () => {
-    if ((state.lot || state.barcode || $('defect').value.trim() || beforeUploader?.getPhotos().length) && !confirm(t('입력 방식을 변경하면 현재 카드와 불량 입력이 초기화됩니다. 계속할까요?'))) { $('entryMode').value = activeEntryMode; return; }
+    if ((state.lot || state.barcode || hasDefectDraft() || beforeUploader?.getPhotos().length) && !confirm(t('입력 방식을 변경하면 현재 카드와 불량 입력이 초기화됩니다. 계속할까요?'))) { $('entryMode').value = activeEntryMode; return; }
     activeEntryMode = $('entryMode').value;
     cancelEquipmentRequest(); endIdentity(); closeOCR(); resetEntry(false); renderEquipment();
     if (isEquipmentMode() && equipmentClient.session().authenticated) loadEquipment();
@@ -7478,7 +7598,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     $('equipmentSelect').value = equipment?.machine.id || ''; $('equipmentIssueDate').value = '';
     $('qrInput').value = '';
     $('barcodeInput').value = '';
-    $('defect').value = '';
+    resetDefectSelection();
     $('quantity').value = '400';
     $('mismatchCheck').checked = false;
     $('charCount').textContent = '0 / 2,000';
@@ -7509,7 +7629,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       } else {
         if (!confirm(t('현재 로트 카드의 하단 바코드를 변경할까요? 입력한 불량 내용은 초기화됩니다.'))) return false;
         state.barcode = null;
-        $('defect').value = '';
+        resetDefectSelection();
         $('quantity').value = '400';
         $('charCount').textContent = '0 / 2,000';
         beforeUploader?.reset();
@@ -7534,7 +7654,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     if (state.barcode && state.barcode.sapPN.toUpperCase() !== pn.sapPN) {
       if (!confirm(t('다른 품번입니다. 현재 카드의 제품 정보와 불량 입력을 초기화하고 변경할까요?'))) return false;
       state.barcode = null; state.ocr = null;
-      $('defect').value = ''; $('quantity').value = '400'; $('charCount').textContent = '0 / 2,000';
+      resetDefectSelection(); $('quantity').value = '400';
       beforeUploader?.reset(); notice('saveMessage', '');
     }
     state.pn = pn;
@@ -7581,11 +7701,11 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   }
   $('defectForm').addEventListener('input', () => { entryRevision++; });
   $('resetCard').addEventListener('click', () => {
-    if ((state.barcode || state.lot || $('defect').value.trim() || beforeUploader?.getPhotos().length || beforeBusy) && !confirm(t('현재 입력을 지우고 새 카드를 스캔할까요? 저장한 이력은 유지됩니다.'))) return;
+    if ((state.barcode || state.lot || hasDefectDraft() || beforeUploader?.getPhotos().length || beforeBusy) && !confirm(t('현재 입력을 지우고 새 카드를 스캔할까요? 저장한 이력은 유지됩니다.'))) return;
     cancelEquipmentRequest(); resetEntry();
   });
   $('mismatchCheck').addEventListener('change', () => { entryRevision++; updateSaveButton(); });
-  $('defect').addEventListener('input', () => { $('charCount').textContent = `${$('defect').value.length.toLocaleString()} / 2,000`; notice('saveMessage', ''); });
+  $('defect').addEventListener('input', () => { renderDefectSelection(); notice('saveMessage', ''); });
 
   $('defectForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -7596,13 +7716,14 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     try {
       if (!canQuality()) throw new Error(t('품질팀 권한과 인터넷 연결을 확인해 주세요.'));
       if (!$('inspector').value.trim()) throw new Error(t('품질 담당자를 입력해 주세요.'));
+      const defect = D.compose(defectDraft());
       if (isEquipmentMode()) {
         if (!state.equipment || equipmentChanged) throw new Error(t('설비·QR·카드 발행일을 확인해 주세요.'));
         await verifySelectedEquipment();
         if (saveRevision !== entryRevision || saveGeneration !== memberGeneration) throw new Error(t('입력 내용이 변경되었습니다. 확인 후 다시 등록해 주세요.'));
         if (mismatch() && !$('mismatchCheck').checked) throw new Error(t('같은 로트 카드인지 확인해 주세요.'));
       }
-      let record = C.createRecord({ ...state, process: document.querySelector('input[name="process"]:checked')?.value, defect: $('defect').value, quantity: $('quantity').value, inspector: sharedRecords ? sharedStatus.memberAlias : $('inspector').value, part: currentPart() });
+      let record = C.createRecord({ ...state, process: document.querySelector('input[name="process"]:checked')?.value, defect, quantity: $('quantity').value, inspector: sharedRecords ? sharedStatus.memberAlias : $('inspector').value, part: currentPart() });
       if (sharedRecords) record.inspectorName = String(sharedStatus.displayName || '').trim().slice(0,120).trim() || String(sharedStatus.email || '').trim().slice(0,120);
       record.beforePhotos = beforeUploader.getPhotos();
       if (!validRecord(record)) throw new Error(t('등록 내용을 확인해 주세요.'));
@@ -8178,7 +8299,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       $('mismatchCheck').checked = false; entryRevision++;
       closeOCR(); renderCard();
       notice('scanMessage', t('확인한 카드 정보를 반영했습니다. 공정·불량 내용과 제품 사진을 등록하세요.'), 'success');
-      $('defect').focus();
+      $('defectCategory').focus();
     } catch (error) { notice('ocrMessage', error.message, 'error'); }
   });
   $('ocrCancel').addEventListener('click', closeOCR);
@@ -8362,6 +8483,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
     const hint = document.querySelector('.history-note span');
     if (hint) window.I18n.bind(hint, '승인된 품질팀과 생산팀이 같은 이력을 공유합니다. 생산 결과와 품질 판정은 회차별로 보존됩니다.');
   }
+  initializeDefectSelection();
   window.I18n.init();
   initializeTeamRecords();
   $('defectForm').noValidate = true;
@@ -8374,7 +8496,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   parts = window.PartsManager.create({ embedded: master, container: $('partsView'), transport: sharedPartsTransport, onChange: masterChanged, onToast: toast });
   initializePhotos();
   document.addEventListener('languagechange', () => {
-    renderMemberAccess(); updateProductionQuantities();
+    renderMemberAccess(); updateProductionQuantities(); renderDefectSelection();
     $('pageCrumb').textContent = t(({ daily: '데일리 보고서', registration: '등록', register: '공정검사', history: '등록 이력', completed: '처리 완료', parts: '품번 관리', quality: '품질 재검사' })[currentView]);
     $('masterCount').textContent = t('SAP PN {count}개 · 추가 / 업데이트', { count: parts.size.toLocaleString() });
     renderCard(); updateToday();
