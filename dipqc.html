@@ -4917,7 +4917,17 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       signInPromise=pending;return pending;
     }
     async function signOut(){const env=await init();await env.sdk.signOut(env.auth);}
-    return Object.freeze({read,subscribe,onStatus,getStatus:()=>status,createRecord,importRecord,updateRecord,requestAccess,subscribeAccessRequests,approve,subscribePhotoSettings,savePhotoSettings,signIn,signOut});
+    async function syncEquipmentLights(){
+      const env=await init(),{user}=await authorize(env);
+      const token=await env.sdk.getIdToken(user);sameUser(env,user);
+      const control=new AbortController(),timer=setTimeout(()=>control.abort(),30000);
+      try{
+        const response=await fetch('https://ltc-equipment-monitor.pwjwx2rg6w.chatgpt.site/api/ipqc-sync',{method:'POST',headers:{Authorization:'Bearer '+token},credentials:'omit',cache:'no-store',signal:control.signal});
+        if(!response.ok)throw new Error('IPQC 신호등 동기화 대기 · 인터넷 연결과 팀 권한을 확인해 주세요.');
+        return await response.json();
+      }finally{clearTimeout(timer);}
+    }
+    return Object.freeze({syncEquipmentLights,read,subscribe,onStatus,getStatus:()=>status,createRecord,importRecord,updateRecord,requestAccess,subscribeAccessRequests,approve,subscribePhotoSettings,savePhotoSettings,signIn,signOut});
   }
   return Object.freeze({create,SDK_VERSION,COLLECTION,MAX_RECORD_BYTES,ROLES});
 });
@@ -6852,11 +6862,28 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
   function statusLabel(record) { return t(({ registered: record.workflow ? '재처리 요청' : '생산팀 처리 대기', production_pending: '생산팀 처리 대기', quality_review: '품질 재검사 대기', completed: '처리 완료' })[W.status(record)] || '미완료'); }
   function productionPending(record) { return ['registered', 'production_pending'].includes(W.status(record)); }
   function methodLabel(value) { return value?.method === 'Other' ? `${t('기타')}: ${value.customMethod || ''}` : t(value?.method === 'Reinspection' ? '재검사' : value?.method || value?.disposition || '검사 방법 선택'); }
+  let lightSyncBusy=false,lightSyncAgain=false,lightSyncTimer=null,lightSyncFailed=false;
+  function queueEquipmentLights(){
+    if(!sharedRecords||!sharedStatus.role||!sharedStatus.online)return;
+    if(lightSyncBusy){lightSyncAgain=true;return;}
+    if(lightSyncTimer)return;
+    lightSyncTimer=setTimeout(async()=>{
+      lightSyncTimer=null;lightSyncBusy=true;
+      let note=$('equipmentLightsSync');
+      if(!note){note=document.createElement('div');note.id='equipmentLightsSync';note.className='notice';note.setAttribute('role','status');$('storageError').insertAdjacentElement('afterend',note);}
+      try{await sharedRecords.syncEquipmentLights();lightSyncFailed=false;note.hidden=true;}
+      catch(_){lightSyncFailed=true;note.hidden=false;note.textContent=t('IPQC 신호등 동기화 대기 · 인터넷 연결과 팀 권한을 확인해 주세요.');}
+      finally{lightSyncBusy=false;if(lightSyncAgain){lightSyncAgain=false;queueEquipmentLights();}}
+    },800);
+  }
+  setInterval(()=>{if(lightSyncFailed)queueEquipmentLights();},60000);
+  window.addEventListener('online',queueEquipmentLights);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)queueEquipmentLights();});
   function applySavedRecord(before, after) {
     const index = records.findIndex(r => r.id === after.id);
     if (index < 0) records.push(after);
     else if ((before && JSON.stringify(records[index]) === JSON.stringify(before)) || JSON.stringify(records[index]) === JSON.stringify(after)) records[index] = after;
-    renderRecords();
+    renderRecords();queueEquipmentLights();
   }
   async function persistUpdate(before, after, action) {
     if (!validRecord(after)) throw new Error(t('등록 내용을 확인해 주세요.'));
@@ -7897,7 +7924,7 @@ window.I18n.addMessages({"개인정보처리방침":{"en":"Privacy policy","zh-T
       beforeUploader?.setDisabled(saving || !canQuality());
       if (status.ready && !status.role) { records = []; renderRecords(); }
     });
-    sharedRecords.subscribe(next => { records = validateRecords(next); storageFault = false; renderRecords(); updateSaveButton(); }, error => {
+    sharedRecords.subscribe(next => { records = validateRecords(next); storageFault = false; renderRecords(); updateSaveButton(); queueEquipmentLights(); }, error => {
       notice('storageError', error.message, 'error'); updateSaveButton();
     });
     $('restoreButton').hidden = true;
