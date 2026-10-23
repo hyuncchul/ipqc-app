@@ -3655,6 +3655,13 @@ init();
 #measurementSection #patrol .p-tools .p-scan,#measurementSection #patrol .p-tools button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 #measurementSection #patrol .p-body{background:var(--card);padding:16px 0 0;gap:16px}
 @media(max-width:1000px){#measurementSection #patrol .p-item{flex-basis:100%;max-width:none;margin-left:0}#measurementSection #patrol .p-body{padding:14px 0 0}}
+
+/* Use the same type scale as the surrounding numbered PEAK form panels:
+   fields 14px, labels/actions 13px, supporting copy 12px. */
+#measurementSection #patrol .p-mc-name,#measurementSection #patrol .p-val,#measurementSection #patrol #pNote,#measurementSection #patrol select,#measurementSection #patrol .p-manual input,#measurementSection #patrol .p-scantarget{font-size:14px}
+#measurementSection #patrol button,#measurementSection #patrol .p-keys button,#measurementSection #patrol .p-keys .fn,#measurementSection #patrol .p-next,#measurementSection #patrol .p-rounds button,#measurementSection #patrol .p-item button,#measurementSection #patrol .p-row-judges button,#measurementSection #patrol .p-pad-target,#measurementSection #patrol .p-caption,#measurementSection #patrol .p-row-judges>span,#measurementSection #patrol .p-prog,#measurementSection #patrol .p-prog b,#measurementSection #patrol .p-no,#measurementSection #patrol .p-dimensions label{font-size:13px;font-weight:600}
+#measurementSection #patrol .p-val,#measurementSection #patrol #pNote,#measurementSection #patrol select{font-weight:400;line-height:1.5}
+#measurementSection #patrol .p-mc-sub,#measurementSection #patrol .p-hint,#measurementSection #patrol .p-scanstatus,#measurementSection #patrol #pValidation{font-size:12px;font-weight:400;line-height:1.6}
 </style>
 
 <div class="p-toast" id="pToast"></div>
