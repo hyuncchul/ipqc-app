@@ -488,7 +488,7 @@
     </div>
     <div id="pEmpty" class="hint"></div>
 <div id="patrol" role="region" aria-label="IPQC patrol measurement input">
-  <div class="p-top"><img class="p-brand" src="ipqc-peak-logo.png" alt="PEAK"><strong>PEAK · IPQC</strong>
+  <div class="p-top">
     <div class="p-rounds" id="pRounds"></div>
     <div class="p-item">
       <button type="button" onclick="patrolItemStep(-1)" aria-label="prev">◀</button>
@@ -3637,6 +3637,24 @@ init();
 @media(max-width:1000px){#measurementSection #patrol .p-top strong,#measurementSection #patrol .p-brand{display:none}#measurementSection #patrol .p-item{flex-basis:100%;max-width:none}#measurementSection #patrol .p-body{grid-template-columns:minmax(0,1fr) 240px;padding:10px;gap:10px}#measurementSection #patrol .p-row{grid-template-columns:26px minmax(0,1fr) 100px;padding:9px;gap:7px}#measurementSection #patrol .p-row-judges{grid-column:1/-1}}
 @media(max-width:650px){#measurementSection #patrol .p-pad{position:static}#measurementSection #patrol .p-tools button{flex:1 1 130px}#measurementSection #patrol .p-row-judges>span{width:100%}}
 
+
+/* Match the numbered PEAK form panels: one white section, neutral controls,
+   blue active/forward actions, and no duplicate application branding. */
+#measurementSection #patrol{border:0;border-radius:0;margin-top:0;background:var(--card)}
+#measurementSection #patrol .p-top{background:var(--card);color:var(--text);padding:0 0 16px;gap:12px;border-radius:0;border-bottom:1px solid var(--line)}
+#measurementSection #patrol .p-rounds{background:transparent;padding:0;gap:6px;border-radius:0}
+#measurementSection #patrol .p-rounds button{background:var(--card);color:var(--muted);border:1px solid var(--line);border-radius:7px;padding:8px 12px;min-height:44px;font-size:14px;font-weight:600}
+#measurementSection #patrol .p-rounds button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+#measurementSection #patrol .p-rounds button.full::after{color:inherit}
+#measurementSection #patrol .p-item{margin-left:auto;flex:1;min-width:220px;max-width:660px;gap:8px}
+#measurementSection #patrol .p-item button{background:var(--card);color:var(--muted);border:1px solid var(--line);border-radius:7px;flex:0 0 44px;font-size:16px;font-weight:600}
+#measurementSection #patrol .p-item button:last-child{background:var(--primary);border-color:var(--primary);color:#fff}
+#measurementSection #patrol .p-item select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:7px;font-size:14px;font-weight:500;height:44px;min-width:0}
+#measurementSection #patrol .p-tools{background:var(--card);padding:14px 0;border-bottom:1px solid var(--line);gap:8px}
+#measurementSection #patrol .p-tools button{color:var(--muted);border-color:var(--line);font-size:13px;border-radius:7px}
+#measurementSection #patrol .p-tools .p-scan,#measurementSection #patrol .p-tools button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+#measurementSection #patrol .p-body{background:var(--card);padding:16px 0 0;gap:16px}
+@media(max-width:1000px){#measurementSection #patrol .p-item{flex-basis:100%;max-width:none;margin-left:0}#measurementSection #patrol .p-body{padding:14px 0 0}}
 </style>
 
 <div class="p-toast" id="pToast"></div>
