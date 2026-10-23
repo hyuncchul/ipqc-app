@@ -314,7 +314,7 @@ test('new inspection decisions stay blank in the form, saved draft, and export r
     assert.equal(app.read('state.machineInfo[0]')[field], '');
     assert.equal(JSON.parse(app.localStorage.getItem('ipqc_pad_v3')).machineInfo[0][field], '');
     const options = markup.match(new RegExp(`<select id="mi_0_${field}"[^>]*>([\\s\\S]*?)</select>`))[1];
-    assert.match(options, /^\s*<option selected><\/option>/);
+    if(field==='visual')assert.match(options, /<option value="">/);else assert.match(options, /^\s*<option selected><\/option>/);
   }
   const row = app.read('buildDataRow(state.machineInfo[0], 0, 0)');
   assert.equal(row[11], '');
@@ -339,7 +339,7 @@ test('explicit inspection decisions survive save, same-production selection, and
   assert.equal(app.read('state.machineInfo[0]').visual, 'OK');
   assert.equal(app.read('state.machineInfo[0]').result, 'PASS');
   const markup = app.run('buildMachineContent(0)');
-  assert.match(markup, /<option selected>OK<\/option>/);
+  assert.match(markup, /<option value="OK" selected>OK<\/option>/);
   assert.match(markup, /<option selected>PASS<\/option>/);
 });
 
@@ -375,8 +375,8 @@ test('history editing keeps empty decisions blank and preserves existing chosen 
     const markup = app.elements.get('he_machines_container').children[0].innerHTML;
     for (const [field, chosen] of [['visual', visual], ['result', result]]) {
       const options = markup.match(new RegExp(`<select id="hem_${field}_0"[^>]*>([\\s\\S]*?)</select>`))[1];
-      assert.match(options, new RegExp(`<option selected>${chosen}</option>`));
-      assert.match(options, /<option(?: selected)?><\/option>/);
+      if(field==='visual')assert.match(options, chosen?new RegExp(`<option value="${chosen}" selected>${chosen}</option>`):/<option value="">/);
+      else{assert.match(options,new RegExp(`<option selected>${chosen}</option>`));assert.match(options, /<option(?: selected)?><\/option>/);}
       app.setElement(`hem_${field}_0`, chosen);
     }
     app.setElement('hem_name_0', 'A07');
@@ -1051,4 +1051,46 @@ test('cancelled login cannot install a late session or reopen equipment selectio
   assert.equal(app.sessionStorage.getItem(SESSION_KEY), null);
   assert.equal(app.requests.length, 1);
   assert.equal(app.elements.get('productionLogin').hidden, true);
+});
+
+test('Visual defect categories and Dimension selections match defect registration',()=>{
+ const app=page();
+ assert.deepEqual(app.read('VISUAL_CATEGORIES'),['FM','Warpage','Crack','Unfield Fence','Incomplete Fence','C/C&STH','S/R','Dimension','Date Code','other']);
+ assert.deepEqual(app.read('VISUAL_DIMENSIONS'),['EL','OL','OW','TSL','BSL','TSW','BSW','Pocket','Other']);
+});
+test('Visual category, multiple dimensions and optional notes roundtrip through the existing Sheet column',()=>{
+ const app=page();
+ app.context.visualFixture={visualCategory:'Dimension',visualDimensions:['Pocket','OL'],visualNotes:'Right edge\nSecond line'};
+ const text=app.run('visualText(visualFixture)');assert.equal(text,'Dimension (OL, Pocket)\nRight edge\nSecond line');
+ app.context.visualSaved=text;
+ assert.deepEqual(app.read('visualDraft({visual:visualSaved})'),{category:'Dimension',dimensions:['OL','Pocket'],notes:'Right edge\nSecond line'});
+ const row=app.read('buildDataRowForRecord({},visualFixture,0,0)');assert.equal(row.length,35);assert.equal(row[11],text);assert.equal(row[34],'');
+});
+test('Visual preserves legacy decisions and arbitrary historical text without data loss',()=>{
+ const app=page();
+ for(const value of ['OK','NG','N/A','Waive','Historical defect\nExtra text','Dimension (unrecognized)']){
+  app.context.visualSaved=value;assert.equal(app.run('visualText({visual:visualSaved})'),value);
+ }
+});
+test('Visual validation allows optional notes but requires dimensions and details for Other',()=>{
+ const app=page();
+ assert.doesNotThrow(()=>app.run("validateVisualInputs([{visual:'FM'},{visual:'OK'},{}])"));
+ assert.throws(()=>app.run("validateVisualInputs([{visualCategory:'Dimension',visualDimensions:[]}])"),/Dimension/);
+ assert.throws(()=>app.run("validateVisualInputs([{visualCategory:'other',visualNotes:''}])"));
+ assert.throws(()=>app.run("validateVisualInputs([{visualCategory:'',visualNotes:'missing category'}])"));
+ assert.doesNotThrow(()=>app.run("validateVisualInputs([{visualCategory:'other',visualNotes:'New defect'}])"));
+});
+test('Visual-only inspections are included in exported Sheet rows without unrelated measurement values',()=>{
+ const app=page();app.run("state.machineCount=1;state.roundCount=1;state.machineInfo=[{name:'A07',visualCategory:'Crack',visualNotes:'Corner'}];state.values={};");
+ const rows=app.read('buildSheetRows()');assert.equal(rows.length,1);assert.equal(rows[0][11],'Crack\nCorner');assert.equal(rows[0][12],'');
+});
+test('Visual controls escape user notes and retain the optional explanation in history editing',()=>{
+ const app=page();app.context.visualFixture={visualCategory:'FM',visualNotes:'</textarea><script>alert(1)</script>'};
+ const markup=app.run('visualInputHtml(0,visualFixture,true)');assert.ok(markup.includes('hem_visual_0_notes'));assert.ok(markup.includes('추가 설명 (선택)'));assert.ok(!markup.includes('<script>'));assert.ok(markup.includes('&lt;script&gt;'));
+});
+
+test('Visual Dimension Other is retained with other dimensions and the optional explanation',()=>{
+ const app=page();app.context.visualFixture={visualCategory:'Dimension',visualDimensions:['Other','OL'],visualNotes:'Custom dimension'};
+ assert.equal(app.run('visualText(visualFixture)'),'Dimension (OL, Other)\nCustom dimension');
+ assert.deepEqual(app.read("visualDraft({visual:'Dimension (OL, Other)\\nCustom dimension'})"),{category:'Dimension',dimensions:['OL','Other'],notes:'Custom dimension'});
 });
