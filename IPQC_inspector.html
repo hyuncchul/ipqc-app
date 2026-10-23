@@ -473,10 +473,9 @@
       </div>
       <div class="row">
         <button class="btn ok sm" onclick="openMeasureSummary()" data-i18n="measureSummaryBtn">전체 입력값 보기</button>
-        <button class="btn sm" onclick="prevItem()" data-i18n="prevItem">◀ 이전 항목</button>
-        <button class="btn primary sm" onclick="nextItem()" data-i18n="nextItem">다음 항목 ▶</button>
       </div>
     </div>
+    <div id="legacyMeasurementGrid" hidden>
     <!-- 항목 탭 -->
     <div class="item-tabs" id="itemTabBar" style="margin-bottom:10px"></div>
     <!-- 현재 항목 제목 -->
@@ -486,6 +485,51 @@
     <div class="table-wrap">
       <table id="measureTable"></table>
     </div>
+    </div>
+    <div id="pEmpty" class="hint"></div>
+<div id="patrol" role="region" aria-label="IPQC patrol measurement input">
+  <div class="p-top"><img class="p-brand" src="ipqc-peak-logo.png" alt="PEAK"><strong>PEAK · IPQC</strong>
+    <div class="p-rounds" id="pRounds"></div>
+    <div class="p-item">
+      <button type="button" onclick="patrolItemStep(-1)" aria-label="prev">◀</button>
+      <select id="pItemSel" onchange="patrolGoItem(+this.value)"></select>
+      <button type="button" onclick="patrolItemStep(1)" aria-label="next">▶</button>
+    </div>
+  </div>
+  <div class="p-tools">
+    <button type="button" class="p-scan" onclick="patrolStartScan()" id="pScanBtn">📷 LTC 연속 스캔</button>
+    <button type="button" onclick="patrolCarryLtc()" id="pCarryBtn">↺ 전회차 LTC 가져오기</button>
+    <button type="button" onclick="patrolToggleOrder()" id="pOrderBtn">⇅ 순찰 순서</button>
+    <button type="button" onclick="patrolToggleKeyboard()" id="pKbBtn">⌨ 기기 키보드</button>
+    <div class="p-prog" id="pProg"></div>
+  </div>
+  <div class="p-body">
+    <div class="p-list" id="pList"></div>
+    <div class="p-pad" id="pPad">
+      <div class="p-pad-target" id="pPadTarget"></div>
+      <div class="p-keys" id="pKeys"></div>
+      <div id="pVisualOptions"></div>
+      <div id="pJudgmentPanel"><div class="p-caption" id="pJudgmentLabel"></div><div class="p-judges" id="pJudges"></div></div>
+      <label class="p-caption" id="pNoteLabel" for="pNote"></label><textarea id="pNote" maxlength="1900" rows="2" oninput="patrolNote(this.value)"></textarea>
+      <div id="pValidation" role="status" aria-live="polite"></div>
+      <button type="button" class="p-next" onclick="patrolNext()" id="pNextBtn">다음 ▶</button>
+      <div class="p-hint" id="pHint"></div>
+    </div>
+  </div>
+  <div class="p-scanbox" id="pScanBox">
+    <div class="p-scancard">
+      <div style="font-size:13px;color:#64748b;font-weight:800" id="pScanTitle">LTC 연속 스캔</div>
+      <div class="p-scantarget" id="pScanTarget"></div>
+      <video id="pScanVideo" playsinline muted></video><label id="pManualLabel" for="pManualLtc"></label><div class="p-manual"><input id="pManualLtc" maxlength="300" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();patrolManualLtc();}"><button id="pManualButton" type="button" onclick="patrolManualLtc()"></button></div>
+      <div class="p-scanstatus" id="pScanStatus"></div>
+      <div class="p-scanlist" id="pScanList"></div>
+      <div class="p-scanbtns">
+        <button type="button" onclick="patrolScanSkip()" id="pScanSkip">건너뛰기</button>
+        <button type="button" class="done" onclick="patrolStopScan(true)" id="pScanDone">완료</button>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 
   <!-- ══ 섹션 4: 저장 ══ -->
@@ -1662,6 +1706,7 @@ function applyLanguage(){
   if(bakeMatchedRows.length) renderBakeResults();
   // 설비 탭 재렌더링 (초기화 완료 후)
   if(document.getElementById('machContents')?.children.length>0) renderAll();
+  if(window.ipqcPatrolReady)patrolRefresh();
 }
 function rebuildCountOptions(){
   // machineCount는 hidden select (plan에서 자동설정) → 건드리지 않음
@@ -2050,7 +2095,7 @@ function openMeasureSummary(){
     return;
   }
 
-  const total = ITEMS.length * state.machineCount * state.roundCount;
+  const total = PATROL_ITEMS.length * state.machineCount * state.roundCount;
   let done = 0;
   Object.values(state.values).forEach(v=>{ if(v) done++; });
   meta.textContent = `${tr('measureSummaryMeta')} · ${done} / ${total}`;
@@ -2060,17 +2105,18 @@ function openMeasureSummary(){
     const mi = state.machineInfo[m] || {};
     const mName = mi.name || ('M/C '+(m+1));
     for(let r=0;r<state.roundCount;r++){
-      html += `<th>${esc(mName)}<br>R${r+1}</th>`;
+      html += `<th>${esc(mName)}<br>R${r+1}<br>${esc(mi.ltcRounds?.[r]??mi.ltc??'')}</th>`;
     }
   }
   html += '</tr></thead><tbody>';
 
-  ITEMS.forEach(item=>{
-    html += `<tr><td>${esc(item.code + '  ' + item.name)}</td>`;
+  PATROL_ITEMS.forEach(item=>{
+    html += `<tr><td>${esc((item.code?item.code+'  ':'') + item.name)}</td>`;
     for(let m=0;m<state.machineCount;m++){
       for(let r=0;r<state.roundCount;r++){
         const val = state.values[`${item.key}|${m}|${r}`] || '';
-        html += `<td class="${val?'has-value':'empty-value'}">${val ? esc(val) : '-'}</td>`;
+        const entry=patrolEntry(state.machineInfo[m],r,item,state.values,m);
+        html += `<td class="${val?'has-value':'empty-value'}">${val ? esc(val) : '-'}${entry?.judge?'<br><b>'+esc(entry.judge)+'</b>':''}${entry?.notes?'<br>'+esc(entry.notes):''}</td>`;
       }
     }
     html += '</tr>';
@@ -2230,12 +2276,13 @@ document.getElementById('ltcQrDialog').addEventListener('cancel',event=>{
   closeLtcQr();
 });
 document.addEventListener('visibilitychange',()=>{
+  if(document.hidden && typeof patrol!=='undefined' && patrol.scan) patrolStopScan(true);
   if(document.hidden && ltcQrSession){
     stopLtcCamera(ltcQrSession);
     if(ltcQrSession.mode==='camera') setLtcQrStatus('qrPaused');
   }
 });
-window.addEventListener('pagehide',()=>closeLtcQr(false));
+window.addEventListener('pagehide',()=>{closeLtcQr(false);patrolStopScan(false);});
 
 // LTC No. 라운드별 저장
 function setLtcRound(m, r, val){
@@ -2258,6 +2305,7 @@ function setLtcAllMachines(r, val){
 
 function switchItem(itemIdx){
   state.currentItem = itemIdx;
+  if(window.ipqcPatrolReady){patrol.item=Math.max(0,PATROL_ITEMS.findIndex(it=>it.key===ITEMS[itemIdx]?.key));patrolRender(false);}
   save();
   renderMeasurementSection();
 }
@@ -2272,6 +2320,7 @@ function setVal(i,m,r,el){
   const item = ITEMS[i];
   if(!item) return;
   const v = el.value.trim();
+  if((state.values[`${item.key}|${m}|${r}`]||'')!==v) {const entry=state.machineInfo[m]?.patrolRounds?.[r]?.items?.[item.key];if(entry)entry.judge='';}
   state.values[`${item.key}|${m}|${r}`] = v;
   el.closest('td').className = v ? 'done-cell' : '';
   saveDebounced();
@@ -2341,6 +2390,7 @@ function renderAll(){
   switchMachineTab(state.currentMachine||0);
   renderMeasurementSection();
   updateKpi();
+  if(window.ipqcPatrolReady)patrolRefresh();
 }
 
 function resetAll(){
@@ -2398,7 +2448,7 @@ function buildSheetRows(){
         const v = state.values[`${it.key}|${m}|${r}`]||'';
         if(v){ row[it.col] = v; has = true; }
       });
-      if(has) rows.push(row);
+      if(applyPatrolRow(row,mi,m,r,state.values)||has) rows.push(row);
     }
   }
   return rows;
@@ -2746,7 +2796,7 @@ function serverRecordToRows(record){
         const v = values[`${it.key}|${m}|${round}`] || '';
         if(v){ row[it.col] = v; has = true; }
       });
-      if(has) rows.push(row);
+      if(applyPatrolRow(row,mi,m,round,values)||has) rows.push(row);
     }
   }
   return rows;
@@ -3026,6 +3076,8 @@ function exportWideCsv(){
   ws2['!cols'] = sumHeader.map(()=>({wch:18}));
   XLSX.utils.book_append_sheet(wb, ws2, '설비 요약');
 
+  const ledger=buildPatrolLedger(state.machineInfo,state.values,state.roundCount);
+  if(ledger.length>1){const detail=XLSX.utils.aoa_to_sheet(ledger);detail['!cols']=ledger[0].map(()=>({wch:22}));XLSX.utils.book_append_sheet(wb,detail,'Patrol judgments');}
   const fname = `IPQC_${state.common.date||'date'}_${state.common.inspector||'QC'}.xlsx`;
   XLSX.writeFile(wb, fname);
 }
@@ -3184,7 +3236,7 @@ function openHistModal(idx){
       if(hasAny) vmHtml+=`<div style="margin:3px 0;font-size:12px"><b style="color:#1e40af">${it.code} ${it.name}:</b> ${cells}</div>`;
     });
   }
-  document.getElementById('viewMachines').innerHTML=vmHtml;
+  document.getElementById('viewMachines').innerHTML=vmHtml+patrolLedgerHtml(machineInfo,vals,rCount);
 
   // ── 수정 탭: 공통 정보
   ['date','time','shift'].forEach(f=>{ const el=document.getElementById('he_'+f); if(el) el.value=c[f]||item[f]||''; });
@@ -3291,6 +3343,7 @@ async function saveHistEdit(){
     const newMachineInfo=[];
     for(let m=0;m<mCount;m++){
       newMachineInfo.push({
+        ...(item.machineInfo||[])[m],
         name:     document.getElementById(`hem_name_${m}`)?.value||'',
         desc:     document.getElementById(`hem_desc_${m}`)?.value||'',
         sap:      document.getElementById(`hem_sap_${m}`)?.value||'',
@@ -3307,12 +3360,14 @@ async function saveHistEdit(){
       });
     }
     const newValues={};
+    Object.entries(item.values||{}).forEach(([key,value])=>{if(key.startsWith('visual|'))newValues[key]=value;});
     ITEMS.forEach(it=>{
       for(let m=0;m<mCount;m++) for(let r=0;r<rCount;r++){
         const el=document.getElementById(`hev_${it.key}_${m}_${r}`);
         if(el&&el.value.trim()) newValues[`${it.key}|${m}|${r}`]=el.value.trim();
       }
     });
+    newMachineInfo.forEach((mi,m)=>{mi.patrolRounds=JSON.parse(JSON.stringify(mi.patrolRounds||{}));Object.keys(mi.patrolRounds).forEach(r=>{Object.entries(mi.patrolRounds[r].items||{}).forEach(([key,entry])=>{if(entry.value!==String(newValues[`${key}|${m}|${r}`]||''))entry.judge='';});});});
     validateVisualInputs(newMachineInfo);
     const dataRows = [];
     for(let m=0;m<mCount;m++){
@@ -3324,7 +3379,7 @@ async function saveHistEdit(){
           const v = newValues[`${it.key}|${m}|${r}`] || '';
           if(v){ row[it.col] = v; has = true; }
         });
-        if(has) dataRows.push(row);
+        if(applyPatrolRow(row,mi,m,r,newValues)||has) dataRows.push(row);
       }
     }
     const updatedPayload = {
@@ -3438,5 +3493,631 @@ window.addEventListener('resize',()=>{ updateThemeNavigation(); if(ipqcTrendSele
 
 init();
 </script>
+<!-- ══ 순찰 입력 모드 (Patrol mode) ══
+     기존 저장 형식(state.values["항목|설비|회차"], machineInfo[m].ltcRounds)을 그대로 사용합니다. -->
+<style id="patrol-style">
+.patrol-ledger{overflow:auto;margin-top:14px}.patrol-ledger table{width:100%;border-collapse:collapse;font-size:12px}.patrol-ledger th{background:var(--soft);color:var(--text)}.patrol-ledger td{white-space:pre-wrap;text-align:left;max-width:320px;overflow-wrap:anywhere}
+#patrolFab{position:fixed;right:18px;bottom:18px;z-index:40;border:0;border-radius:999px;padding:0 20px;height:54px;font-size:16px;font-weight:900;color:#fff;background:linear-gradient(135deg,#1d4ed8,#0f766e);box-shadow:0 8px 24px #1d4ed855;cursor:pointer}
+#patrol{position:fixed;inset:0;z-index:95;background:#eef2f7;display:none;flex-direction:column;color:#172033;font-size:16px;-webkit-user-select:none;user-select:none}
+#patrol.open{display:flex}
+#patrol button{font:inherit;cursor:pointer;touch-action:manipulation}
+.p-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#11273b;color:#fff;flex-wrap:wrap}
+.p-close{border:0;background:#ffffff1f;color:#fff;border-radius:10px;height:44px;padding:0 14px;font-weight:800}
+.p-rounds{display:flex;gap:4px;background:#ffffff14;padding:4px;border-radius:12px}
+.p-rounds button{border:0;background:transparent;color:#cbd5e1;height:38px;min-width:64px;border-radius:9px;font-weight:800;font-size:15px}
+.p-rounds button.on{background:#fff;color:#11273b}
+.p-rounds button.full::after{content:" ✓";color:#16a34a}
+.p-item{flex:1;display:flex;align-items:center;gap:6px;min-width:260px}
+.p-item button{border:0;background:#ffffff1f;color:#fff;border-radius:10px;width:48px;height:44px;font-size:18px;font-weight:900}
+.p-item select{flex:1;height:44px;border-radius:10px;border:0;padding:0 10px;font-size:17px;font-weight:900;color:#11273b;background:#fff;min-width:0}
+.p-tools{display:flex;gap:6px;padding:8px 14px;background:#fff;border-bottom:1px solid #dbe3ee;flex-wrap:wrap;align-items:center}
+.p-tools button{border:1px solid #cbd5e1;background:#fff;border-radius:10px;height:40px;padding:0 12px;font-size:14px;font-weight:800;color:#1e293b}
+.p-tools button.on{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.p-tools .p-scan{background:#0f766e;border-color:#0f766e;color:#fff}
+.p-prog{margin-left:auto;font-size:13px;font-weight:800;color:#475569;white-space:nowrap}
+.p-prog b{color:#1d4ed8;font-size:15px}
+.p-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;padding:12px;min-height:0}
+.p-list{overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px;padding-bottom:20px}
+.p-row{flex-shrink:0;display:grid;grid-template-columns:40px minmax(0,1fr) 170px;gap:10px;align-items:center;background:#fff;border:2px solid #dbe3ee;border-radius:14px;padding:6px 10px;min-height:60px}
+.p-row.active{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb33}
+.p-row.done{background:#f0fdf4;border-color:#86efac}
+.p-row.done.active{border-color:#2563eb}
+.p-no{width:36px;height:36px;border-radius:50%;background:#e2e8f0;display:grid;place-items:center;font-weight:900;font-size:16px;color:#334155}
+.p-row.done .p-no{background:#16a34a;color:#fff}
+.p-mc{min-width:0}
+.p-mc-name{font-weight:900;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-mc-sub{font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.p-mc-head{display:flex;align-items:center;gap:8px;min-width:0}.p-mc-head .p-mc-name{flex:0 1 auto}
+.p-ltc{flex:0 1 auto;min-width:0;border:1px dashed #f59e0b;background:#fffbeb;color:#92400e;border-radius:8px;height:30px;padding:0 9px;font-size:13px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-ltc.ok{border:1px solid #fde68a;background:#fef9c3;color:#713f12}
+.p-ltc.carried{border:1px dashed #94a3b8;background:#f1f5f9;color:#475569}
+.p-ltc.target{outline:3px solid #0f766e}
+.p-val{width:100%;height:48px;border:2px solid #cbd5e1;border-radius:11px;font-size:24px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;color:#0f172a;background:#fff;-webkit-user-select:text;user-select:text;padding:0 6px}
+.p-val:focus{outline:none;border-color:#2563eb;background:#eff6ff}
+.p-order{display:flex;gap:6px;justify-content:flex-end}
+.p-order button{width:56px;height:48px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-size:20px}
+.p-pad{background:#fff;border:1px solid #dbe3ee;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px;align-self:start}
+.p-pad-target{font-size:13px;color:#475569;font-weight:700;min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.p-keys button{height:62px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;font-size:26px;font-weight:800;color:#0f172a}
+.p-keys button:active{background:#dbeafe}
+.p-keys .fn{font-size:18px;background:#eef2f7}
+.p-next{height:66px;border:0;border-radius:12px;background:#1d4ed8;color:#fff;font-size:21px;font-weight:900}
+.p-next:active{background:#1e40af}
+.p-hint{font-size:12px;color:#64748b;line-height:1.5}
+.p-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:110;background:#0f172ae6;color:#fff;padding:12px 20px;border-radius:12px;font-weight:800;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.p-toast.show{opacity:1}
+.p-toast.warn{background:#b91c1ce6}
+.p-scanbox{position:fixed;inset:0;z-index:105;background:#000d;display:none;align-items:center;justify-content:center;padding:16px}
+.p-scanbox.open{display:flex}
+.p-scancard{background:#fff;border-radius:18px;width:min(560px,100%);max-height:100%;overflow:auto;padding:14px}
+.p-scantarget{font-size:19px;font-weight:900;color:#0f766e;margin:4px 0 10px}
+.p-scancard video{width:100%;aspect-ratio:4/3;background:#000;border-radius:12px;object-fit:cover}
+.p-scanstatus{font-size:13px;color:#475569;margin:8px 0;min-height:18px}
+.p-scanlist{display:flex;flex-direction:column;gap:4px;margin:8px 0;font-size:14px}
+.p-scanlist div{display:flex;justify-content:space-between;gap:10px;padding:6px 8px;border-radius:8px;background:#f8fafc}
+.p-scanlist div.cur{background:#ccfbf1;font-weight:900}
+.p-scanbtns{display:flex;gap:8px}
+.p-scanbtns button{flex:1;height:50px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-size:16px;font-weight:800}
+.p-scanbtns .done{background:#0f766e;border-color:#0f766e;color:#fff}
+@media (max-width:700px){
+  .p-body{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .p-pad{padding:8px}
+  .p-keys button{height:50px;font-size:22px}
+  .p-next{height:54px}
+  .p-hint{display:none}
+  .p-row{grid-template-columns:36px minmax(0,1fr) 140px}
+}
+@media (max-width:560px){ .p-keys{grid-template-columns:repeat(3,1fr)} .p-keys button{height:46px} }
+/* PEAK inspection workspace: use the existing navy, blue, field and panel tokens. */
+#patrolFab{background:var(--primary);box-shadow:0 5px 18px #11273b26;font-weight:600;border-radius:8px}
+#patrol{background:var(--bg);color:var(--text);font-size:15px}
+#patrol .p-top{background:var(--navy,#11273b);gap:12px;padding:12px 18px}
+#patrol .p-brand{width:35px;height:35px;object-fit:contain}
+#patrol .p-top strong{font-size:16px;white-space:nowrap}
+#patrol .p-close{font-weight:600;order:4;margin-left:auto}
+#patrol .p-rounds{border-radius:7px}
+#patrol .p-rounds button{min-height:44px;height:auto;border-radius:5px;font-weight:600}
+#patrol .p-item{min-width:200px;max-width:600px}
+#patrol .p-item select{font-size:15px;font-weight:600;border-radius:6px}
+#patrol .p-tools{padding:10px 18px;border-color:var(--line)}
+#patrol .p-tools button{border-radius:6px;min-height:44px;font-weight:500}
+#patrol .p-tools .p-scan{background:var(--primary);border-color:var(--primary)}
+#patrol .p-body{grid-template-columns:minmax(0,1fr) 300px;padding:16px 18px;gap:16px;overflow:auto}
+#patrol .p-list{gap:10px}
+#patrol .p-row{border:1px solid var(--line);border-radius:8px;grid-template-columns:32px minmax(0,1fr) 150px;padding:12px;min-height:92px}
+#patrol .p-row.active{border-color:var(--primary);box-shadow:inset 3px 0 var(--primary);background:var(--soft)}
+#patrol .p-row.done{border-color:#b6dace;background:#f5faf8}
+#patrol .p-row.done.active{border-color:var(--primary);background:var(--soft)}
+#patrol .p-no{width:30px;height:30px;font-weight:600;font-size:14px}
+#patrol .p-mc-name{color:var(--text);font-size:17px;font-weight:600}
+#patrol .p-mc-head{flex-wrap:wrap}
+#patrol .p-ltc{min-height:32px;border-radius:5px;max-width:100%;font-weight:500}
+#patrol .p-mc-sub{white-space:normal;overflow-wrap:anywhere}
+#patrol .p-val{height:48px;min-height:48px;font-size:22px;font-weight:500;border-width:1px;border-radius:6px;color:var(--text)}
+#patrol .p-pad{border-color:var(--line);border-radius:8px;padding:14px;position:sticky;top:0;max-height:100%;overflow:auto;gap:7px}
+#patrol .p-pad-target{white-space:normal;color:var(--text);font-size:14px;font-weight:600}
+#patrol .p-keys{gap:6px}
+#patrol .p-keys button{height:47px;min-height:44px;border-radius:6px;font-size:21px;font-weight:500;border-color:var(--line)}
+#patrol .p-caption{font-size:12px;color:var(--muted);margin:4px 0}
+#patrol .p-judges{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#patrol .p-judge{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:6px;min-height:44px;padding:6px 10px;font-size:14px;touch-action:manipulation}
+#patrol .p-judge[aria-pressed=true]{background:var(--soft);color:var(--primary);border-color:var(--primary)}
+#patrol .p-judge.pass[aria-pressed=true]{background:#e8f6ef;color:#17694d;border-color:var(--ok)}
+#patrol .p-judge.fail[aria-pressed=true]{background:#fff0ef;color:#a53129;border-color:var(--bad)}
+#patrol .p-row-judges{grid-column:2/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px}
+#patrol .p-row-judges>span{font-size:12px;color:var(--muted);margin-right:auto}
+#patrol .p-row-judges button{font-size:12px}
+#patrol #pNote{width:100%;min-height:74px;border-color:var(--line);border-radius:6px;font:inherit;font-size:16px;resize:vertical;padding:8px}
+#patrol #pValidation{font-size:12px;color:var(--bad);min-height:18px;white-space:normal}
+#patrol .p-next{height:auto;min-height:48px;border-radius:6px;background:var(--primary);font-size:16px;font-weight:600;padding:10px}
+#patrol .p-prog{margin-left:auto;white-space:normal}
+#patrol .p-hint{font-size:12px;font-weight:400}
+#patrol #pVisualOptions select{width:100%;min-height:44px;font-size:16px}
+#patrol .p-dimensions{border:1px solid var(--line);border-radius:6px;margin:8px 0;padding:7px;display:flex;flex-wrap:wrap;gap:6px}
+#patrol .p-dimensions label{display:flex;align-items:center;gap:5px;min-height:40px;padding:3px;font-size:12px}
+#patrol .p-dimensions input{width:18px;height:18px;min-height:18px}
+#patrol .p-manual{display:flex;gap:8px}
+#patrol .p-manual input{min-width:0;flex:1;min-height:44px;font-size:16px}
+#patrol .p-manual button{min-height:44px;background:var(--primary);color:#fff;border:0;border-radius:6px;padding:0 12px}
+@media(max-width:850px){#patrol .p-top strong{display:none}#patrol .p-body{grid-template-columns:minmax(0,1fr) 260px;padding:10px;gap:10px}#patrol .p-row{grid-template-columns:26px minmax(0,1fr) 110px;padding:9px;gap:7px}#patrol .p-row-judges{grid-column:1/-1}#patrol .p-top{padding:8px}#patrol .p-row-judges>span{width:100%}}
+@media(max-width:650px){#patrol .p-body{display:flex;flex-direction:column;overflow:auto}#patrol .p-list{overflow:visible;padding-bottom:0;flex:none}#patrol .p-pad{position:static;max-height:none;overflow:visible;align-self:stretch;flex:none}#patrol .p-top .p-item{order:5;flex-basis:100%;max-width:none}#patrol .p-tools{padding:8px}#patrol .p-prog{width:100%}#patrol .p-top .p-close{order:3}#patrol .p-keys button{height:44px}#patrol .p-hint{display:block}}
+
+
+/* Section 03 is the primary entry workspace; no separate floating patrol mode. */
+#measurementSection #patrol{position:relative;inset:auto;z-index:auto;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;margin-top:14px;min-width:0}
+#measurementSection #patrol[hidden]{display:none!important}
+#measurementSection #patrol .p-top{border-radius:7px 7px 0 0;min-width:0;flex-wrap:wrap}
+#measurementSection #patrol .p-item{min-width:160px}
+#measurementSection #patrol .p-body{overflow:visible;flex:none;min-width:0}
+#measurementSection #patrol .p-list{overflow:visible;min-width:0;padding-bottom:0}
+#measurementSection #patrol .p-pad{max-height:none;overflow:visible;top:12px}
+#measurementSection #patrol .p-rounds{flex-wrap:wrap}
+#measurementSection #patrol .p-prog b{color:var(--primary)}
+@media(max-width:1000px){#measurementSection #patrol .p-top strong,#measurementSection #patrol .p-brand{display:none}#measurementSection #patrol .p-item{flex-basis:100%;max-width:none}#measurementSection #patrol .p-body{grid-template-columns:minmax(0,1fr) 240px;padding:10px;gap:10px}#measurementSection #patrol .p-row{grid-template-columns:26px minmax(0,1fr) 100px;padding:9px;gap:7px}#measurementSection #patrol .p-row-judges{grid-column:1/-1}}
+@media(max-width:650px){#measurementSection #patrol .p-pad{position:static}#measurementSection #patrol .p-tools button{flex:1 1 130px}#measurementSection #patrol .p-row-judges>span{width:100%}}
+
+</style>
+
+<div class="p-toast" id="pToast"></div>
+
+<script>
+// ══ 순찰 입력 모드 ══════════════════════════════════
+const PATROL_TXT={
+  ko:{fab:'순찰 입력',close:'✕ 닫기',round:'회차',scan:'📷 LTC 연속 스캔',carry:'↺ 전회차 LTC 가져오기',order:'⇅ 순찰 순서',orderDone:'✓ 순서 저장',kb:'⌨ 기기 키보드',
+    next:'다음 ▶',ltcEmpty:'LTC 스캔',carried:'↺ 전회차',progRound:'회차 입력',progItem:'이 항목',noMachine:'먼저 설비를 선택해 주세요.',
+    toItem:'완료 → 다음 항목',roundDone:'회차 모든 항목 입력 완료',carryDone:'개 설비에 전회차 LTC를 채웠습니다. 다르면 다시 스캔하세요.',carryNone:'가져올 전회차 LTC가 없습니다.',
+    carryFirst:'1회차는 전회차가 없습니다.',scanTitle:'LTC 연속 스캔',scanTarget:'스캔할 트레이',scanAll:'LTC 스캔 완료',scanSkip:'건너뛰기',scanDone:'완료',
+    scanStart:'카메라 시작 중…',scanOn:'로트카드 QR을 비춰 주세요',scanDenied:'카메라 권한이 없습니다. 브라우저 설정을 확인해 주세요.',scanErr:'카메라를 열 수 없습니다.',
+    dup:'이미 다른 설비에 등록된 LTC입니다',hint:'Enter / 다음 → 다음 트레이로 이동합니다.\n마지막 트레이 다음에는 다음 항목으로 넘어갑니다.\n블루투스 측정기·키보드 입력도 그대로 됩니다.',
+    orderHint:'▲▼로 실제 순찰 동선 순서로 맞추세요. 설비 이름 기준으로 저장되어 다음 날에도 유지됩니다.',textItem:'문자 입력 항목'},
+  zh:{fab:'巡檢輸入',close:'✕ 關閉',round:'回',scan:'📷 LTC 連續掃描',carry:'↺ 帶入前回 LTC',order:'⇅ 巡檢順序',orderDone:'✓ 儲存順序',kb:'⌨ 系統鍵盤',
+    next:'下一個 ▶',ltcEmpty:'掃描 LTC',carried:'↺ 前回',progRound:'本回輸入',progItem:'本項目',noMachine:'請先選擇機台。',
+    toItem:'完成 → 下一項目',roundDone:'本回所有項目已輸入完成',carryDone:'台機台已帶入前回 LTC，若不同請重新掃描。',carryNone:'沒有可帶入的前回 LTC。',
+    carryFirst:'第 1 回沒有前回資料。',scanTitle:'LTC 連續掃描',scanTarget:'掃描對象',scanAll:'LTC 掃描完成',scanSkip:'略過',scanDone:'完成',
+    scanStart:'相機啟動中…',scanOn:'請對準批號卡 QR',scanDenied:'沒有相機權限，請確認瀏覽器設定。',scanErr:'無法開啟相機。',
+    dup:'此 LTC 已登錄於其他機台',hint:'Enter / 下一個 → 移到下一個 tray。\n最後一個 tray 之後自動換到下一項目。\n藍牙量測器・鍵盤輸入也可使用。',
+    orderHint:'用 ▲▼ 調整成實際巡檢路線順序。依機台名稱儲存，隔天仍保留。',textItem:'文字輸入項目'},
+  en:{fab:'Patrol input',close:'✕ Close',round:'Round',scan:'📷 Scan LTC (continuous)',carry:'↺ Copy previous LTC',order:'⇅ Patrol order',orderDone:'✓ Save order',kb:'⌨ Device keyboard',
+    next:'Next ▶',ltcEmpty:'Scan LTC',carried:'↺ prev.',progRound:'Round',progItem:'This item',noMachine:'Select machines first.',
+    toItem:'done → next item',roundDone:'All items entered for this round',carryDone:'machines filled from previous round. Rescan if different.',carryNone:'No previous-round LTC to copy.',
+    carryFirst:'Round 1 has no previous round.',scanTitle:'Continuous LTC scan',scanTarget:'Scanning for',scanAll:'LTC scan complete',scanSkip:'Skip',scanDone:'Done',
+    scanStart:'Starting camera…',scanOn:'Point at the lot card QR',scanDenied:'Camera permission denied. Check browser settings.',scanErr:'Cannot open the camera.',
+    dup:'This LTC is already assigned to another machine',hint:'Enter / Next → next tray.\nAfter the last tray it moves to the next item.\nBluetooth gauges and keyboards also work.',
+    orderHint:'Use ▲▼ to match your patrol route. Saved by machine name, kept for following days.',textItem:'Text item'},
+  vi:{fab:'Nhập tuần tra',close:'✕ Đóng',round:'Lần',scan:'📷 Quét LTC liên tục',carry:'↺ Lấy LTC lần trước',order:'⇅ Thứ tự tuần tra',orderDone:'✓ Lưu thứ tự',kb:'⌨ Bàn phím máy',
+    next:'Tiếp ▶',ltcEmpty:'Quét LTC',carried:'↺ lần trước',progRound:'Lần',progItem:'Mục này',noMachine:'Hãy chọn máy trước.',
+    toItem:'xong → mục tiếp',roundDone:'Đã nhập đủ mọi mục của lần này',carryDone:'máy đã lấy LTC lần trước. Nếu khác hãy quét lại.',carryNone:'Không có LTC lần trước.',
+    carryFirst:'Lần 1 không có lần trước.',scanTitle:'Quét LTC liên tục',scanTarget:'Đang quét cho',scanAll:'Đã quét xong LTC',scanSkip:'Bỏ qua',scanDone:'Xong',
+    scanStart:'Đang mở camera…',scanOn:'Hướng camera vào QR thẻ lô',scanDenied:'Không có quyền camera.',scanErr:'Không mở được camera.',
+    dup:'LTC này đã gán cho máy khác',hint:'Enter / Tiếp → khay tiếp theo.\nSau khay cuối sẽ sang mục tiếp theo.',
+    orderHint:'Dùng ▲▼ để sắp theo lộ trình tuần tra.',textItem:'Mục nhập chữ'},
+  id:{fab:'Input patroli',close:'✕ Tutup',round:'Ronde',scan:'📷 Pindai LTC berturut',carry:'↺ Salin LTC sebelumnya',order:'⇅ Urutan patroli',orderDone:'✓ Simpan urutan',kb:'⌨ Keyboard perangkat',
+    next:'Lanjut ▶',ltcEmpty:'Pindai LTC',carried:'↺ sebelumnya',progRound:'Ronde',progItem:'Item ini',noMachine:'Pilih mesin terlebih dahulu.',
+    toItem:'selesai → item berikut',roundDone:'Semua item ronde ini sudah diisi',carryDone:'mesin diisi LTC ronde sebelumnya. Pindai ulang jika berbeda.',carryNone:'Tidak ada LTC ronde sebelumnya.',
+    carryFirst:'Ronde 1 tidak punya ronde sebelumnya.',scanTitle:'Pindai LTC berturut',scanTarget:'Memindai untuk',scanAll:'Pemindaian LTC selesai',scanSkip:'Lewati',scanDone:'Selesai',
+    scanStart:'Membuka kamera…',scanOn:'Arahkan ke QR kartu lot',scanDenied:'Izin kamera ditolak.',scanErr:'Kamera tidak dapat dibuka.',
+    dup:'LTC ini sudah dipakai mesin lain',hint:'Enter / Lanjut → tray berikutnya.\nSetelah tray terakhir pindah ke item berikutnya.',
+    orderHint:'Gunakan ▲▼ sesuai rute patroli.',textItem:'Item teks'}
+};
+function patrolRoundLabel(i){ return ['ko','zh'].includes(state.lang)?`${i+1}${ptr('round')}`:`${ptr('round')} ${i+1}`; }
+function ptr(k){ return (PATROL_TXT[state.lang]||PATROL_TXT.ko)[k] ?? PATROL_TXT.ko[k] ?? k; }
+
+// 문자 입력 항목 (Where 位置 / RESULT / Approval / Remark)
+const PATROL_ITEMS=[...ITEMS.filter(it=>![8,9,'remark'].includes(it.key)),{key:'visual',col:11,name:'VISUAL'},...ITEMS.filter(it=>[8,9,'remark'].includes(it.key))];
+const PATROL_TEXT_KEYS=new Set([4,8,9,'remark','visual']);
+const patrol={open:false,round:0,row:0,item:0,keyboard:false,editOrder:false,scan:null};
+
+function patrolMachineName(m){ return (state.machineInfo[m]||{}).name || ('M/C '+(m+1)); }
+// 순찰 순서: 설비 이름 기준으로 저장 → 설비를 다시 선택해도 유지
+function patrolOrder(){
+  const names=Array.isArray(state.patrolOrderNames)?state.patrolOrderNames:[];
+  const idx=[...Array(state.machineCount).keys()];
+  const rank=m=>{ const p=names.indexOf(patrolMachineName(m)); return p<0?1e6+m:p; };
+  return idx.sort((a,b)=>rank(a)-rank(b));
+}
+function patrolKey(it,m,r){ return `${it.key}|${m}|${r}`; }
+function patrolItem(){ return PATROL_ITEMS[patrol.item]||PATROL_ITEMS[0]; }
+function patrolIsText(it){ return PATROL_TEXT_KEYS.has(it.key); }
+function patrolLtc(m,r){ const mi=state.machineInfo[m]; if(!mi) return ''; ensureLtcRounds(mi); return mi.ltcRounds[r]||''; }
+function patrolCarriedMap(){ if(!state.patrolCarried||typeof state.patrolCarried!=='object') state.patrolCarried={}; return state.patrolCarried; }
+function patrolSetLtc(m,r,v,carried=false){
+  if(!state.machineInfo[m]) state.machineInfo[m]=emptyMachineInfo();
+  const mi=state.machineInfo[m]; ensureLtcRounds(mi);
+  const old=mi.ltcRounds[r];
+  if(old!==v&&(mi.patrolRounds?.[r]||PATROL_ITEMS.some(it=>state.values[patrolKey(it,m,r)]))){if(!confirm(ptr('changeLot')))return false; delete mi.patrolRounds[r]; PATROL_ITEMS.forEach(it=>delete state.values[patrolKey(it,m,r)]);}
+  mi.ltcRounds[r]=v;
+  const el=document.getElementById(`ltc_${m}_${r}`); if(el) el.value=v; // save()가 화면값을 다시 읽으므로 동기화
+  const map=patrolCarriedMap(), ck=patrolMachineName(m)+'|'+r;
+  if(carried) map[ck]=true; else delete map[ck];
+  saveDebounced();
+  return true;
+}
+function patrolRoundDone(r){
+  let total=PATROL_ITEMS.length*state.machineCount,done=0;
+  PATROL_ITEMS.forEach(it=>{ for(let m=0;m<state.machineCount;m++) if(patrolComplete(it,m,r)) done++; });
+  return {done,total};
+}
+function patrolItemDone(it,r){
+  let done=0; for(let m=0;m<state.machineCount;m++) if(patrolComplete(it,m,r)) done++;
+  return done;
+}
+
+function openPatrol(){
+  if(!state.machineCount){alert(ptr('noMachine'));return;}
+  patrolRefresh();
+  document.getElementById('measurementSection').scrollIntoView({block:'start'});
+  patrolFocus();
+}
+function closePatrol(){patrolStopScan(false);save();}
+function patrolRefresh(){
+  if(patrol.scan)patrolStopScan(false);
+  const root=document.getElementById('patrol'),empty=document.getElementById('pEmpty');
+  empty.textContent=ptr('noMachine');empty.hidden=!!state.machineCount;
+  root.hidden=!state.machineCount;patrol.open=!!state.machineCount;
+  if(!state.machineCount)return;
+  patrol.round=Math.max(0,Math.min(patrol.round,state.roundCount-1));
+  patrol.row=Math.max(0,Math.min(patrol.row,state.machineCount-1));
+  patrolRender(false);
+}
+function patrolFirstEmpty(){
+  const it=patrolItem(), ord=patrolOrder();
+  const p=ord.findIndex(m=>!patrolComplete(it,m,patrol.round));
+  return p<0?0:p;
+}
+
+function patrolRender(focus){
+  const it=patrolItem(), r=patrol.round, ord=patrolOrder();
+  // 상단: 회차
+  document.getElementById('pRounds').innerHTML=[...Array(state.roundCount).keys()].map(i=>{
+    const s=patrolRoundDone(i);
+    return `<button type="button" class="${i===r?'on':''} ${s.total&&s.done===s.total?'full':''}" onclick="patrolGoRound(${i})">${esc(patrolRoundLabel(i))}</button>`;
+  }).join('');
+  // 상단: 항목 선택
+  document.getElementById('pItemSel').innerHTML=PATROL_ITEMS.map((x,i)=>{
+    const d=patrolItemDone(x,r);
+    return `<option value="${i}" ${i===patrol.item?'selected':''}>${d===state.machineCount?'✓ ':''}${i+1}/${PATROL_ITEMS.length}  ${esc(x.name)}  (${d}/${state.machineCount})</option>`;
+  }).join('');
+  // 도구 버튼 텍스트
+
+  document.getElementById('pScanBtn').textContent=ptr('scan');
+  document.getElementById('pCarryBtn').textContent=ptr('carry');
+  const ob=document.getElementById('pOrderBtn'); ob.textContent=patrol.editOrder?ptr('orderDone'):ptr('order'); ob.classList.toggle('on',patrol.editOrder);
+  const kb=document.getElementById('pKbBtn'); kb.textContent=ptr('kb'); kb.classList.toggle('on',patrol.keyboard);
+  document.getElementById('pNextBtn').textContent=ptr('recordNext');
+  document.getElementById('pHint').textContent=patrol.editOrder?ptr('orderHint'):ptr('hint');
+  document.getElementById('pHint').style.whiteSpace='pre-line';
+  // 목록
+  const carried=patrolCarriedMap(), text=patrolIsText(it);
+  const mode=(patrol.keyboard||text)?'text':'none';
+  document.getElementById('pList').innerHTML=ord.map((m,pos)=>{
+    const mi=state.machineInfo[m]||{}, v=state.values[patrolKey(it,m,r)]||'', ltc=patrolLtc(m,r);
+    const isCarried=ltc && carried[patrolMachineName(m)+'|'+r];
+    const sub=[mi.sap,mi.desc,mi.customer].filter(Boolean).join(' · ');
+    const judgment=patrolEntry(mi,r,it,state.values,m)?.judge||'';
+    const ltcCls=ltc?(isCarried?'carried':'ok'):'';
+    const ltcTxt=ltc?(esc(ltc)+(isCarried?`  ${esc(ptr('carried'))}`:'')):'📷 '+esc(ptr('ltcEmpty'));
+    const right=patrol.editOrder
+      ? `<div class="p-order"><button type="button" onclick="patrolMove(${pos},-1)" ${pos===0?'disabled':''}>▲</button><button type="button" onclick="patrolMove(${pos},1)" ${pos===ord.length-1?'disabled':''}>▼</button></div>`
+      : `<input class="p-val" id="pv_${pos}" aria-label="${esc(patrolMachineName(m)+' · '+it.name+' · '+patrolRoundLabel(r))}" value="${esc(v)}" inputmode="${mode}" enterkeyhint="next" autocomplete="off" autocapitalize="characters" spellcheck="false"
+           onfocus="patrolSetRow(${pos},false)" oninput="patrolInput(${pos},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();patrolNext();}">`;
+    return `<div class="p-row ${patrolComplete(it,m,r)?'done':''} ${pos===patrol.row&&!patrol.editOrder?'active':''}" id="prow_${pos}" onclick="if(!event.target.closest('button,input'))patrolSetRow(${pos},true)">
+      <div class="p-no">${pos+1}</div>
+      <div class="p-mc"><div class="p-mc-head"><div class="p-mc-name">${esc(patrolMachineName(m))}</div>
+        <button type="button" class="p-ltc ${ltcCls}" onclick="patrolStartScan(${pos})">${ltcTxt}</button></div>${sub?`<div class="p-mc-sub">${esc(sub)}</div>`:''}</div>
+      ${right}${!patrol.editOrder&&patrolNeedsJudge(it)?`<div class="p-row-judges"><span>${esc(ptr('judgment'))}</span>${patrolJudgeButtons(m,r,it,judgment,pos)}</div>`:''}</div>`;
+  }).join('');
+  // 키패드
+  const keys=['7','8','9','4','5','6','1','2','3','.','0','⌫','-','E','C'];
+  document.getElementById('pKeys').innerHTML=keys.map(k=>`<button type="button" class="${/[0-9.]/.test(k)?'':'fn'}" onpointerdown="event.preventDefault()" onclick="patrolKeyPress('${k}')">${k}</button>`).join('');
+  document.getElementById('pKeys').style.opacity=(text&&!patrol.keyboard)?'.45':'';
+  patrolUpdateProg();
+  patrolPanel();
+  if(focus) patrolFocus();
+}
+function patrolUpdateProg(){
+  const it=patrolItem(), r=patrol.round, s=patrolRoundDone(r);
+  document.getElementById('pProg').innerHTML=`${esc(ptr('progItem'))} <b>${patrolItemDone(it,r)}/${state.machineCount}</b> · ${esc(patrolRoundLabel(r))} <b>${s.done}/${s.total}</b>`;
+  const ord=patrolOrder(), m=ord[patrol.row];
+  document.getElementById('pPadTarget').textContent= m===undefined?'':`#${patrol.row+1} ${patrolMachineName(m)} · ${it.name}${patrolIsText(it)?' ('+ptr('textItem')+')':''}`;
+}
+function patrolFocus(){
+  if(patrol.editOrder) return;
+  const el=document.getElementById('pv_'+patrol.row);
+  if(el){ el.focus({preventScroll:true}); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+}
+function patrolSetRow(pos,focus){
+  if(patrol.row!==pos){
+    document.getElementById('prow_'+patrol.row)?.classList.remove('active');
+    patrol.row=pos;
+    document.getElementById('prow_'+pos)?.classList.add('active');
+    patrolUpdateProg();
+    patrolPanel();
+  }
+  if(focus) patrolFocus();
+}
+function patrolInput(pos,raw){
+  const it=patrolItem(), m=patrolOrder()[pos], v=String(raw).trim();
+  if(m===undefined) return;
+  const prev=state.values[patrolKey(it,m,patrol.round)]||'';
+  state.values[patrolKey(it,m,patrol.round)]=v;
+  if(prev!==v){const entry=patrolDraft(m,patrol.round,it);entry.value=v;entry.judge='';}
+  patrolSyncJudges();
+  document.getElementById('prow_'+pos)?.classList.toggle('done',patrolComplete(it,m,patrol.round));
+  saveDebounced();
+  patrolUpdateProg();
+}
+function patrolKeyPress(k){
+  const el=document.getElementById('pv_'+patrol.row); if(!el) return;
+  let v=el.value;
+  if(k==='⌫') v=v.slice(0,-1);
+  else if(k==='C') v='';
+  else if(k==='-') v=v.startsWith('-')?v.slice(1):'-'+v;
+  else if(k==='.'){ if(!/\.\d*$/.test(v.split('E')[0])||/E/.test(v)) v+=(v===''||v==='-'?'0.':'.'); }
+  else if(k==='E'){ if(v&&!/E/i.test(v)) v+='E'; }
+  else v+=k;
+  el.value=v; patrolInput(patrol.row,v);
+  el.focus({preventScroll:true});
+}
+function patrolNext(){
+  if(patrol.editOrder) return;
+  const ord=patrolOrder(), item=patrolItem(), m=ord[patrol.row];
+  if(!patrolLtc(m,patrol.round)){patrolError(ptr('needLtc'));return;}
+  if(!patrolComplete(item,m,patrol.round)){patrolError(ptr('needJudge'));return;}
+  patrolError('');
+  save();
+  if(patrol.row<ord.length-1){ patrolSetRow(patrol.row+1,true); return; }
+  // 마지막 트레이 → 다음 항목
+  const it=patrolItem();
+  if(patrol.item<PATROL_ITEMS.length-1){
+    const nx=PATROL_ITEMS[patrol.item+1];
+    patrolToast(`${it.name} ✓ ${ptr('toItem')}: ${nx.name}`);
+    patrolGoItem(patrol.item+1);
+  }else{
+    const s=patrolRoundDone(patrol.round);
+    patrolToast(s.done===s.total?`${patrolRoundLabel(patrol.round)} · ${ptr('roundDone')}`:`${s.done}/${s.total}`, s.done!==s.total);
+    document.activeElement?.blur();
+  }
+}
+function patrolGoItem(i){
+  if(i<0||i>=PATROL_ITEMS.length) return;
+  patrol.item=i; saveDebounced();
+  patrol.row=patrolFirstEmpty();
+  patrolRender(true);
+}
+function patrolItemStep(d){ patrolGoItem(patrol.item+d); }
+function patrolGoRound(r){
+  patrolStopScan(false);
+  patrol.round=r; patrol.row=patrolFirstEmpty();
+  patrolRender(true);
+}
+function patrolToggleKeyboard(){ patrol.keyboard=!patrol.keyboard; patrolRender(true); }
+function patrolToggleOrder(){
+  patrol.editOrder=!patrol.editOrder;
+  if(!patrol.editOrder) save();
+  patrolRender(!patrol.editOrder);
+}
+function patrolMove(pos,d){
+  const ord=patrolOrder(), to=pos+d;
+  if(to<0||to>=ord.length) return;
+  [ord[pos],ord[to]]=[ord[to],ord[pos]];
+  const names=ord.map(patrolMachineName);
+  // 오늘 목록에 없는 설비의 기존 순서도 뒤에 보존
+  const old=(state.patrolOrderNames||[]).filter(n=>!names.includes(n));
+  state.patrolOrderNames=names.concat(old);
+  saveDebounced();
+  patrolRender(false);
+}
+function patrolCarryLtc(){
+  const r=patrol.round;
+  if(r===0){ patrolToast(ptr('carryFirst'),true); return; }
+  let n=0;
+  for(let m=0;m<state.machineCount;m++){
+    const prev=patrolLtc(m,r-1);
+    if(prev && !patrolLtc(m,r)){ patrolSetLtc(m,r,prev,true); n++; }
+  }
+  patrolRender(false);
+  patrolToast(n?`${n} ${ptr('carryDone')}`:ptr('carryNone'),!n);
+}
+
+// ── LTC 연속 스캔: 순찰 순서대로 다음 트레이에 자동 배정 ──
+function patrolStartScan(pos){
+  closeLtcQr(false);
+  const ord=patrolOrder(), r=patrol.round, carried=patrolCarriedMap();
+  if(pos===undefined){ // LTC가 없거나 전회차 값인 첫 트레이부터
+    pos=ord.findIndex(m=>!patrolLtc(m,r)||carried[patrolMachineName(m)+'|'+r]);
+    if(pos<0) pos=0;
+  }
+  patrolStopScan(false);
+  const s={pos,round:patrol.round,order:ord.slice(),attempt:0,stream:null,timer:null,last:'',lastAt:0};
+  patrol.scan=s;
+  document.getElementById('pScanTitle').textContent=ptr('scanTitle');
+  document.getElementById('pManualLabel').textContent=ptr('manualLtc');
+  document.getElementById('pManualButton').textContent=ptr('register');
+  document.getElementById('pManualLtc').value='';
+  document.getElementById('pScanSkip').textContent=ptr('scanSkip');
+  document.getElementById('pScanDone').textContent=ptr('scanDone');
+  document.getElementById('pScanBox').classList.add('open');
+  patrolScanUi();
+  patrolScanCamera(s);
+}
+function patrolScanUi(msg){
+  const s=patrol.scan; if(!s) return;
+  const ord=patrolOrder(), r=patrol.round, carried=patrolCarriedMap();
+  const m=ord[s.pos];
+  document.getElementById('pScanTarget').textContent=m===undefined?'':`${ptr('scanTarget')}: #${s.pos+1} ${patrolMachineName(m)}`;
+  if(msg!==undefined) document.getElementById('pScanStatus').textContent=msg;
+  document.getElementById('pScanList').innerHTML=ord.map((mm,p)=>{
+    const l=patrolLtc(mm,r), c=l&&carried[patrolMachineName(mm)+'|'+r];
+    return `<div class="${p===s.pos?'cur':''}"><span>#${p+1} ${esc(patrolMachineName(mm))}</span><span>${l?esc(l)+(c?' ↺':' ✓'):'—'}</span></div>`;
+  }).join('');
+}
+async function patrolScanCamera(s){
+  if(typeof jsQR!=='function'||!navigator.mediaDevices?.getUserMedia){ patrolScanUi(ptr('scanErr')); return; }
+  patrolScanUi(ptr('scanStart'));
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+    if(patrol.scan!==s){ stream.getTracks().forEach(t=>t.stop()); return; }
+    s.stream=stream;
+    const video=document.getElementById('pScanVideo');
+    video.srcObject=stream; await video.play();
+    if(patrol.scan!==s){stream.getTracks().forEach(t=>t.stop());return;}
+    patrolScanUi(ptr('scanOn'));
+    const loop=()=>{
+      if(patrol.scan!==s) return;
+      try{
+        if(video.readyState>=2&&video.videoWidth){
+          const val=decodeLtcQr(video,video.videoWidth,video.videoHeight,960).trim();
+          if(val) patrolScanHit(s,val);
+        }
+      }catch(e){}
+      if(patrol.scan===s) s.timer=setTimeout(loop,150);
+    };
+    loop();
+  }catch(e){
+    if(patrol.scan!==s) return;
+    patrolScanUi(e.name==='NotAllowedError'||e.name==='SecurityError'?ptr('scanDenied'):ptr('scanErr'));
+  }
+}
+function patrolScanHit(s,val){
+  if(patrol.scan!==s||!patrol.open||s.round!==patrol.round||s.order?.some((m,i)=>patrolOrder()[i]!==m)) return;
+  const now=Date.now();
+  if(val===s.last && now-s.lastAt<3000) return; // 같은 카드를 계속 비추는 경우 무시
+  s.last=val; s.lastAt=now;
+  const ord=patrolOrder(), r=patrol.round, m=ord[s.pos];
+  if(m===undefined) return;
+  const other=ord.find(mm=>mm!==m && patrolLtc(mm,r)===val && !patrolCarriedMap()[patrolMachineName(mm)+'|'+r]);
+  if(other!==undefined){ patrolScanUi(`⚠ ${ptr('dup')}: ${patrolMachineName(other)}`); patrolToast(`${ptr('dup')}: ${patrolMachineName(other)}`,true); return; }
+  if(patrolSetLtc(m,r,val,false)===false)return;
+  try{ navigator.vibrate?.(80); }catch(e){}
+  patrolToast(`#${s.pos+1} ${patrolMachineName(m)} ← ${val}`);
+  patrolScanAdvance(s);
+}
+function patrolScanAdvance(s){
+  const ord=patrolOrder();
+  if(s.pos>=ord.length-1){ patrolStopScan(true); patrolToast(ptr('scanAll')); return; }
+  s.pos++;
+  patrolScanUi(ptr('scanOn'));
+}
+function patrolScanSkip(){ if(patrol.scan) patrolScanAdvance(patrol.scan); }
+function patrolStopScan(rerender){
+  const s=patrol.scan; patrol.scan=null;
+  if(s){ clearTimeout(s.timer); s.stream?.getTracks().forEach(t=>t.stop()); }
+  const v=document.getElementById('pScanVideo'); if(v){ v.pause(); v.srcObject=null; }
+  document.getElementById('pScanBox')?.classList.remove('open');
+  if(rerender&&patrol.open) patrolRender(false);
+}
+
+let patrolToastTimer=null;
+function patrolToast(msg,warn){
+  const t=document.getElementById('pToast');
+  t.textContent=msg; t.classList.toggle('warn',!!warn); t.classList.add('show');
+  clearTimeout(patrolToastTimer); patrolToastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function patrolSyncFab(){
+  const l=document.getElementById('patrolFabLabel'); if(l) l.textContent=ptr('fab');
+  const b=document.getElementById('patrolEntryButton'); if(b) b.textContent=ptr('fab');
+}
+
+
+// Judgments live inside machineInfo, so drafts, server records and JSON backups
+// preserve the same machine/round/lot binding. A changed value invalidates a verdict.
+const PATROL_EXTRA={
+ko:{judgment:'항목 합부',pass:'합격',fail:'불합격',hold:'보류',na:'해당 없음',notes:'추가 설명 (선택)',recordNext:'기록 후 다음 트레이 →',needJudge:'측정값 입력 후 항목 합부를 선택해 주세요.',needLtc:'이 회차의 LTC 번호를 먼저 스캔하거나 입력해 주세요.',changeLot:'LTC가 변경되면 이 설비의 현재 회차 측정값·합부·설명이 초기화됩니다. 변경할까요?',manualLtc:'LTC 번호 직접 입력 / 스캐너 입력',register:'등록',choose:'선택',final:'로트 최종 판정',visual:'외관 불량 유형',hint:'측정값 입력 → 항목 합부 선택 → 다음 트레이.\n전체 트레이가 끝나면 다음 검사항목으로 이동합니다.\n로트 최종 판정은 RESULT에서 별도로 입력합니다.'},
+en:{judgment:'Item judgment',pass:'Pass',fail:'Fail',hold:'Hold',na:'N/A',notes:'Additional details (optional)',recordNext:'Record · next tray →',needJudge:'Enter a measurement and select its judgment.',needLtc:'Scan or enter this round’s LTC first.',changeLot:'Changing LTC clears this machine’s measurements, judgments and notes for this round. Continue?',manualLtc:'Enter LTC / hardware scanner',register:'Register',choose:'Select',final:'Final lot judgment',visual:'Visual defect type',hint:'Enter a value → select judgment → next tray.\nAfter the last tray, continue to the next item.\nEnter the final lot judgment separately under RESULT.'},
+zh:{judgment:'項目判定',pass:'合格',fail:'不合格',hold:'待判',na:'不適用',notes:'補充說明（選填）',recordNext:'記錄後下一個托盤 →',needJudge:'請輸入量測值並選擇項目判定。',needLtc:'請先掃描或輸入本回 LTC。',changeLot:'變更 LTC 將清除本機台本回的量測值、判定和說明。是否繼續？',manualLtc:'手動輸入 LTC / 掃描器輸入',register:'登錄',choose:'選擇',final:'批次最終判定',visual:'外觀不良類型',hint:'輸入量測值 → 選擇判定 → 下一個托盤。\n最後一個托盤後進入下一項目。\n批次最終判定請於 RESULT 另行輸入。'},
+vi:{judgment:'Kết luận hạng mục',pass:'Đạt',fail:'Không đạt',hold:'Chờ xử lý',na:'Không áp dụng',notes:'Thông tin bổ sung (tùy chọn)',recordNext:'Ghi · khay tiếp theo →',needJudge:'Nhập giá trị và chọn kết luận hạng mục.',needLtc:'Quét hoặc nhập LTC của lần này trước.',changeLot:'Đổi LTC sẽ xóa số đo, kết luận và ghi chú của máy trong lần này. Tiếp tục?',manualLtc:'Nhập LTC / máy quét',register:'Đăng ký',choose:'Chọn',final:'Kết luận cuối của lô',visual:'Loại lỗi ngoại quan',hint:'Nhập số đo → chọn kết luận → khay tiếp theo.\nSau khay cuối chuyển sang hạng mục tiếp.\nKết luận cuối của lô nhập riêng tại RESULT.'},
+id:{judgment:'Keputusan item',pass:'Lulus',fail:'Gagal',hold:'Tahan',na:'Tidak berlaku',notes:'Rincian tambahan (opsional)',recordNext:'Catat · tray berikut →',needJudge:'Masukkan nilai dan pilih keputusan item.',needLtc:'Pindai atau isi LTC ronde ini terlebih dahulu.',changeLot:'Mengubah LTC menghapus nilai, keputusan, dan catatan mesin pada ronde ini. Lanjutkan?',manualLtc:'Input LTC / pemindai',register:'Daftarkan',choose:'Pilih',final:'Keputusan akhir lot',visual:'Jenis cacat visual',hint:'Isi nilai → pilih keputusan → tray berikut.\nSetelah tray terakhir, lanjut ke item berikut.\nIsi keputusan akhir lot secara terpisah pada RESULT.'}
+};
+Object.keys(PATROL_EXTRA).forEach(lang=>Object.assign(PATROL_TXT[lang],PATROL_EXTRA[lang]));
+function patrolNeedsJudge(it){return ![8,9,'remark'].includes(it.key);}
+function patrolEntry(mi,r,it,values,m){
+ const round=mi?.patrolRounds?.[r], entry=round?.items?.[it.key];
+ const ltc=(mi?.ltcRounds&&mi.ltcRounds[r]!==undefined)?mi.ltcRounds[r]:(mi?.ltc||'');
+ if(!entry||round.ltc!==ltc||entry.value!==String(values?.[`${it.key}|${m}|${r}`]||''))return null;
+ return entry;
+}
+function patrolDraft(m,r,it){
+ const mi=state.machineInfo[m];if(!mi)throw Error('Invalid patrol machine');
+ const ltc=patrolLtc(m,r);if(!mi.patrolRounds||typeof mi.patrolRounds!=='object')mi.patrolRounds={};
+ if(!mi.patrolRounds[r]||mi.patrolRounds[r].ltc!==ltc)mi.patrolRounds[r]={ltc,items:{}};
+ const round=mi.patrolRounds[r];if(!round.items)round.items={};
+ if(!round.items[it.key])round.items[it.key]={value:String(state.values[patrolKey(it,m,r)]||''),judge:'',notes:''};
+ return round.items[it.key];
+}
+function patrolComplete(it,m,r){
+ const value=String(state.values[patrolKey(it,m,r)]||'').trim();
+ if(!patrolNeedsJudge(it))return !!value;
+ const entry=patrolEntry(state.machineInfo[m],r,it,state.values,m);
+ return !!patrolLtc(m,r)&&!!entry?.judge&&(!!value||entry.judge==='N/A');
+}
+function patrolJudgeButtons(m,r,it,selected,pos){
+ return ['PASS','FAIL','HOLD','N/A'].map((j,i)=>`<button type="button" class="p-judge ${j.toLowerCase()}" data-verdict="${j}" aria-pressed="${selected===j}" onclick="patrolJudge('${j}',${pos})">${esc(ptr(['pass','fail','hold','na'][i]))}</button>`).join('');
+}
+function patrolError(message){const el=document.getElementById('pValidation');if(el)el.textContent=message;}
+function patrolPanel(){
+ const it=patrolItem(),m=patrolOrder()[patrol.row];if(m===undefined)return;
+ const entry=patrolEntry(state.machineInfo[m],patrol.round,it,state.values,m);
+ document.getElementById('pJudgmentLabel').textContent=ptr('judgment');
+ document.getElementById('pJudgmentPanel').hidden=!patrolNeedsJudge(it)||patrol.editOrder;
+ document.getElementById('pJudges').innerHTML=patrolJudgeButtons(m,patrol.round,it,entry?.judge||'',patrol.row);
+ document.getElementById('pNoteLabel').textContent=ptr('notes');
+ document.getElementById('pNote').value=entry?.notes||'';
+ document.getElementById('pNote').disabled=patrol.editOrder;
+ document.getElementById('pKeys').hidden=it.key==='visual'||it.key===8;
+ const wrap=document.getElementById('pVisualOptions');wrap.innerHTML='';
+ if(it.key===8){wrap.innerHTML=`<label for="pResultSelect">${esc(ptr('final'))}</label><select id="pResultSelect" onchange="patrolSetChoice(this.value)"><option value="">${esc(ptr('choose'))}</option>${['PASS','FAIL','HOLD','N/A','Waive'].map(v=>`<option ${state.values[patrolKey(it,m,patrol.round)]===v?'selected':''}>${v}</option>`).join('')}</select>`;}
+ if(it.key==='visual'){
+  const category=entry?.category||'',dimensions=entry?.dimensions||[];
+  wrap.innerHTML=`<label for="pVisualCategory">${esc(ptr('visual'))}</label><select id="pVisualCategory" onchange="patrolVisual(this.value)"><option value="">${esc(ptr('choose'))}</option>${[...VISUAL_LEGACY,...VISUAL_CATEGORIES].map(c=>`<option value="${esc(c)}" ${category===c?'selected':''}>${esc(c)}</option>`).join('')}</select>${category==='Dimension'?`<fieldset class="p-dimensions"><legend>${esc(tr('visualDimensions'))}</legend>${VISUAL_DIMENSIONS.map(d=>`<label><input type="checkbox" value="${d}" ${dimensions.includes(d)?'checked':''} onchange="patrolVisualDimensions()">${d}</label>`).join('')}</fieldset>`:''}`;
+ }
+ patrolError('');
+}
+function patrolSyncJudges(){
+ const it=patrolItem(),r=patrol.round;
+ patrolOrder().forEach((m,pos)=>{const entry=patrolEntry(state.machineInfo[m],r,it,state.values,m);document.querySelectorAll('#prow_'+pos+' .p-judge').forEach(b=>b.setAttribute('aria-pressed',String(entry?.judge===b.getAttribute('data-verdict'))));});
+ // The active panel does not replace the input being edited.
+ const m=patrolOrder()[patrol.row],entry=patrolEntry(state.machineInfo[m],r,it,state.values,m);
+ document.getElementById('pJudges').innerHTML=patrolJudgeButtons(m,r,it,entry?.judge||'',patrol.row);
+}
+function patrolJudge(j,pos){
+ if(!['PASS','FAIL','HOLD','N/A'].includes(j))return;
+ patrolSetRow(pos,false);const m=patrolOrder()[pos],it=patrolItem(),r=patrol.round;
+ if(!patrolLtc(m,r)){patrolError(ptr('needLtc'));return;}
+ const value=String(state.values[patrolKey(it,m,r)]||'').trim();
+ if(!value&&j!=='N/A'){patrolError(ptr('needJudge'));return;}
+ const entry=patrolDraft(m,r,it);
+ if(it.key==='visual'&&entry.category==='Dimension'&&!entry.dimensions?.length){patrolError(tr('visualDimensionsRequired'));return;}
+ if(it.key==='visual'&&entry.category==='other'&&!entry.notes?.trim()){patrolError(tr('visualOtherRequired'));return;}
+ entry.value=value;entry.judge=j;entry.updatedAt=new Date().toISOString();save();patrolRender(false);
+}
+function patrolNote(value){
+ const m=patrolOrder()[patrol.row],it=patrolItem();if(m===undefined)return;
+ const entry=patrolDraft(m,patrol.round,it);if(entry.notes!==value)entry.judge='';entry.notes=value;
+ if(it.key==='visual'&&entry.category==='other')entry.judge='';
+ saveDebounced();patrolSyncJudges();document.getElementById('prow_'+patrol.row)?.classList.toggle('done',patrolComplete(it,m,patrol.round));patrolUpdateProg();
+}
+function patrolSetChoice(value){const input=document.getElementById('pv_'+patrol.row);if(input)input.value=value;patrolInput(patrol.row,value);}
+function patrolVisual(category){
+ const m=patrolOrder()[patrol.row],it=patrolItem(),entry=patrolDraft(m,patrol.round,it);
+ entry.category=category;entry.dimensions=[];entry.judge='';
+ patrolSetChoice(category);patrolPanel();
+}
+function patrolVisualDimensions(){
+ const m=patrolOrder()[patrol.row],entry=patrolDraft(m,patrol.round,patrolItem());
+ entry.dimensions=Array.from(document.querySelectorAll('#pVisualOptions input:checked'),el=>el.value);
+ patrolSetChoice('Dimension'+(entry.dimensions.length?' ('+entry.dimensions.join(', ')+')':''));
+}
+function patrolManualLtc(){const input=document.getElementById('pManualLtc'),s=patrol.scan;if(!s)return;const value=input.value.trim();if(!value)return;patrolScanHit(s,value);input.value='';}
+function applyPatrolRow(row,mi,m,r,values){
+ const round=mi?.patrolRounds?.[r],ltc=mi?.ltcRounds?.[r]??mi?.ltc??'';
+ if(!round||round.ltc!==ltc)return false;
+ const details=[];let has=false;
+ Object.entries(round.items||{}).forEach(([key,entry])=>{
+  if(!entry||entry.value!==String(values[`${key}|${m}|${r}`]||''))return;
+  const it=PATROL_ITEMS.find(it=>String(it.key)===key);if(!it)return;
+  if(key==='visual'){row[11]=[entry.value,entry.notes].filter(Boolean).join('\n');has=has||!!row[11];}
+  if(key==='8')row[20]=entry.value;
+  if(entry.judge||entry.notes){details.push(it.name+': '+[entry.judge,entry.notes].filter(Boolean).join(' | '));has=true;}
+ });
+ if(details.length)row[34]=[row[34],'[Patrol R'+(r+1)+'] '+details.join('; ')].filter(Boolean).join('\n');
+ return has;
+}
+function buildPatrolLedger(machineInfo,values,roundCount){
+ const rows=[['M/C','LTC','Round','Item','Value','Judgment','Notes']];
+ machineInfo.forEach((mi,m)=>{for(let r=0;r<roundCount;r++)PATROL_ITEMS.forEach(it=>{const entry=patrolEntry(mi,r,it,values,m);if(entry&&(entry.value||entry.judge||entry.notes))rows.push([mi.name||'',mi.ltcRounds?.[r]??mi.ltc??'',r+1,it.name,entry.value,entry.judge||'',entry.notes||'']);});});return rows;
+}
+function patrolLedgerHtml(machineInfo,values,roundCount){
+ const rows=buildPatrolLedger(machineInfo,values,roundCount);if(rows.length<2)return '';
+ const headings=['M/C','LTC',ptr('round'),'Item','Value',ptr('judgment'),ptr('notes')];
+ return '<div class="patrol-ledger"><table><thead><tr>'+headings.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.slice(1).map(row=>'<tr>'+row.map(v=>'<td>'+esc(String(v))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&patrol.scan)patrolStopScan(true);});
+
+window.ipqcPatrolReady=true;
+patrolRefresh();
+</script>
+
+
 </body>
 </html>
