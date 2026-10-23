@@ -245,7 +245,7 @@
   </style>
   <link rel="stylesheet" href="ipqc-theme.css?v=20261022">
   <meta name="theme-color" content="#11273b">
-</head>
+<style id="visual-defect-style">.visual-field{grid-column:1/-1;padding:16px;border:1px solid #d7e3f0;border-radius:10px;background:#f8fbff}.visual-controls{display:grid;grid-template-columns:minmax(180px,1fr) minmax(240px,2fr);gap:16px}.visual-controls select{height:44px;width:100%;box-sizing:border-box}.visual-controls textarea{width:100%;box-sizing:border-box;min-height:82px;padding:10px 12px;resize:vertical;border:1px solid #cbd5e1;border-radius:7px;font:inherit;background:white;color:#203346}.visual-dimensions{margin:14px 0 0;border:1px solid #d7e3f0;border-radius:8px;padding:12px}.visual-dimensions[hidden]{display:none!important}.visual-dimensions legend{font-size:13px;font-weight:600}.visual-dimensions p{font-size:12px;color:#64748b;margin:0 0 10px}.visual-dimensions>div{display:flex;gap:10px;flex-wrap:wrap}.visual-dimensions label{display:flex!important;align-items:center;gap:7px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;padding:10px 12px;margin:0!important;min-height:44px}.visual-dimensions input[type=checkbox]{width:18px!important;height:18px!important;margin:0;padding:0}.visual-preview{margin-top:12px;font-size:12px;color:#64748b}.visual-preview span{display:block;margin-bottom:5px}.visual-preview output{display:block;white-space:pre-wrap;overflow-wrap:anywhere;color:#203346}.view-field .vv{white-space:pre-wrap}@media(max-width:650px){.visual-controls{grid-template-columns:1fr}.visual-field{padding:12px}}</style></head>
 <body>
 <!-- QR images are decoded locally; no camera frames or photos are uploaded. -->
 <dialog id="ltcQrDialog" class="ltc-qr-dialog" aria-labelledby="ltcQrTitle" aria-describedby="ltcQrStatus">
@@ -1638,6 +1638,8 @@ const THEME_MESSAGES = {
   id:{navLabel:'MANAJEMEN INSPEKSI',navSetup:'Pengaturan umum',navMachines:'Informasi mesin',navMeasurements:'Pengukuran',navSave:'Simpan / Ekspor',navSearch:'Cari catatan',navParts:'Nomor komponen',qualityLabel:'Kontrol kualitas',overviewTitle:'Ringkasan inspeksi',overviewScope:'Inspeksi saat ini',draftLabel:'Draf inspeksi',draftHint:'Isian disimpan sementara di browser ini. Simpan ke server setelah inspeksi selesai.'}
 };
 Object.entries(THEME_MESSAGES).forEach(([lang,messages])=>Object.assign(I18N[lang],messages));
+const VISUAL_MESSAGES={"ko": {"visualChoose": "불량 항목을 선택해 주세요.", "visualOther": "기타 · 직접 입력", "visualNotes": "추가 설명 (선택)", "visualOtherNotes": "불량 내용 · 직접 입력", "visualNotesHint": "발생 위치나 상태 등 추가 설명을 입력하세요.", "visualDimensions": "Dimension 세부 항목", "visualDimensionsHint": "해당하는 치수 항목을 선택하세요. 여러 개 선택할 수 있습니다.", "visualPreview": "저장될 Visual 내용", "visualDimensionsRequired": "Dimension 세부 항목을 하나 이상 선택해 주세요.", "visualOtherRequired": "기타를 선택하면 불량 내용을 직접 입력해 주세요.", "visualTooLong": "Visual 내용은 2,000자 이내로 입력해 주세요."}, "en": {"visualChoose": "Select a defect category.", "visualOther": "Other · Enter details", "visualNotes": "Additional details (optional)", "visualOtherNotes": "Defect details · Manual entry", "visualNotesHint": "Enter additional details, such as the location or condition of the defect.", "visualDimensions": "Dimension details", "visualDimensionsHint": "Select the applicable dimensions. Multiple selections are allowed.", "visualPreview": "Visual content to be saved", "visualDimensionsRequired": "Select at least one dimension.", "visualOtherRequired": "Enter defect details when selecting Other.", "visualTooLong": "Visual content must not exceed 2,000 characters."}, "zh": {"visualChoose": "請選擇不良項目。", "visualOther": "其他 · 手動輸入", "visualNotes": "補充說明（選填）", "visualOtherNotes": "不良內容 · 手動輸入", "visualNotesHint": "請輸入不良發生位置、狀況等補充說明。", "visualDimensions": "Dimension 細項", "visualDimensionsHint": "請選擇適用的尺寸項目，可複選。", "visualPreview": "將儲存的 Visual 內容", "visualDimensionsRequired": "請至少選擇一個尺寸項目。", "visualOtherRequired": "選擇其他時，請手動輸入不良內容。", "visualTooLong": "Visual 內容不可超過 2,000 字。"}, "vi": {"visualChoose": "Chọn loại lỗi.", "visualOther": "Khác · Nhập chi tiết", "visualNotes": "Mô tả bổ sung (không bắt buộc)", "visualOtherNotes": "Nội dung lỗi · Nhập thủ công", "visualNotesHint": "Nhập mô tả bổ sung, như vị trí hoặc tình trạng lỗi.", "visualDimensions": "Chi tiết Dimension", "visualDimensionsHint": "Chọn các kích thước phù hợp. Có thể chọn nhiều mục.", "visualPreview": "Nội dung Visual sẽ lưu", "visualDimensionsRequired": "Chọn ít nhất một kích thước.", "visualOtherRequired": "Nhập nội dung lỗi khi chọn Khác.", "visualTooLong": "Nội dung Visual không được quá 2.000 ký tự."}, "id": {"visualChoose": "Pilih kategori cacat.", "visualOther": "Lainnya · Isi detail", "visualNotes": "Keterangan tambahan (opsional)", "visualOtherNotes": "Detail cacat · Input manual", "visualNotesHint": "Masukkan keterangan tambahan, seperti lokasi atau kondisi cacat.", "visualDimensions": "Detail Dimension", "visualDimensionsHint": "Pilih dimensi yang sesuai. Boleh memilih lebih dari satu.", "visualPreview": "Isi Visual yang akan disimpan", "visualDimensionsRequired": "Pilih setidaknya satu dimensi.", "visualOtherRequired": "Isi detail cacat saat memilih Lainnya.", "visualTooLong": "Isi Visual tidak boleh melebihi 2.000 karakter."}};
+Object.entries(VISUAL_MESSAGES).forEach(([lang,messages])=>Object.assign(I18N[lang],messages));
 function tr(k){ return (I18N[state?.lang||'ko']||I18N.ko)[k] || I18N.ko[k] || k; }
 function setLang(v){ state.lang=v; save(); applyLanguage(); }
 function applyLanguage(){
@@ -1686,6 +1688,54 @@ const ITEMS = RAW_ITEMS.filter(item=>item.key!==8 && item.key!==9).concat(RAW_IT
 // ══ 상태 ══════════════════════════════════════════
 const LSKEY   = 'ipqc_pad_v3';
 const HIST_KEY = 'ipqc_submit_history_v2';
+
+// Visual uses the same defect categories and dimension choices as defect registration.
+const VISUAL_CATEGORIES=['FM','Warpage','Crack','Unfield Fence','Incomplete Fence','C/C&STH','S/R','Dimension','Date Code','other'];
+const VISUAL_DIMENSIONS=['EL','OL','OW','TSL','BSL','TSW','BSW','Pocket','Other'];
+const VISUAL_LEGACY=['OK','NG','N/A','Waive'];
+function visualDraft(info={}){
+  if(typeof info.visualCategory==='string')return {category:info.visualCategory,dimensions:VISUAL_DIMENSIONS.filter(d=>(info.visualDimensions||[]).includes(d)),notes:String(info.visualNotes||'')};
+  const text=String(info.visual||''),[first,...rest]=text.split('\n');
+  if(!text)return {category:'',dimensions:[],notes:''};
+  const dimension=first.match(/^Dimension\s*\(([^)]+)\)$/);
+  if(dimension){const dimensions=dimension[1].split(',').map(s=>s.trim());if(dimensions.every(d=>VISUAL_DIMENSIONS.includes(d)))return {category:'Dimension',dimensions,notes:rest.join('\n')}}
+  if([...VISUAL_CATEGORIES.filter(c=>c!=='other'),...VISUAL_LEGACY].includes(first))return {category:first,dimensions:[],notes:rest.join('\n')};
+  return {category:'other',dimensions:[],notes:text};
+}
+function visualText(info={}){
+  const draft=visualDraft(info);let label=draft.category==='other'?'':draft.category;
+  if(draft.category==='Dimension'&&draft.dimensions.length)label+=' ('+draft.dimensions.join(', ')+')';
+  return [label,draft.notes.trim()].filter(Boolean).join('\n');
+}
+function visualId(m,history=false){return history?'hem_visual_'+m:'mi_'+m+'_visual'}
+function visualInputHtml(m,info={},history=false){
+ const draft=visualDraft(info),id=visualId(m,history),change=`visualInputChanged(${m},${history},true)`;
+ return `<div class="visual-field"><div class="visual-controls"><div><label for="${id}">${tr('visualLabel')}</label><select id="${id}" onchange="${change}"><option value="">${esc(tr('visualChoose'))}</option>${VISUAL_LEGACY.map(c=>`<option value="${c}" ${draft.category===c?'selected':''}>${c}</option>`).join('')}${VISUAL_CATEGORIES.map(c=>`<option value="${c}" ${draft.category===c?'selected':''}>${esc(c==='other'?tr('visualOther'):c)}</option>`).join('')}</select></div><div><label id="${id}_notes_label" for="${id}_notes">${tr(draft.category==='other'?'visualOtherNotes':'visualNotes')}</label><textarea id="${id}_notes" rows="3" maxlength="1900" placeholder="${esc(tr('visualNotesHint'))}" oninput="visualInputChanged(${m},${history})">${esc(draft.notes)}</textarea></div></div><fieldset id="${id}_dimensions" class="visual-dimensions" ${draft.category==='Dimension'?'':'hidden'}><legend>${tr('visualDimensions')}</legend><p>${tr('visualDimensionsHint')}</p><div>${VISUAL_DIMENSIONS.map(d=>`<label><input type="checkbox" value="${d}" ${draft.dimensions.includes(d)?'checked':''} onchange="visualInputChanged(${m},${history})"><span>${d}</span></label>`).join('')}</div></fieldset><div class="visual-preview"><span>${tr('visualPreview')}</span><output id="${id}_preview" for="${id} ${id}_notes">${esc(visualText(info))}</output></div></div>`;
+}
+function readVisualInput(m,fallback={},history=false){
+ const id=visualId(m,history),select=document.getElementById(id);
+ if(!select)return {visualCategory:fallback.visualCategory,visualDimensions:fallback.visualDimensions,visualNotes:fallback.visualNotes,visual:visualText(fallback)};
+ const draft={visualCategory:select.value,visualDimensions:select.value==='Dimension'?Array.from(document.querySelectorAll('#'+id+'_dimensions input:checked'),input=>input.value):[],visualNotes:document.getElementById(id+'_notes')?.value||''};
+ const value=visualText(draft);
+ if((!draft.visualCategory||VISUAL_LEGACY.includes(draft.visualCategory))&&!draft.visualNotes)return {visualCategory:undefined,visualDimensions:undefined,visualNotes:undefined,visual:value};
+ return {...draft,visual:value};
+}
+function visualInputChanged(m,history=false,categoryChanged=false){
+ const id=visualId(m,history),select=document.getElementById(id);if(!select)return;
+ const dimensions=document.getElementById(id+'_dimensions');if(dimensions)dimensions.hidden=select.value!=='Dimension';
+ if(categoryChanged&&select.value!=='Dimension')document.querySelectorAll('#'+id+'_dimensions input').forEach(input=>input.checked=false);
+ const label=document.getElementById(id+'_notes_label');if(label)label.textContent=tr(select.value==='other'?'visualOtherNotes':'visualNotes');
+ const value=readVisualInput(m,{},history),preview=document.getElementById(id+'_preview');if(preview)preview.textContent=value.visual;
+ if(!history){Object.assign(state.machineInfo[m],value);saveDebounced()}
+}
+function validateVisualInputs(infos){
+ for(const info of infos){const draft=visualDraft(info);
+  if(draft.category==='Dimension'&&!draft.dimensions.length)throw Error((info.name||'M/C')+': '+tr('visualDimensionsRequired'));
+  if(draft.category==='other'&&!draft.notes.trim())throw Error((info.name||'M/C')+': '+tr('visualOtherRequired'));
+  if(!draft.category&&draft.notes.trim())throw Error((info.name||'M/C')+': '+tr('visualChoose'));
+  if(visualText(info).length>2000)throw Error(tr('visualTooLong'));
+ }
+}
 
 function emptyMachineInfo(){
   return {name:'',desc:'',sap:'',customer:'',mold:'',datecode:'',ltc:'',ltcRounds:[],visual:'',result:'',approval:'',material:'',ratio:'',sess:''};
@@ -1751,9 +1801,10 @@ function collectCurrentMachineInfo(){
   const info = state.machineInfo[m];
   const nameEl = document.getElementById(`mname_${m}`);
   if(nameEl) info.name = nameEl.value;
-  ['desc','sap','customer','mold','datecode','visual','result','approval','material','ratio','sess'].forEach(f=>{
+  ['desc','sap','customer','mold','datecode','result','approval','material','ratio','sess'].forEach(f=>{
     const el = document.getElementById(`mi_${m}_${f}`); if(el) info[f] = el.value;
   });
+  Object.assign(info,readVisualInput(m,info));
   // LTC No. 라운드별 수집
   ensureLtcRounds(info);
   for(let r=0;r<state.roundCount;r++){
@@ -1765,7 +1816,7 @@ function applyMachineInfoToForm(m){
   const info = state.machineInfo[m] || emptyMachineInfo();
   const nameEl = document.getElementById(`mname_${m}`);
   if(nameEl) nameEl.value = info.name||'';
-  ['desc','sap','customer','mold','datecode','visual','result','approval','material','ratio','sess'].forEach(f=>{
+  ['desc','sap','customer','mold','datecode','result','approval','material','ratio','sess'].forEach(f=>{
     const el = document.getElementById(`mi_${m}_${f}`); if(el) el.value = info[f]||'';
   });
   // LTC No. 라운드별 적용
@@ -1901,11 +1952,7 @@ function buildMachineContent(m){
     ${productionFieldInput(m,'customer','customerLabel')}
     ${productionFieldInput(m,'mold','moldLabel')}
     <div><label>${tr('datecodeLabel')}</label><input id="mi_${m}_datecode" placeholder="${tr('productionManual')}" value="${esc(info.datecode||'')}" oninput="saveDebounced()"></div>
-    <div><label>${tr('visualLabel')}</label>
-      <select id="mi_${m}_visual" onchange="saveDebounced()">
-        ${sel('visual',['','OK','NG','N/A','Waive'],info.visual||'')}
-      </select>
-    </div>
+    ${visualInputHtml(m,info)}
     ${productionFieldInput(m,'material','materialLabel')}
     ${productionFieldInput(m,'ratio','ratioLabel',tr('productionManual'))}
     <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" placeholder="${tr('productionManual')}" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
@@ -2318,6 +2365,7 @@ function newRecordId(){
 }
 
 function buildServerPayload(existingId){
+  validateVisualInputs(state.machineInfo);
   const machinesArr = state.machineInfo.map(mi=>mi.name||'');
   return {
     id: existingId || newRecordId(),
@@ -2345,7 +2393,7 @@ function buildSheetRows(){
     const mi = state.machineInfo[m]||emptyMachineInfo();
     for(let r=0;r<state.roundCount;r++){
       const row = buildDataRow(mi, m, r);
-      let has = false;
+      let has = Boolean(visualText(mi));
       ITEMS.forEach(it=>{
         const v = state.values[`${it.key}|${m}|${r}`]||'';
         if(v){ row[it.col] = v; has = true; }
@@ -2437,7 +2485,7 @@ async function submitToServer(){
   collectCommon();
   collectCurrentMachineInfo();
   if(!state.common.inspector||!state.common.inspector.trim()){ alert(tr('noInspector')); return; }
-  let hasData=false;
+  let hasData=state.machineInfo.some(mi=>Boolean(visualText(mi)));
   for(const v of Object.values(state.values)){ if(v){ hasData=true; break; } }
   if(!hasData){ alert(tr('noData')); return; }
   if(!ensureSheetWebAppUrl()) return;
@@ -2924,6 +2972,7 @@ function getDeviceId(){
 // ══ CSV 내보내기 ════════════════════════════════
 function exportWideCsv(){
   collectCommon(); collectCurrentMachineInfo();
+  try{validateVisualInputs(state.machineInfo)}catch(error){alert(error.message);return}
 
   if(typeof XLSX === 'undefined'){
     alert(tr('srchNoXlsx'));
@@ -2971,7 +3020,7 @@ function exportWideCsv(){
   const sumData = [sumHeader];
   for(let m=0;m<state.machineCount;m++){
     const mi = state.machineInfo[m]||emptyMachineInfo();
-    sumData.push([mi.name||('M/C '+(m+1)),mi.desc||'',mi.sap||'',mi.customer||'',mi.mold||'',mi.ltc||'',mi.visual||'',mi.result||'',mi.approval||'',mi.material||'',mi.ratio||'',mi.sess||'']);
+    sumData.push([mi.name||('M/C '+(m+1)),mi.desc||'',mi.sap||'',mi.customer||'',mi.mold||'',mi.ltc||'',visualText(mi),mi.result||'',mi.approval||'',mi.material||'',mi.ratio||'',mi.sess||'']);
   }
   const ws2 = XLSX.utils.aoa_to_sheet(sumData);
   ws2['!cols'] = sumHeader.map(()=>({wch:18}));
@@ -2995,7 +3044,7 @@ function buildDataRowForRecord(common, mi, m, round){
   // LTC No.: 라운드별 값 우선, 없으면 공통값 사용 (하위호환)
   const ltcVal = (mi.ltcRounds && mi.ltcRounds[round]!==undefined) ? mi.ltcRounds[round] : (mi.ltc||'');
   row[10] = ltcVal;
-  row[11]=mi.visual||''; row[20]=mi.result||''; row[21]=mi.approval||'';
+  row[11]=visualText(mi); row[20]=mi.result||''; row[21]=mi.approval||'';
   row[32]=mi.material||''; row[33]=mi.ratio||'';
   return row;
 }
@@ -3120,7 +3169,7 @@ function openHistModal(idx){
     <div class="view-grid">
       ${[['Description',mi.desc||''],['SAP PN',mi.sap||''],['Customer',mi.customer||''],
          ['MOLD',mi.mold||''],['Datecode',mi.datecode||''],
-         ['VISUAL',mi.visual||''],['RESULT',mi.result||''],['Approval',mi.approval||''],
+         ['VISUAL',visualText(mi)],['RESULT',mi.result||''],['Approval',mi.approval||''],
          ['Material',mi.material||''],['Ratio(%)',mi.ratio||''],['SESS',mi.sess||'']]
         .map(([l,v])=>`<div class="view-field"><div class="vl">${esc(l)}</div><div class="vv">${esc(v||'-')}</div></div>`).join('')}
       ${(mi.ltcRounds||[]).map((ltcV,r)=>`<div class="view-field"><div class="vl">LTC No. R${r+1}</div><div class="vv">${esc(ltcV||'-')}</div></div>`).join('')}
@@ -3159,7 +3208,7 @@ function openHistModal(idx){
         <div class="edit-field"><label>MOLD</label><input id="hem_mold_${m}" value="${esc(mi.mold||'')}"></div>
         <div class="edit-field"><label>Datecode</label><input id="hem_datecode_${m}" value="${esc(mi.datecode||'')}"></div>
         ${(mi.ltcRounds||Array(rCount).fill('')).map((ltcV,r)=>`<div class="edit-field"><label>LTC No. R${r+1}</label><input id="hem_ltc_${m}_${r}" value="${esc(ltcV||'')}"></div>`).join('')}
-        <div class="edit-field"><label>VISUAL</label><select id="hem_visual_${m}">${selOpts(['','OK','NG','N/A','Waive'],mi.visual)}</select></div>
+        ${visualInputHtml(m,mi,true)}
         <div class="edit-field"><label>RESULT</label><select id="hem_result_${m}">${selOpts(['','PASS','FAIL','HOLD','N/A','Waive'],mi.result)}</select></div>
         <div class="edit-field"><label>Approval</label><input id="hem_approval_${m}" value="${esc(mi.approval||'')}"></div>
         <div class="edit-field"><label>Material</label><input id="hem_material_${m}" value="${esc(mi.material||'')}"></div>
@@ -3249,7 +3298,7 @@ async function saveHistEdit(){
         mold:     document.getElementById(`hem_mold_${m}`)?.value||'',
         datecode:  document.getElementById(`hem_datecode_${m}`)?.value||'',
         ltcRounds: Array.from({length:rCount},(_,r)=>document.getElementById(`hem_ltc_${m}_${r}`)?.value||''),
-        visual:    document.getElementById(`hem_visual_${m}`)?.value||'',
+        ...readVisualInput(m,(item.machineInfo||[])[m]||{},true),
         result:   document.getElementById(`hem_result_${m}`)?.value||'',
         approval: document.getElementById(`hem_approval_${m}`)?.value||'',
         material: document.getElementById(`hem_material_${m}`)?.value||'',
@@ -3264,12 +3313,13 @@ async function saveHistEdit(){
         if(el&&el.value.trim()) newValues[`${it.key}|${m}|${r}`]=el.value.trim();
       }
     });
+    validateVisualInputs(newMachineInfo);
     const dataRows = [];
     for(let m=0;m<mCount;m++){
       const mi = newMachineInfo[m] || emptyMachineInfo();
       for(let r=0;r<rCount;r++){
         const row = buildDataRowForRecord(newCommon, mi, m, r);
-        let has = false;
+        let has = Boolean(visualText(mi));
         ITEMS.forEach(it=>{
           const v = newValues[`${it.key}|${m}|${r}`] || '';
           if(v){ row[it.col] = v; has = true; }
