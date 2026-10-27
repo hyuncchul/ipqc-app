@@ -245,7 +245,12 @@
   </style>
   <link rel="stylesheet" href="ipqc-theme.css?v=20261022">
   <meta name="theme-color" content="#11273b">
-<style id="visual-defect-style">.visual-field{grid-column:1/-1;padding:16px;border:1px solid #d7e3f0;border-radius:10px;background:#f8fbff}.visual-controls{display:block;max-width:360px}.visual-notes{margin-top:14px}.visual-controls select{height:44px;width:100%;box-sizing:border-box}.visual-notes textarea{width:100%;box-sizing:border-box;min-height:82px;padding:10px 12px;resize:vertical;border:1px solid #cbd5e1;border-radius:7px;font:inherit;background:white;color:#203346}.visual-dimensions{margin:10px 0 0;border:1px solid #d7e3f0;border-radius:6px;padding:7px}.visual-dimensions[hidden]{display:none!important}.visual-dimensions legend{font-size:13px;font-weight:600}.visual-dimensions p{font-size:11px;color:#64748b;margin:0 0 6px}.visual-dimensions>div{display:flex;gap:6px;flex-wrap:wrap}.visual-dimensions label{display:flex!important;align-items:center;gap:4px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;padding:6px 7px;margin:0!important;height:40px;min-height:40px;font-size:11px;line-height:1.2}.visual-field .visual-dimensions input[type=checkbox]{appearance:auto;width:11px!important;height:11px!important;min-height:11px!important;margin:0!important;padding:0!important;flex:0 0 11px}.visual-preview{margin-top:12px;font-size:12px;color:#64748b}.visual-preview span{display:block;margin-bottom:5px}.visual-preview output{display:block;white-space:pre-wrap;overflow-wrap:anywhere;color:#203346}.view-field .vv{white-space:pre-wrap}@media(max-width:650px){.visual-controls{max-width:none}.visual-field{padding:12px}}</style></head>
+<style id="visual-defect-style">.visual-field{grid-column:1/-1;padding:16px;border:1px solid #d7e3f0;border-radius:10px;background:#f8fbff}.visual-controls{display:block;max-width:360px}.visual-notes{margin-top:14px}.visual-controls select{height:44px;width:100%;box-sizing:border-box}.visual-notes textarea{width:100%;box-sizing:border-box;min-height:82px;padding:10px 12px;resize:vertical;border:1px solid #cbd5e1;border-radius:7px;font:inherit;background:white;color:#203346}.visual-dimensions{margin:10px 0 0;border:1px solid #d7e3f0;border-radius:6px;padding:7px}.visual-dimensions[hidden]{display:none!important}.visual-dimensions legend{font-size:13px;font-weight:600}.visual-dimensions p{font-size:11px;color:#64748b;margin:0 0 6px}.visual-dimensions>div{display:flex;gap:6px;flex-wrap:wrap}.visual-dimensions label{display:flex!important;align-items:center;gap:4px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;padding:6px 7px;margin:0!important;height:40px;min-height:40px;font-size:11px;line-height:1.2}.visual-field .visual-dimensions input[type=checkbox]{appearance:auto;width:11px!important;height:11px!important;min-height:11px!important;margin:0!important;padding:0!important;flex:0 0 11px}.visual-preview{margin-top:12px;font-size:12px;color:#64748b}.visual-preview span{display:block;margin-bottom:5px}.visual-preview output{display:block;white-space:pre-wrap;overflow-wrap:anywhere;color:#203346}.view-field .vv{white-space:pre-wrap}@media(max-width:650px){.visual-controls{max-width:none}.visual-field{padding:12px}}</style><style>
+#machineSection>.mach-tabbar-wrap{position:static}
+#machineSection>.unified-measurement{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);scroll-margin-top:24px}
+#measurementSection>.panel-heading .section-title::before{display:none}
+#measurementSection>.panel-heading .section-title{font-size:17px}
+</style></head>
 <body>
 <!-- QR images are decoded locally; no camera frames or photos are uploaded. -->
 <dialog id="ltcQrDialog" class="ltc-qr-dialog" aria-labelledby="ltcQrTitle" aria-describedby="ltcQrStatus">
@@ -337,8 +342,7 @@
   <div class="nav-label" data-i18n="navLabel">검사 관리</div>
   <nav class="ipqc-nav" aria-label="IPQC">
       <a class="nav-item" href="#setupSection" data-section-link="setupSection" aria-current="location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="8" cy="7" r="3"/><circle cx="16" cy="17" r="3"/></svg><span data-i18n="navSetup">공통 설정</span></a>
-      <a class="nav-item" href="#machineSection" data-section-link="machineSection"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 9h2M12 9h5M7 13h10"/></svg><span data-i18n="navMachines">설비 정보</span></a>
-      <a class="nav-item" href="#measurementSection" data-section-link="measurementSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h2M13 7h3M8 12h2M13 12h3M8 17h2M13 17h3"/></svg><span data-i18n="navMeasurements">측정값 입력</span></a>
+      <a class="nav-item" href="#machineSection" data-section-link="machineSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h2M13 7h3M8 12h2M13 12h3M8 17h2M13 17h3"/></svg><span data-i18n="navMeasurements">측정값 입력</span></a>
       <a class="nav-item" href="#saveSection" data-section-link="saveSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v6h16v-6"/></svg><span data-i18n="navSave">저장 / 내보내기</span></a>
       <a class="nav-item" href="#searchSection" data-section-link="searchSection"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span data-i18n="navSearch">기록 검색</span></a>
       <a class="nav-item" href="#partsSection" data-section-link="partsSection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v18H4zM7 7h10M7 11h10M7 15h10M7 18h6"/></svg><span data-i18n="navParts">품번 관리</span></a>
@@ -446,7 +450,7 @@
   <div class="card" id="machineSection">
     <div class="row panel-heading">
       <div>
-        <h2 class="section-title" data-step="02" data-i18n="s2title">설비별 정보 및 측정값 입력</h2>
+        <h2 class="section-title" data-step="02" data-i18n="s2title">설비 정보 · 순찰 검사 입력</h2>
         <div class="hint" data-i18n="s2hint">각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요</div>
       </div>
       <div class="row">
@@ -462,13 +466,12 @@
 
     <!-- 설비별 컨텐츠 -->
     <div id="machContents"></div>
-  </div>
 
-  <!-- ══ 섹션 3: 항목별 측정값 (전체 설비) ══ -->
-  <div class="card" id="measurementSection">
+  <!-- Unified Section 02: retain measurementSection anchor for existing bookmarks. -->
+  <div class="unified-measurement" id="measurementSection">
     <div class="row panel-heading">
       <div>
-        <h2 class="section-title" data-step="03" data-i18n="s3title">항목별 측정값 입력</h2>
+        <h2 class="section-title" data-i18n="s3title">항목별 측정값 입력</h2>
         <div class="hint" data-i18n="s3hint">항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다</div>
       </div>
       <div class="row">
@@ -531,10 +534,11 @@
   </div>
 </div>
   </div>
+  </div>
 
-  <!-- ══ 섹션 4: 저장 ══ -->
+  <!-- ══ 섹션 3: 저장 ══ -->
   <div class="card" id="saveSection">
-    <div class="panel-heading"><h2 class="section-title" data-step="04" data-i18n="s4title">저장 / 내보내기</h2></div>
+    <div class="panel-heading"><h2 class="section-title" data-step="03" data-i18n="s4title">저장 / 내보내기</h2></div>
 
     <div id="cloudStatus"></div>
     <div class="row" style="margin-top:12px">
@@ -550,7 +554,7 @@
 
   <!-- ══ 섹션 5: 서버 데이터 검색 ══ -->
   <div class="card" id="searchSection">
-    <div class="panel-heading"><div><h2 class="section-title" data-step="05" data-i18n="srchTitle">서버 데이터 검색 / Excel 저장</h2>
+    <div class="panel-heading"><div><h2 class="section-title" data-step="04" data-i18n="srchTitle">서버 데이터 검색 / Excel 저장</h2>
     <div class="hint" data-i18n="srchHint">Google Sheet에 저장된 데이터를 조건으로 검색하고, 결과 행을 클릭하면 상세 내용을 볼 수 있습니다.</div></div></div>
     <div class="search-grid">
       <div><label data-i18n="srchDate">특정 날짜</label><input id="searchDate" type="date"></div>
@@ -598,7 +602,7 @@
   <!-- ══ 섹션 6: 파트 번호 추가 등록 ══ -->
   <div class="card" id="partsSection">
     <div class="panel-heading">
-      <h2 class="section-title" data-step="06" data-i18n="s5title">파트 번호 추가 등록 (Part Number Manager)</h2>
+      <h2 class="section-title" data-step="05" data-i18n="s5title">파트 번호 추가 등록 (Part Number Manager)</h2>
       <span id="pnCountBadge" style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:999px;font-weight:700">0개 추가</span>
     </div>
     <div class="hint" style="margin-bottom:10px" data-i18n="pnHint">🔍 기본 DB: 861개 SAP PN 등록됨 · SAP PN 입력 시 Description 자동채움 · 미등록 파트는 여기서 추가하세요.</div>
@@ -1075,9 +1079,9 @@ const I18N = {
     machineCountLabel:'설비 수', roundCountLabel:'검사 횟수',
     dateLabel:'날짜', timeLabel:'시간', shiftLabel:'SHIFT 班別',
     inspectorLabel:'QC 검사원', inspectorPH:'검사원 이름',
-    s2title:'설비별 정보 및 측정값 입력', s2hint:'각 설비 탭을 선택하여 설비 정보와 측정값을 입력하세요',
+    s2title:'설비 정보 · 순찰 검사 입력', s2hint:'설비·제품 정보를 확인한 뒤 아래에서 회차별 LTC, 검사값, Visual, 합부와 승인을 입력하세요',
     prevMach:'◀ 이전 설비', nextMach:'다음 설비 ▶',
-    s3title:'항목별 측정값 입력', s3hint:'항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다',
+    s3title:'회차별 검사 및 측정', s3hint:'항목을 선택하면 전체 설비의 측정값을 한번에 입력할 수 있습니다',
     measureSummaryBtn:'전체 입력값 보기', measureSummaryTitle:'📊 항목별 입력값 전체보기',
     measureSummaryClose:'닫기', measureSummaryEmpty:'표시할 설비가 없습니다.',
     measureSummaryMeta:'항목별 입력값',
@@ -1185,9 +1189,9 @@ const I18N = {
     machineCountLabel:'Machines', roundCountLabel:'Rounds',
     dateLabel:'Date', timeLabel:'Time', shiftLabel:'SHIFT',
     inspectorLabel:'QC Inspector', inspectorPH:'Inspector name',
-    s2title:'Per-Machine Info & Measurements', s2hint:'Select a machine tab to enter info and measurements',
+    s2title:'Machine Info & Patrol Inspection', s2hint:'Confirm machine/product details, then enter lot cards, measurements, Visual, result and approval by round below.',
     prevMach:'◀ Prev Machine', nextMach:'Next Machine ▶',
-    s3title:'Measurements by Item', s3hint:'Select an item to enter values for all machines at once',
+    s3title:'Round Inspection & Measurements', s3hint:'Select an item to enter values for all machines at once',
     measureSummaryBtn:'View All Values', measureSummaryTitle:'📊 All Measurement Values',
     measureSummaryClose:'Close', measureSummaryEmpty:'No machines to display.',
     measureSummaryMeta:'Measurement values by item',
@@ -1295,9 +1299,9 @@ const I18N = {
     machineCountLabel:'設備數', roundCountLabel:'檢驗次數',
     dateLabel:'日期', timeLabel:'時間', shiftLabel:'班別',
     inspectorLabel:'QC 檢驗員', inspectorPH:'檢驗員姓名',
-    s2title:'各設備資訊及量測值輸入', s2hint:'選擇設備標籤輸入設備資訊及量測值',
+    s2title:'機台資料與巡檢輸入', s2hint:'確認機台及產品資料後，在下方依巡檢次數輸入批號、量測值、外觀、判定及審核。',
     prevMach:'◀ 上一個', nextMach:'下一個 ▶',
-    s3title:'各項目量測值輸入', s3hint:'選擇項目可同時輸入所有設備的量測值',
+    s3title:'各次巡檢與量測', s3hint:'選擇項目可同時輸入所有設備的量測值',
     measureSummaryBtn:'查看全部輸入值', measureSummaryTitle:'📊 各項目輸入值總覽',
     measureSummaryClose:'關閉', measureSummaryEmpty:'沒有可顯示的設備。',
     measureSummaryMeta:'各項目輸入值',
@@ -1405,7 +1409,7 @@ const I18N = {
     machineCountLabel:'Số máy', roundCountLabel:'Số lần đo',
     dateLabel:'Ngày', timeLabel:'Giờ', shiftLabel:'Ca',
     inspectorLabel:'Nhân viên QC', inspectorPH:'Tên nhân viên',
-    s2title:'Thông tin & đo theo máy', s2hint:'Chọn tab máy để nhập thông tin và giá trị đo',
+    s2title:'Thông tin máy & kiểm tra tuần tra', s2hint:'Xác nhận thông tin máy/sản phẩm, rồi nhập lô, số đo, Visual, kết quả và phê duyệt theo lần bên dưới.',
     prevMach:'◀ Máy trước', nextMach:'Máy sau ▶',
     s3title:'Giá trị đo theo hạng mục', s3hint:'Chọn hạng mục để nhập tất cả máy cùng lúc',
     measureSummaryBtn:'Xem tất cả giá trị', measureSummaryTitle:'📊 Toàn bộ giá trị đo',
@@ -1515,7 +1519,7 @@ const I18N = {
     machineCountLabel:'Jumlah Mesin', roundCountLabel:'Putaran',
     dateLabel:'Tanggal', timeLabel:'Waktu', shiftLabel:'Shift',
     inspectorLabel:'Inspektor QC', inspectorPH:'Nama inspektor',
-    s2title:'Info & Pengukuran per Mesin', s2hint:'Pilih tab mesin untuk memasukkan info dan pengukuran',
+    s2title:'Info Mesin & Inspeksi Patroli', s2hint:'Konfirmasi data mesin/produk, lalu isi lot, pengukuran, Visual, hasil dan persetujuan per ronde di bawah.',
     prevMach:'◀ Mesin Sebelumnya', nextMach:'Mesin Berikutnya ▶',
     s3title:'Nilai Ukur per Item', s3hint:'Pilih item untuk memasukkan semua mesin sekaligus',
     measureSummaryBtn:'Lihat Semua Nilai', measureSummaryTitle:'📊 Semua Nilai Pengukuran',
@@ -1675,7 +1679,7 @@ const QR_MESSAGES = {
 };
 Object.entries(QR_MESSAGES).forEach(([lang,messages])=>Object.assign(I18N[lang],messages));
 const THEME_MESSAGES = {
-  ko:{navLabel:'검사 관리',navSetup:'공통 설정',navMachines:'설비 정보',navMeasurements:'측정값 입력',navSave:'저장 / 내보내기',navSearch:'기록 검색',navParts:'품번 관리',qualityLabel:'품질 관리',overviewTitle:'검사 입력 현황',overviewScope:'현재 검사 기준',draftLabel:'검사 입력 임시 저장',draftHint:'입력값은 이 브라우저에 임시 저장됩니다. 검사를 마치면 서버에 저장해 주세요.'},
+  ko:{navLabel:'검사 관리',navSetup:'공통 설정',navMachines:'설비 정보',navMeasurements:'설비·검사 입력',navSave:'저장 / 내보내기',navSearch:'기록 검색',navParts:'품번 관리',qualityLabel:'품질 관리',overviewTitle:'검사 입력 현황',overviewScope:'현재 검사 기준',draftLabel:'검사 입력 임시 저장',draftHint:'입력값은 이 브라우저에 임시 저장됩니다. 검사를 마치면 서버에 저장해 주세요.'},
   en:{navLabel:'INSPECTION',navSetup:'Common settings',navMachines:'Equipment',navMeasurements:'Measurements',navSave:'Save / Export',navSearch:'Search records',navParts:'Part numbers',qualityLabel:'Quality control',overviewTitle:'Inspection overview',overviewScope:'Current inspection',draftLabel:'Inspection draft',draftHint:'Entries are saved temporarily in this browser. Save to the server when the inspection is complete.'},
   zh:{navLabel:'檢驗管理',navSetup:'共同設定',navMachines:'機台資訊',navMeasurements:'量測輸入',navSave:'儲存 / 匯出',navSearch:'紀錄查詢',navParts:'料號管理',qualityLabel:'品質管理',overviewTitle:'檢驗輸入狀態',overviewScope:'目前檢驗',draftLabel:'檢驗草稿',draftHint:'輸入資料會暫存在此瀏覽器。完成檢驗後，請儲存至伺服器。'},
   vi:{navLabel:'QUẢN LÝ KIỂM TRA',navSetup:'Cài đặt chung',navMachines:'Thông tin máy',navMeasurements:'Nhập số đo',navSave:'Lưu / Xuất',navSearch:'Tra cứu',navParts:'Mã sản phẩm',qualityLabel:'Quản lý chất lượng',overviewTitle:'Tình trạng nhập kiểm tra',overviewScope:'Lần kiểm tra hiện tại',draftLabel:'Bản nháp kiểm tra',draftHint:'Dữ liệu được lưu tạm trong trình duyệt này. Hãy lưu lên máy chủ khi hoàn tất kiểm tra.'},
@@ -1965,29 +1969,6 @@ function buildMachineContent(m){
     <div class="progress-bar"><div class="progress-fill" id="mprogbar_${m}" style="width:${pct}%"></div></div>
   </div>
 
-  <!-- LTC No. 회차별 입력 -->
-  ${(()=>{
-    ensureLtcRounds(info);
-    const rounds = Array.from({length:state.roundCount},(_,r)=>r);
-    return `<div class="ltc-row-wrap">
-      <span class="ltc-row-label">${tr('ltcLabel')}</span>
-      <div class="ltc-rounds">
-        ${rounds.map(r=>`
-          <div class="ltc-round-cell">
-            <label for="ltc_${m}_${r}" class="ltc-round-label">${tr('ltcRound')} ${r+1}</label>
-            <div class="ltc-entry">
-              <input id="ltc_${m}_${r}" class="ltc-round-input"
-                value="${esc(info.ltcRounds[r]||'')}"
-                placeholder="LTC No."
-                oninput="setLtcRound(${m},${r},this.value)">
-              <button type="button" class="btn sm ltc-qr-btn" onclick="openLtcQr(${m},${r})"
-                aria-label="${esc(tr('qrTitle'))} · ${esc(info.name)} · ${tr('ltcRound')} ${r+1}">📷 QR</button>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-  })()}
-
   <!-- 설비 정보 -->
   ${info.productionKey?`<div class="production-note">${tr('productionManualHint')}</div>`:''}
   <div class="info-section-title">${tr('infoTitle')}</div>
@@ -1997,16 +1978,9 @@ function buildMachineContent(m){
     ${productionFieldInput(m,'customer','customerLabel')}
     ${productionFieldInput(m,'mold','moldLabel')}
     <div><label>${tr('datecodeLabel')}</label><input id="mi_${m}_datecode" placeholder="${tr('productionManual')}" value="${esc(info.datecode||'')}" oninput="saveDebounced()"></div>
-    ${visualInputHtml(m,info)}
     ${productionFieldInput(m,'material','materialLabel')}
     ${productionFieldInput(m,'ratio','ratioLabel',tr('productionManual'))}
     <div><label>${tr('sessLabel')}</label><input id="mi_${m}_sess" placeholder="${tr('productionManual')}" value="${esc(info.sess||'')}" inputmode="decimal" oninput="saveDebounced()"></div>
-    <div><label>${tr('resultLabel')}</label>
-      <select id="mi_${m}_result" onchange="saveDebounced()">
-        ${sel('result',['','PASS','FAIL','HOLD','N/A','Waive'],info.result||'')}
-      </select>
-    </div>
-    <div><label>${tr('approvalLabel')}</label><input id="mi_${m}_approval" placeholder="${tr('productionManual')}" value="${esc(info.approval||'')}" oninput="saveDebounced()"></div>
   </div>
 
   `;
