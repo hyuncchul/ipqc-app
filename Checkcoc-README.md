@@ -30,3 +30,14 @@ PDF 내용은 브라우저에서 처리하며 서버로 전송하지 않습니�
 ## GitHub Pages
 
 https://hyuncchul.github.io/ipqc-app/Checkcoc.html
+
+## SPEC LIMIT 형식 지원
+
+- `SPEC LIMIT(mm)`의 대칭(`10 ± 0.2`) 및 비대칭(`10 +0.25/-0.13`) 공차
+- `#1`부터 이어지는 측정 열, MIN·MAX·AVG 및 열 순서 변경
+- WARPAGE의 MAX 한쪽 규격과 Before/After 공유 규격
+- 위첨자 `10⁵`와 `10¹¹`을 위치 정보로 결합해 저항값 검사
+- 평균·Cpk가 생략된 S.R 행은 측정값과 Min·Max만 검사
+- Cpk·서명·인증 문구는 자동 검증 대상에서 제외
+
+검증: `node Checkcoc.test.cjs`
