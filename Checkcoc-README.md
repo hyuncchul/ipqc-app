@@ -48,3 +48,9 @@ Cpk·서명·인증 문구·도면 적합성·정성 시험은 자동 검증 대
 node Checkcoc.test.cjs
 node Checkcoc-excel.test.cjs
 ```
+
+## 언어 선택
+
+오른쪽 위 **Language / 語言 / 언어**에서 한국어, English, 繁體中文（台灣）을 선택할 수 있습니다. 메뉴·검사 상태·오류 설명·CSV 결과의 앱 문구가 전환됩니다. 선택은 해당 브라우저에 저장하며, 언어 변경 시 업로드한 파일과 검사 결과는 유지합니다. 원본 시트의 제품명·측정값·수식·파일명은 번역하거나 수정하지 않습니다.
+
+`Checkcoc-i18n.js`를 HTML과 같은 폴더에 두세요. 번역 검증은 `node Checkcoc-i18n.test.cjs`로 실행합니다.
