@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const html = fs.readFileSync(__dirname + '/Checkcoc.html', 'utf8');
-const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 new vm.Script(script);
 const c = {};
 vm.createContext(c);
